@@ -31,7 +31,8 @@ Mint consists of 4 main sections:
 
 Whilst these 4 areas are relatively widely spaced in RAM - this is only an artifact of the code development process. In reality, the 4 main sections may be concatenated such that the total memory requirement is about 1K bytes. 
 
-# Operation
+
+Operation
 
 Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ascii characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
 
@@ -51,7 +52,7 @@ Maths Operators:
 Logical Operators:
 
 ~   16-bit bitwise inversion INV
-#   16-bit negation (2's complement) NEG
+(#) 16-bit negation (2's complement) NEG
 &   16-bit bitwise AND
 |   16-bit bitwise OR
 ^   16-bit bitwise XOR
@@ -69,6 +70,11 @@ Memory Operations:
 @   FETCH a value from memory
 !   STORE a value to memory
 
+User Definitions:
+
+:   Define a new word  DEF
+;   End of user definition  END
+
 Variables:
 
 }   SAVE the top of stack to a variable
@@ -84,13 +90,14 @@ Loops and conditional execution:
 
 Miscellaneous:
 
-_   STRING  _Everything between underscores is a sting_
+_   STRING  _Everything between underscores is printed as a string_
 
 \   QUIT
 
 ?   QUERY
-
+,   Separate array members
 `   TICK
+
 
 
 
