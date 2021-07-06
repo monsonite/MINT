@@ -41,61 +41,111 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 Maths Operators:
 
 +   16-bit integer addition  ADD
+
+
 -   16-bit integer subtraction  SUB
+
+
 *   8-bit by 8-bit integer multiplication  MUL
+
+
 /   16-bit by 8-bit division DIV
+
+
 %   16-bit by 8-bit modulo MOD
+
+
 <   16-bit comparison LT
+
+
 =   16 bit comparison EQ
+
+
 >   16-bit comparison GT
+
+
 
 Logical Operators:
 
 ~   16-bit bitwise inversion INV
+
+
 (#) 16-bit negation (2's complement) NEG
+
+
 &   16-bit bitwise AND
+
+
 |   16-bit bitwise OR
+
+
 ^   16-bit bitwise XOR
+
+
 
 Stack Operations:
 
 "   Duplicate the top member of the stack DUP
+
+
 '   Drop the top member of the stack DROP
+
+
 $   Swap the top 2 members of the stack  SWAP
+
+
 .   Print the top member of the stack as a decimal number DOT
 
 
 Memory Operations:
 
 @   FETCH a value from memory
+
+
 !   STORE a value to memory
+
 
 User Definitions:
 
 :   Define a new word  DEF
+
+
 ;   End of user definition  END
 
 Variables:
 
 }   SAVE the top of stack to a variable
+
+
 {   LOAD the top of stack from a variable
+
 
 Loops and conditional execution:
 
 (   BEGIN a loop or conditionally executed code block
+
+
 )   END a loop or conditionally executed code block
 
+
 [   OPEN an array
+
+
 ]   CLOSE an array
 
 Miscellaneous:
 
 _   STRING  _Everything between underscores is printed as a string_
 
+
 \   QUIT
 
+
 ?   QUERY
+
 ,   Separate array members
+
+
 `   TICK
 
 
