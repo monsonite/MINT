@@ -31,6 +31,67 @@ Mint consists of 4 main sections:
 
 Whilst these 4 areas are relatively widely spaced in RAM - this is only an artifact of the code development process. In reality, the 4 main sections may be concatenated such that the total memory requirement is about 1K bytes. 
 
+# Operation
+
+Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ascii characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
+
+There are roughly 30 punctuation and arithmetical symbols available in the printable ascii codes. These are assigned to the primitive functions, from which more complex programs can be built.
+
+Maths Operators:
+
++   16-bit integer addition  ADD
+-   16-bit integer subtraction  SUB
+*   8-bit by 8-bit integer multiplication  MUL
+/   16-bit by 8-bit division DIV
+%   16-bit by 8-bit modulo MOD
+<   16-bit comparison LT
+=   16 bit comparison EQ
+>   16-bit comparison GT
+
+Logical Operators:
+
+~   16-bit bitwise inversion INV
+#   16-bit negation (2's complement) NEG
+&   16-bit bitwise AND
+|   16-bit bitwise OR
+^   16-bit bitwise XOR
+
+Stack Operations:
+
+"   Duplicate the top member of the stack DUP
+'   Drop the top member of the stack DROP
+$   Swap the top 2 members of the stack  SWAP
+.   Print the top member of the stack as a decimal number DOT
+
+
+Memory Operations:
+
+@   FETCH a value from memory
+!   STORE a value to memory
+
+Variables:
+
+}   SAVE the top of stack to a variable
+{   LOAD the top of stack from a variable
+
+Loops and conditional execution:
+
+(   BEGIN a loop or conditionally executed code block
+)   END a loop or conditionally executed code block
+
+[   OPEN an array
+]   CLOSE an array
+
+Miscellaneous:
+
+_   STRING  _Everything between underscores is a sting_
+
+\   QUIT
+
+?   QUERY
+
+`   TICK
+
 
 
 
