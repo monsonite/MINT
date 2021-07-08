@@ -1,6 +1,8 @@
 # MINT
 A minimal interpreter in Z80 assembly language for the RC2014 Micro.
 
+## Using Mint
+
 
 MINT is a small Z80 assembly language program that provides a framework for a bytecode interpreter based on the printable ascii character set. The basic principles, once grasped could be applied to any other 8-bit micro, such as the 6502 or similar.
 
