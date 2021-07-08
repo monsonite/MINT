@@ -40,7 +40,7 @@ A basic serial terminal interface is provided, communicating with the familiar g
 MINT provides a simple interactive interpreter based on printable ascii characters. This provides a greater level of human readability compared to assembly language. It is designed to use single ascii character commands - for example, when the interpreter recieves the "+" character, it will perform a 16-bit integer addition. There are approximately 30 such commands, mostly consisting of arithmetic and punctuation characters.
 
 
-mint_1.0 is the latest upload.  On the RC2014 Micro it loads at address $8000.
+mint_1.1 is the latest upload.  On the RC2014 Micro it loads at address $8000.
 
 Mint consists of 4 main sections:
 
