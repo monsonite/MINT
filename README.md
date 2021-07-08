@@ -1,10 +1,34 @@
 # MINT
-A minimal interpreter in Z80 assembly for the RC2014 Micro.
+A minimal interpreter in Z80 assembly language for the RC2014 Micro.
 
 
 MINT is a small Z80 assembly language program that provides a framework for a bytecode interpreter based on the printable ascii character set. The basic principles, once grasped could be applied to any other 8-bit micro, such as the 6502 or similar.
 
+MINT is a simple tool to provide an interactive user interface through a set of commands - based on single printable ascii characters. MINT allocates the uppercase letter A to Z as User Definable  Commands. Using these commands, the User can develop simple applications, which could be anything from a few commands to exercise I/O, flash LEDs or even drive stepper motors. 
 
+
+However simple or complex the application, MINT provides an easy means to interract with the hardware, where ideas can be tried out quickly without having to keep going around the edit, compile, reflash cycle.
+
+Using familliar uppercase characters allows the User to create shortcut commands that make sense to the specific application.  For example a simple hex monitor application might use the following:
+
+A   Specify an Address
+E   Edit memory
+D   Show a hex Dump of the memory
+G   Go to the address and run the program.
+
+For exercising simple I/O you might like to define O as send to an Output port and I as read an Input port. A more complex system might be a 2D-plotter or 3D printer where you might choose commands X, Y and Z to move the head to a specific position.
+
+MINT provides a framework that makes it easy to define new commands and attach whatever functional code you wish to them.
+
+Commands are of little use without parameters, so MINT allows several parameters to be attached to a command. Parameters are placed in order on a data stack before the command is called. Parameters are 16-bit positive integers - so any value between 0 and 65535.
+
+In the hex Dump example, you might choose to specify a starting address and the number of bytes to dump:
+
+8192 256 D   this would display 256 bytes starting at address 8192
+
+Commands are executed only when the return key is pressed.
+
+****************************************************************************************************
 In my case I am using a Z80 based RC2014 "Micro", a single board computer that has a serial terminal interface based on the 68B50 ACIA. Credit should be given here to Grant Searle, Spencer Owen and Stephen C Cousins for making these retro systems available to the wider hobbyist community.
 
 
@@ -16,7 +40,7 @@ A basic serial terminal interface is provided, communicating with the familiar g
 MINT provides a simple interactive interpreter based on printable ascii characters. This provides a greater level of human readability compared to assembly language. It is designed to use single ascii character commands - for example, when the interpreter recieves the "+" character, it will perform a 16-bit integer addition. There are approximately 30 such commands, mostly consisting of arithmetic and punctuation characters.
 
 
-mint_9 is the latest upload.  On the RC2014 Micro it loads at address $8000.
+mint_1.0 is the latest upload.  On the RC2014 Micro it loads at address $8000.
 
 Mint consists of 4 main sections:
 
