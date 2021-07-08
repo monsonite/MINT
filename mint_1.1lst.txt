@@ -1,0 +1,1086 @@
+0000                             ; *************************************************************************
+0000                             ; 
+0000                             ;        MINT_1.1 Micro-Interpreter for the Z80 based on SIMPL
+0000                             ; 
+0000                             ;        Ken Boak July 2021
+0000                             ; 
+0000                             ;        Includes serial routines getchar and putchar
+0000                             ;        printstring
+0000                             ;        printdec
+0000                             ;        printhex
+0000                             ;        crlf
+0000                             ; 
+0000                             ;        Register Assignment:
+0000                             ; 
+0000                             ;        BC is the instruction pointer IP
+0000                             ;        DE is a working register and 2nd on stack NOS
+0000                             ;        HL is a working register and Top of stack TOS
+0000                             ;        SP is data stack pointer
+0000                             ; 
+0000                             ;        MINT consists of 4 major sections:
+0000                             ; 
+0000                             ;        1.  An interpreter kernel and serial interface routines
+0000                             ; 
+0000                             ;        2.  A vector table to dispatch the 96 possible opcodes
+0000                             ; 
+0000                             ;        3.  A text buffer area to hold keyboard input and User routines
+0000                             ; 
+0000                             ;        4.  An area containing the Primitive function code fields
+0000                             ; 
+0000                             ; 
+0000                             ;        New in this version 1.1: User defined commands and variables
+0000                             ; 
+0000                             ;        User Commands  A-Z
+0000                             ;        User Variables a-z
+0000                             ; 
+0000                             ;        Commands now available:
+0000                             ; 
+0000                             ;        +     ADD
+0000                             ;		 -     SUB
+0000                             ;        _     NEG
+0000                             ;        ~     INV
+0000                             ;        &     AND
+0000                             ;        |     OR
+0000                             ;        ^     XOR
+0000                             ;        "     DUP
+0000                             ;        '     DROP
+0000                             ;        $     SWAP
+0000                             ;        .     DOT     (Print the value of the topp of stack as a decimal)
+0000                             ;        @     FETCH
+0000                             ;        !     STORE
+0000                             ;        \     QUIT    (Print OK and return to monitor)
+0000                             ; 
+0000                             ; 
+0000                             ;       User Commands are allocated to uppercase alpha characters A to Z
+0000                             ; 
+0000                             ;       A user command can be defined by starting with a colon and
+0000                             ;       ending with a semicolon
+0000                             ; 
+0000                             ;       Example  :A 123 456 + . ;
+0000                             ; 
+0000                             ;       The A character represents a fixed address for the User routine
+0000                             ;       The interpreter copies all the characters after the A to a text buffer
+0000                             ;       located at address A
+0000                             ;       Each time A is encountered (outside of a colon definition)
+0000                             ;       it will execute the code  located there i.e. 123 456 + .
+0000                             ; 
+0000                             ;       Variables are associated with lowercase characters a-z
+0000                             ;       Each variable is allocated 2 bytes located on even addresses
+0000                             ;       They run contiguously from $A800 (a) to $A830 (z)
+0000                             ;       They are accessed using the fetch and store commands @ and !
+0000                             ; 
+0000                             ;       Examples:
+0000                             ; 
+0000                             ;       1234 a!     store 1234 in a
+0000                             ; 
+0000                             ;       b@ .        fetch the value from b and print it out
+0000                             ; 
+0000                             ;       a@ b@ + .   fetch values from a and b, add them together and print the sum
+0000                             ; 
+0000                             ;       a@ b!       copy the value in a and stor it in b
+0000                             ; 
+0000                             ; 
+0000                             ; *****************************************************************************
+0000                             ; 
+0000                TABSTART:   EQU   $82   ; High Address of Vector table
+0000                             ; 
+0000                TEXTBUF:   EQU   $8100   ; Input text buffer
+0000                             ; 
+0000                STRINGBUF:   EQU   $8800   
+0000                             ; 
+0000                USERTAB:   EQU   $A4   ; Upper byte of user table
+0000                             ; 
+0000                VARTAB:   EQU   $A8   ; Upper byte of variables table
+0000                             ; 
+0000                             ; 
+8000                          .ORG   $8000   
+8000                             ; *******************************************************************         
+8000                             ; Wait for a character from the serial input (keyboard) 
+8000                             ; and store it in the text buffer. Keep accepting characters,
+8000                             ; increasing the instruction pointer BC - until a newline received.
+8000                             ; *******************************************************************
+8000                             ; 
+8000                             ; 
+8000   01 00 81     INCHAR:   LD   BC,textbuf   ; input buffer is at $8100      
+8003                             ; 
+8003   CD 84 80     WAITCHAR:   CALL   getchar   ; loop around waiting for character
+8006                             ; 
+8006   FE 0A                  CP   $0A   ; Less than $0A
+8008   38 0F                  JR   C,endchar   ; Return char
+800A   FE 7F                  CP   $7F   ; Greater or equal to $7F
+800C   30 0B                  JR   NC,endchar   
+800E                             ; 
+800E   02                     LD   (BC),A   ; store the character in textbuf
+800F   03                     INC   BC   
+8010   FE 0D                  CP   $0D   ; is it a newline?
+8012   28 05                  JR   Z,endchar   
+8014                             ; 
+8014   CD 8D 80               CALL   putchar   ; echo character to screen
+8017                             ; 
+8017   18 EA                  JR   waitchar   ; wait for next character
+8019                             ; 
+8019   3E 0D        ENDCHAR:   LD   A,$0D   ; Send out a CRLF
+801B   CD 8D 80               CALL   putchar   
+801E   3E 0A                  LD   A,$0A   
+8020   CD 8D 80               CALL   putchar   
+8023                             ; 
+8023                             ; ********************************************************************************
+8023                             ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
+8023                             ; On receipt of a newline character, reset BC to the start of the text buffer
+8023                             ; Read the first character. If not a number (0-9) jump to the dispatch routine
+8023                             ;			
+8023                             ; Number characters ($30 to $39) are converted to digits by subtracting $30
+8023                             ; and then added into the L register. (HL forms a 16-bit accumulator)
+8023                             ; Fetch the next character, if it is a number, multiply contents of HL by 10
+8023                             ; and then add in the next digit. Repeat this until a non-number character is 
+8023                             ; detected. Add in the final digit so that HL contains the converted number.
+8023                             ; Push HL onto the stack and proceed to the dispatch routine.
+8023                             ; ********************************************************************************
+8023                             ; 
+8023   01 FF 80               LD   BC,textbuf-1   ; Instructions begin at $8100
+8026                             ; 
+8026   21 00 00     NEXT:     LD   HL,$0000   ; 10t   Clear HL to accept new number
+8029   03                     INC   BC   ; 6t    Increment the IP
+802A   0A                     LD   A,(BC)   ; 7t    Get the next character
+802B   FE 30                  CP   $30   ; 7t    Less that $30
+802D   38 20                  JR   C,dispatch   ; 7/12t Not a number
+802F   FE 3A                  CP   $3A   ; 7t    Greater or equal to $3A
+8031   30 1C                  JR   NC,dispatch   ; 7/12t Not a number
+8033                             ; 
+8033   D6 30                  SUB   $30   ; 7t    Form decimal digit
+8035   85                     ADD   A,L   ; 4t    Add into bottom of HL
+8036   6F                     LD   L,A   ; 4t
+8037                             ; 
+8037                NUMBER1:      
+8037   03                     INC   BC   ; 6t    Increment IP
+8038   0A                     LD   A,(BC)   ; 7t    Get the next character
+8039   FE 30                  CP   $30   ; 7t    Less than $30
+803B   38 11                  JR   C,endnum   ; 7/12t Not a number / end of number
+803D   FE 3A                  CP   $3A   ; 7t    Greater or equal to $3A
+803F   30 0D                  JR   NC,endnum   ; 7/12t Not a number / end of number
+8041                             ; 
+8041                TIMES10:      ; Multiply digit(s) in HL by 10
+8041   29                     ADD   HL,HL   ; 11t    2 X
+8042   5D                     LD   E,L   ;  4t    LD DE,HL
+8043   54                     LD   D,H   ;  4t
+8044   29                     ADD   HL,HL   ; 11t    4 X
+8045   29                     ADD   HL,HL   ; 11t    8 X
+8046   19                     ADD   HL,DE   ; 11t    10 X
+8047                             ; 52t cycles
+8047                             ; 
+8047   D6 30                  SUB   $30   ;  7t   Form next decimal digit in A
+8049   85                     ADD   A,L   ;  4t   Add into bottom of HL
+804A   6F                     LD   L,A   ;  4t
+804B                             ;  15t cycles
+804B                             ; 
+804B   C3 37 80               JP   number1   
+804E                             ; 
+804E                ENDNUM:      
+804E   E5                     PUSH   HL   ; 11t   Put the number on the stack
+804F                             ; 
+804F                             ; ********************************************************************************
+804F                             ; Dispatch Routine.
+804F                             ; The Instruction Pointer IP BC is pushed to preserve its contents.
+804F                             ; The current character from the text buffer is temporarily held in A.
+804F                             ; It is doubled so that it forms an even number and will point to even address.
+804F                             ; B is loaded with the high byte of the vector table tabstart and the doubled		 
+804F                             ; value of A is loaded into C, so that it indexes into the vector table.
+804F                             ; At the selected table location is a 2-byte jump address to the selected function
+804F                             ; This target jump address is loaded into HL, and BC is restored.
+804F                             ; The routine uses HL to jump to the selected function.
+804F                             ; *********************************************************************************
+804F                             ; 
+804F                DISPATCH:      ; The character at IP is not a number
+804F                             ; 
+804F   C5                     PUSH   BC   ; 11t   Push the current IP
+8050   87                     ADD   A,A   ; 4t    Double A to index even addresses
+8051   06 82                  LD   B,tabstart   ; 7t    Start address of jump table         
+8053   4F                     LD   C,A   ; 4t    Index into table
+8054   0A                     LD   A,(BC)   ; 7t    get low jump address
+8055   6F                     LD   L,A   ; 4t    and put into L
+8056   03                     INC   BC   ; 6t
+8057   0A                     LD   A,(BC)   ; 7t    Get high jump address
+8058   67                     LD   H,A   ; 4t    and put into H
+8059   C1                     POP   BC   ; 10t   Get IP back
+805A                             ; 
+805A   FE A8                  CP   vartab   ; Is H >= to user variable table start
+805C   30 0C                  JR   NC,uservar   
+805E                             ; 
+805E   FE A4                  CP   usertab   ; Is H >= to user definition table start
+8060   30 01                  JR   NC,userdef   
+8062                             ; 
+8062   E9                     JP   (HL)   ; 4t Jump to routine
+8063                             ; 
+8063                USERDEF:      
+8063   C5                     PUSH   BC   
+8064   44                     LD   B,H   ; Instruction Pointer loaded with user address
+8065   4D                     LD   C,L   
+8066   0B                     DEC   BC   
+8067   C3 26 80               JP   NEXT   ; Execute code from User def
+806A                             ; 
+806A                USERVAR:      
+806A                             ; PUSH BC
+806A   E5                     PUSH   HL   ; push variable address on the stack
+806B   C3 26 80               JP   NEXT   
+806E                             ; 
+806E                             ; ************************SERIAL HANDLING ROUTINES**********************        
+806E                             ; 
+806E                             ;        Includes drivers for 68B50 ACIA 
+806E                             ;		 serial interface I/O primitive routines getchar and putchar
+806E                             ;        printstring
+806E                             ;        printdec
+806E                             ;        printhex
+806E                             ;        crlf         
+806E                             ; 
+806E                             ; **********************************************************************
+806E                             ; **  Device Driver                             by Stephen C Cousins  **
+806E                             ; **  Hardware:  RC2014                                               **
+806E                             ; **  Interface: Serial 6850 ACIA                                     **
+806E                             ; **********************************************************************
+806E                             ; 
+806E                             ; This module is the driver for the RC2014 serial I/O interface which is
+806E                             ; based on the 6850 Asynchronous Communications Interface Adapter (ACIA)
+806E                             ; 
+806E                             ; Base addresses for ACIA externally defined. eg:
+806E                KACIA1:   EQU   0x80   ;Base address of serial ACIA #1
+806E                KACIA2:   EQU   0x80   ;Base address of serial ACIA #2
+806E                             ; 
+806E                             ; RC2014 addresses for 68B50 number 2:
+806E                             ; 0x40   Control registers (read and write)
+806E                             ; 0x41   Data registers (read and write)
+806E                             ; 
+806E                             ; Control registers (read and write)
+806E                             ; Bit   Control write              Control read
+806E                             ;  0    Counter divide select 1    Receive data register full
+806E                             ;  1    Counter divide select 2    Transmit data register empty
+806E                             ;  2    Word select 1              Data carrier detect (/DCD) input
+806E                             ;  3    Word seelct 2              Clear to send (/CTS) input
+806E                             ;  4    Word select 3              Framing error
+806E                             ;  5    Transmit contol 1          Receiver overrun
+806E                             ;  6    Transmit control 2         Parity error
+806E                             ;  7    Receive interrupt enable   Interrupt request
+806E                             ; 
+806E                             ; Control register write
+806E                             ; Bit   7   6   5   4   3   2   1   0
+806E                             ;       |   |   |   |   |   |   |   |
+806E                             ;       |   |   |   |   |   |   0   0     Clock divide 1
+806E                             ;       |   |   |   |   |   |   0   1     Clock divide 16
+806E                             ; >     |   |   |   |   |   |   1   0  >  Clock divide 64
+806E                             ;       |   |   |   |   |   |   1   1     Master reset
+806E                             ;       |   |   |   |   |   |
+806E                             ;       |   |   |   0   0   0     7 data bits, even parity, 2 stop bits
+806E                             ;       |   |   |   0   0   1     7 data bits, odd parity,  2 stop bits
+806E                             ;       |   |   |   0   1   0     7 data bits, even parity, 1 stop bit
+806E                             ;       |   |   |   0   1   1     7 data bits, odd parity,  1 stop bit
+806E                             ;       |   |   |   1   0   0     8 data bits, no parity,   2 stop bits
+806E                             ;       |   |   |   1   0   1  >  8 data bits, no parity,   1 stop bit
+806E                             ;       |   |   |   1   1   0     8 data bits, even parity, 1 stop bit
+806E                             ;       |   |   |   1   1   1     8 data bits, odd parity,  1 stop bit
+806E                             ;       |   |   |
+806E                             ;       |   0   0  >  /RTS = low (ready), tx interrupt disabled
+806E                             ;       |   0   1     /RTS = low (ready), tx interrupt enabled
+806E                             ;       |   1   0     /RTS = high (not ready), tx interrupt disabled 
+806E                             ;       |   1   1     /RTS = low, tx break, tx interrupt disabled
+806E                             ;       |
+806E                             ;       0  >  Receive interrupt disabled
+806E                             ;       1     Receive interrupt enabled
+806E                             ; 
+806E                             ; Control register read
+806E                             ; Bit   7   6   5   4   3   2   1   0
+806E                             ;       |   |   |   |   |   |   |   |
+806E                             ;       |   |   |   |   |   |   |   +-------  Receive data register full
+806E                             ;       |   |   |   |   |   |   +-------  Transmit data register empty
+806E                             ;       |   |   |   |   |   +-------  Data carrier detect (/DCD)
+806E                             ;       |   |   |   |   +-------  Clear to send (/CTS)
+806E                             ;       |   |   |   +-------  Framing error
+806E                             ;       |   |   +-------  Receiver overrun 
+806E                             ;       |   +-------  Parity error
+806E                             ;       +-------  Interrupt request
+806E                             ; 
+806E                             ; 6850 #1 registers derived from base address (above)
+806E                KACIA1CONT:   EQU   kACIA1+0   ;I/O address of control register
+806E                KACIA1DATA:   EQU   kACIA1+1   ;I/O address of data register
+806E                             ; 6850 #2 registers derived from base address (above)
+806E                KACIA2CONT:   EQU   kACIA2+0   ;I/O address of control register
+806E                KACIA2DATA:   EQU   kACIA2+1   ;I/O address of data register
+806E                             ; 
+806E                             ; Control register values
+806E                K6850RESET:   EQU   0b00000011   ;Master reset
+806E                K6850INIT:   EQU   0b00010110   ;No int, RTS low, 8+1, /64
+806E                             ; 
+806E                             ; Status (control) register bit numbers
+806E                K6850RXRDY:   EQU   0   ;Receive data available bit number
+806E                K6850TXRDY:   EQU   1   ;Transmit data empty bit number
+806E                             ; 
+806E                             ; Device detection, test 1
+806E                             ; This test just reads from the devices' status (control) register
+806E                             ; and looks for register bits in known states:
+806E                             ; /CTS input bit = low
+806E                             ; /DCD input bit = low
+806E                             ; WARNING
+806E                             ; Sometimes at power up the Tx data reg empty bit is zero, but
+806E                             ; recovers after device initialised. So test 1 excludes this bit.
+806E                K6850MASK1:   EQU   0b00001100   ;Mask for known bits in control reg
+806E                K6850TEST1:   EQU   0b00000000   ;Test value following masking
+806E                             ; 
+806E                             ; Device detection, test 2
+806E                             ; This test just reads from the devices' status (control) register
+806E                             ; and looks for register bits in known states:
+806E                             ; /CTS input bit = low
+806E                             ; /DCD input bit = low
+806E                             ; Transmit data register empty bit = high
+806E                K6850MASK2:   EQU   0b00001110   ;Mask for known bits in control reg
+806E                K6850TEST2:   EQU   0b00000010   ;Test value following masking
+806E                             ; 
+806E                             ; RC2014 serial 6850 initialise
+806E                             ;   On entry: No parameters required
+806E                             ;   On exit:  Z flagged if device is found and initialised
+806E                             ;             AF BC DE HL not specified
+806E                             ;             IX IY I AF" BC" DE" HL" preserved
+806E                             ; If the device is found it is initialised
+806E                SERIAL_INIT:      
+806E                             ; First look to see if the device is present
+806E                             ; Test 1, just read from chip, do not write anything
+806E   DB 80                  IN   A,(kACIA1Cont)   ;Read status (control) register
+8070   E6 00                  AND   k6850Mask1   ;Mask for known bits in control reg
+8072   FE 00                  CP   k6850Test1   ;and check for known values
+8074   C0                     RET   NZ   ;If not found return with NZ flag
+8075                             ; Attempt to initialise the chip
+8075   3E 00                  LD   A,k6850Reset   ;Master reset
+8077   D3 80                  OUT   (kACIA1Cont),A   ;Write to ACIA control register
+8079   3E 00                  LD   A,k6850Init   ;No int, RTS low, 8+1, /64
+807B   D3 80                  OUT   (kACIA1Cont),A   ;Write to ACIA control register
+807D                             ; Test 2, perform tests on chip following initialisation
+807D   DB 80                  IN   A,(kACIA1Cont)   ;Read status (control) register
+807F   E6 00                  AND   k6850Mask2   ;Mask for known bits in control reg
+8081   FE 00                  CP   k6850Test2   ;Test value following masking
+8083                             ;           RET  NZ             ;Return not found NZ flagged
+8083   C9                     RET      ;Return Z if found, NZ if not
+8084                             ; 
+8084                             ; 
+8084                             ; RC2014 serial 6850 input character
+8084                             ;   On entry: No parameters required
+8084                             ;   On exit:  A = Character input from the device
+8084                             ;             NZ flagged if character input
+8084                             ;             BC DE HL IX IY I AF" BC" DE" HL" preserved
+8084                             ; This function does not return until a character is available
+8084                GETCHAR:      
+8084   DB 80                  IN   A,(kACIA1Cont)   ;Address of status register
+8086   E6 01                  AND   $01   ;Receive byte available
+8088   28 FA                  JR   Z,getchar   ;Return Z if no character
+808A   DB 81                  IN   A,(kACIA1Data)   ;Read data byte
+808C   C9                     RET      ;NZ flagged if character input
+808D                             ; 
+808D                             ; 
+808D                             ; RC2014 serial 6850 output character
+808D                             ;   On entry: A = Character to be output to the device
+808D                             ;   On exit:  If character output successful (eg. device was ready)
+808D                             ;               NZ flagged and A != 0
+808D                             ;             If character output failed (eg. device busy)
+808D                             ;               Z flagged and A = Character to output
+808D                             ;             BC DE HL IX IY I AF" BC" DE" HL" preserved
+808D                PUTCHAR:      
+808D   C5                     PUSH   BC   
+808E   0E 80                  LD   C,kACIA1Cont   ;ACIA control register
+8090   ED 40                  IN   B,(C)   ;Read ACIA control register
+8092   00                     BIT   k6850TxRdy,B   ;Transmit register full?
+8093   C1                     POP   BC   
+8094   28 F7                  JR   Z,putchar   ;Return Z as character not output
+8096   D3 81                  OUT   (kACIA1Data),A   ;Write data byte
+8098   F6 FF                  OR   0xFF   ;Return success A=0xFF and NZ flagged
+809A   C9                     RET      
+809B                             ; 
+809B                PRINTDEC:      
+809B                             ; 
+809B                             ;Number in hl to decimal ASCII
+809B                             ;Thanks to z80 Bits
+809B                             ;inputs:	hl = number to ASCII
+809B                             ;example: hl=300 outputs "00300"
+809B                             ;destroys: af, bc, hl, de used
+809B                DISPHL:      
+809B   01 F0 D8               LD   bc,-10000   
+809E   CD B4 80               CALL   Num1   
+80A1   01 18 FC               LD   bc,-1000   
+80A4   CD B4 80               CALL   Num1   
+80A7   01 9C FF               LD   bc,-100   
+80AA   CD B4 80               CALL   Num1   
+80AD   0E F6                  LD   c,-10   
+80AF   CD B4 80               CALL   Num1   
+80B2   0E FF                  LD   c,-1   
+80B4   3E 2F        NUM1:     LD   a,"0"-1   
+80B6   3C           NUM2:     INC   a   
+80B7   09                     ADD   hl,bc   
+80B8   38 FC                  JR   c,Num2   
+80BA   ED 42                  SBC   hl,bc   
+80BC   CD 8D 80               CALL   putchar   
+80BF   C9                     RET      
+80C0                             ; 
+80C0                             ; 
+80C0   3E 0A        CRLF:     LD   A,$0A   ; Send a CRLF
+80C2   CD 8D 80               CALL   putchar   
+80C5   3E 0D                  LD   A,$0D   
+80C7   CD 8D 80               CALL   putchar   
+80CA   C9                     RET      
+80CB                             ; 
+80CB   3E 4F        OK:       LD   A,$4F   ; Print OK
+80CD   CD 8D 80               CALL   putchar   
+80D0   3E 4B                  LD   A,$4B   
+80D2   CD 8D 80               CALL   putchar   
+80D5   C9                     RET      
+80D6                             ; 
+80D6                             ; 
+80D6                PRINTHEX:      
+80D6                             ; 
+80D6                             ;Display a 16- or 8-bit number in hex.
+80D6                DISPHLHEX:      
+80D6                             ; Input: HL
+80D6   4C                     LD   c,h   
+80D7   CD DB 80               CALL   OutHex8   
+80DA   4D                     LD   c,l   
+80DB                OUTHEX8:      
+80DB                             ; Input: C
+80DB   79                     LD   a,c   
+80DC   1F                     RRA      
+80DD   1F                     RRA      
+80DE   1F                     RRA      
+80DF   1F                     RRA      
+80E0   CD E4 80               CALL   Conv   
+80E3   79                     LD   a,c   
+80E4                CONV:        
+80E4   E6 0F                  AND   $0F   
+80E6   C6 90                  ADD   a,$90   
+80E8   27                     DAA      
+80E9   CE 40                  ADC   a,$40   
+80EB   27                     DAA      
+80EC   CD 8D 80               CALL   putchar   
+80EF   C9                     RET      
+80F0                             ; 
+80F0                             ; ****************************************************************
+80F0                             ; Vector Table - holds the 16-bit target addresses of 
+80F0                             ; the 96 possible functions as used by the dispatch routine
+80F0                             ; 192 bytes
+80F0                             ; ****************************************************************
+821A                          .ORG   $821A   
+821A                             ; 
+821A   00 80                  DW   $8000   ; Newline returns to inchar routine
+821C                             ; 
+8240                          .ORG   $8240   
+8240                             ; 
+8240                TABSTART:      ; Jump Table
+8240                             ; 
+8240   00 A0                  DW   space   ; 
+8242   0B A0                  DW   store   ; !   
+8244   13 A0                  DW   dup_   ; "
+8246   D8 A0                  DW   lit_   ; #
+8248   19 A0                  DW   swap   ; $   
+824A   DB A0                  DW   mod_   ; %   
+824C   24 A0                  DW   and_   ; &
+824E   20 A0                  DW   drop   ; '
+8250   A3 A0                  DW   begin_   ; (  
+8252   A7 A0                  DW   end_   ; )
+8254   D2 A0                  DW   mul_   ; *   
+8256   48 A0                  DW   add_   ; +
+8258   80 A0                  DW   quit   ; ,   
+825A   4F A0                  DW   sub_   ; -
+825C   74 A0                  DW   dot_   ; .
+825E   D5 A0                  DW   div_   ; /
+8260   DE A0                  DW   num_   ; 0   
+8262   DE A0                  DW   num_   ; 1  
+8264   DE A0                  DW   num_   ; 2   
+8266   DE A0                  DW   num_   ; 3
+8268   DE A0                  DW   num_   ; 4   
+826A   DE A0                  DW   num_   ; 5   
+826C   DE A0                  DW   num_   ; 6   
+826E   DE A0                  DW   num_   ; 7
+8270   DE A0                  DW   num_   ; 8   
+8272   DE A0                  DW   num_   ; 9  
+8274   84 A0                  DW   def_   ; :  
+8276   9F A0                  DW   ret_   ; ;
+8278   E1 A0                  DW   lt_   ; <
+827A   E4 A0                  DW   eq_   ; =   
+827C   E7 A0                  DW   gt_   ; >   
+827E   EA A0                  DW   query   ; ?
+8280                             ; 
+8280   03 A0                  DW   fetch   ; @ 
+8282                             ; 
+8282   20 A4                  DW   $A420   ; A 
+8284   40 A4                  DW   $A440   ; B
+8286   60 A4                  DW   $A460   ; C
+8288   80 A4                  DW   $A480   ; D 
+828A   A0 A4                  DW   $A4A0   ; E
+828C   C0 A4                  DW   $A4C0   ; F
+828E   E0 A4                  DW   $A4E0   ; G
+8290   00 A5                  DW   $A500   ; H
+8292   20 A5                  DW   $A520   ; I
+8294   40 A5                  DW   $A540   ; J
+8296   60 A5                  DW   $A560   ; K
+8298   80 A5                  DW   $A580   ; L
+829A   A0 A5                  DW   $A5A0   ; M
+829C   C0 A5                  DW   $A5C0   ; N
+829E   E0 A5                  DW   $A5E0   ; O
+82A0   00 A6                  DW   $A600   ; P
+82A2   20 A6                  DW   $A620   ; Q
+82A4   40 A6                  DW   $A640   ; R
+82A6   60 A6                  DW   $A660   ; S
+82A8   80 A6                  DW   $A680   ; T
+82AA   A0 A6                  DW   $A6A0   ; U
+82AC   C0 A6                  DW   $A6C0   ; V
+82AE   E0 A6                  DW   $A6E0   ; W
+82B0   00 A7                  DW   $A700   ; X
+82B2   20 A7                  DW   $A720   ; Y
+82B4   40 A7                  DW   $A740   ; Z
+82B6                             ; 
+82B6   ED A0                  DW   open   ; [
+82B8   80 A0                  DW   quit   ; \
+82BA   F0 A0                  DW   close   ; ]
+82BC   3C A0                  DW   xor_   ; ^
+82BE                             ;             DEFW    neg_       ; _
+82BE   BF A0                  DW   str_   ; _
+82C0   F3 A0                  DW   tick   ; `   
+82C2                             ; 
+82C2                             ; 
+82C2                LOWERTAB:      
+82C2                             ; 
+82C2   00 A8                  DW   $A800   ; a
+82C4   02 A8                  DW   $A802   ; b
+82C6   04 A8                  DW   $A804   ; c
+82C8   06 A8                  DW   $A806   ; d
+82CA   08 A8                  DW   $A808   ; e
+82CC   0A A8                  DW   $A80A   ; f
+82CE   0C A8                  DW   $A80C   ; g
+82D0   0E A8                  DW   $A80E   ; h
+82D2                             ; 
+82D2   10 A8                  DW   $A810   ; i   
+82D4   12 A8                  DW   $A812   ; j
+82D6   14 A8                  DW   $A814   ; k
+82D8   16 A8                  DW   $A816   ; l
+82DA   18 A8                  DW   $A818   ; m
+82DC   1A A8                  DW   $A81A   ; n
+82DE   1C A8                  DW   $A81C   ; o
+82E0   1E A8                  DW   $A81E   ; p
+82E2                             ; 
+82E2   20 A8                  DW   $A820   ; q   
+82E4   22 A8                  DW   $A822   ; r
+82E6   24 A8                  DW   $A824   ; s 
+82E8   26 A8                  DW   $A826   ; t
+82EA   28 A8                  DW   $A828   ; u
+82EC   2A A8                  DW   $A82A   ; v
+82EE   2C A8                  DW   $A82C   ; x
+82F0   2E A8                  DW   $A82E   ; y
+82F2                             ; 
+82F2   30 A8                  DW   $A830   ; z
+82F4                             ; 
+82F4   F6 A0                  DW   save   ; {
+82F6   30 A0                  DW   or_   ; |   
+82F8   F9 A0                  DW   load   ; }   
+82FA   5D A0                  DW   inv_   ; ~   
+82FC   FC A0                  DW   del_   ; BS
+82FE                             ; 
+82FE                             ; **********************************************************************			 
+82FE                             ; 
+82FE                             ; $ A000 Start of primitive routines 
+82FE                             ; 
+82FE                             ; **********************************************************************
+82FE                             ; 
+A000                          .ORG   $A000   
+A000                             ; 
+A000                SPACE:       
+A000   C3 26 80               JP   NEXT   
+A003                             ; 
+A003                FETCH:       ; Fetch the value from the address placed on the top of the stack      
+A003   E1                     POP   HL   
+A004   5E                     LD   E,(HL)   
+A005   23                     INC   HL   
+A006   56                     LD   D,(HL)   
+A007   D5                     PUSH   DE   
+A008   C3 26 80               JP   NEXT   
+A00B                             ; 
+A00B                             ; 
+A00B                             ; 
+A00B                STORE:       ; Store the value at the address placed on the top of the stack
+A00B   E1                     POP   HL   
+A00C   D1                     POP   DE   
+A00D   73                     LD   (HL),E   
+A00E   23                     INC   HL   
+A00F   72                     LD   (HL),D   
+A010   C3 26 80               JP   NEXT   
+A013                             ; 
+A013                             ; 
+A013   E1           DUP_:     POP   HL   ; Duplicate the top member of the stack
+A014   E5                     PUSH   HL   
+A015   E5                     PUSH   HL   
+A016   C3 26 80               JP   NEXT   
+A019                             ; 
+A019                             ; 
+A019   E1           SWAP:     POP   HL   ; Swap the top 2 elements of the stack
+A01A   D1                     POP   DE   
+A01B   E5                     PUSH   HL   
+A01C   D5                     PUSH   DE   
+A01D   C3 26 80               JP   NEXT   
+A020                             ; 
+A020                DROP:        ; Discard the top member of the stack
+A020   E1                     POP   HL   
+A021   C3 26 80               JP   NEXT   
+A024                             ; 
+A024                             ; 
+A024                             ; 
+A024   D1           AND_:     POP   DE   ; 10t Bitwise AND the top 2 elements of the stack
+A025   E1                     POP   HL   ; 10t
+A026   7B                     LD   A,E   ; 4t
+A027   A5                     AND   L   ; 4t
+A028   6F                     LD   L,A   ; 4t
+A029   7A                     LD   A,D   ; 4t
+A02A   A4                     AND   H   ; 4t
+A02B   67                     LD   H,A   ; 4t
+A02C   E5                     PUSH   HL   ; 11t
+A02D   C3 26 80               JP   NEXT   ; 10t
+A030                             ; 
+A030                             ; 
+A030   D1           OR_:      POP   DE   ; Bitwise OR the top 2 elements of the stack
+A031   E1                     POP   HL   
+A032   7B                     LD   A,E   
+A033   B5                     OR   L   
+A034   6F                     LD   L,A   
+A035   7A                     LD   A,D   
+A036   B4                     OR   H   
+A037   67                     LD   H,A   
+A038   E5                     PUSH   HL   
+A039   C3 26 80               JP   NEXT   
+A03C                             ; 
+A03C                             ; 
+A03C   D1           XOR_:     POP   DE   ; Bitwise XOR the top 2 elements of the stack
+A03D   E1                     POP   HL   
+A03E   7B                     LD   A,E   
+A03F   AD                     XOR   L   
+A040   6F                     LD   L,A   
+A041   7A                     LD   A,D   
+A042   AC                     XOR   H   
+A043   67                     LD   H,A   
+A044   E5                     PUSH   HL   
+A045   C3 26 80               JP   NEXT   
+A048                             ; 
+A048   D1           ADD_:     POP   DE   ; Add the top 2 members of the stack
+A049   E1                     POP   HL   
+A04A   19                     ADD   HL,DE   
+A04B   E5                     PUSH   HL   
+A04C   C3 26 80               JP   NEXT   
+A04F                             ; 
+A04F                SUB_:        ; Subtract the value 2nd on stack from top of stack 
+A04F   E1                     POP   HL   
+A050   D1                     POP   DE   
+A051   7B                     LD   A,E   
+A052   2F                     CPL      ; Invert E
+A053   5F                     LD   E,A   
+A054   7A                     LD   A,D   
+A055   2F                     CPL      ; Invert D
+A056   57                     LD   D,A   
+A057   13                     INC   DE   ; Add 1 to DE
+A058   19                     ADD   HL,DE   
+A059   E5                     PUSH   HL   
+A05A   C3 26 80               JP   NEXT   
+A05D                             ; 
+A05D                INV_:        ; Bitwise INVert the top member of the stack
+A05D   E1                     POP   HL   
+A05E   7D                     LD   A,L   
+A05F   2F                     CPL      ; Invert L
+A060   6F                     LD   L,A   
+A061   7C                     LD   A,H   
+A062   2F                     CPL      ; Invert H
+A063   67                     LD   H,A   
+A064   E5                     PUSH   HL   
+A065   C3 26 80               JP   NEXT   
+A068                             ; 
+A068                NEG_:        ; NEGate the value on top of stack (2's complement)
+A068   E1                     POP   HL   
+A069   7D                     LD   A,L   
+A06A   2F                     CPL      ; Invert L
+A06B   6F                     LD   L,A   
+A06C   7C                     LD   A,H   
+A06D   2F                     CPL      ; Invert H
+A06E   67                     LD   H,A   
+A06F   23                     INC   HL   
+A070   E5                     PUSH   HL   
+A071   C3 26 80               JP   NEXT   
+A074                             ; 
+A074                             ; 
+A074   E1           DOT_:     POP   HL   
+A075   C5                     PUSH   BC   ; Preserve the Instruction Pointer !
+A076   CD 9B 80               CALL   printdec   
+A079   CD C0 80               CALL   crlf   
+A07C   C1                     POP   BC   
+A07D   C3 26 80               JP   NEXT   
+A080                             ; 
+A080                QUIT:        
+A080   CD CB 80               CALL   ok   ; Print OK and return to monitor
+A083   C9                     RET      
+A084                             ; **************************************************************************             
+A084                             ; def is used to create a colon definition
+A084                             ; When a colon is detected, the next character (usually uppercase alpha)
+A084                             ; is looked up in the vector table to get its associated code field address
+A084                             ; This CFA is held in HL
+A084                             ; The remainder of the characters in the text buffer are then copied
+A084                             ; up to a buffer beginning at that CFA until the end_def semicolon character 
+A084                             ; is found.
+A084                             ; ***************************************************************************
+A084                             ; 
+A084                DEF_:        ; Create a colon definition
+A084   03                     INC   BC   
+A085   0A                     LD   A,(BC)   ; Get the next character
+A086   C5                     PUSH   BC   ; Push the current IP
+A087                             ; Look up its CFA in vector table
+A087   87                     ADD   A,A   ; Double A to index even addresses
+A088   06 82                  LD   B,tabstart   ; Start address of jump table         
+A08A   4F                     LD   C,A   ; Index into table
+A08B   0A                     LD   A,(BC)   ; get low code field address
+A08C   6F                     LD   L,A   ; and put into L
+A08D   03                     INC   BC   ; 
+A08E   0A                     LD   A,(BC)   ; Get high code field address
+A08F   67                     LD   H,A   ; and put into H
+A090   C1                     POP   BC   ; Get IP back
+A091                             ; 
+A091   03           NEXTBYTE:   INC   BC   ; Point to next character
+A092   0A                     LD   A,(BC)   ; Get the next character
+A093   FE 3B                  CP   $3B   ; Is it a semicolon $3B
+A095   28 04                  JR   z,end_def   ; end the definition
+A097   77                     LD   (HL),A   ; store the character at the CFA
+A098   23                     INC   HL   
+A099   18 F6                  JR   nextbyte   ; get the next element
+A09B                             ; 
+A09B   77           END_DEF:   LD   (HL),A   ; Store the semicolon at end of definition
+A09C   C3 26 80               JP   NEXT   
+A09F                             ; 
+A09F                RET_:        
+A09F   C1                     POP   BC   ; Restore Instruction pointer
+A0A0   C3 26 80               JP   NEXT   
+A0A3                             ; 
+A0A3                             ; 
+A0A3                             ; 
+A0A3                BEGIN_:      ; Left parentesis begins a loop
+A0A3                             ; 
+A0A3   C5                     PUSH   BC   ; Preserve the IP
+A0A4                             ; 
+A0A4                             ; 
+A0A4   C3 26 80               JP   NEXT   ; execute next character
+A0A7                             ; 
+A0A7                             ; 
+A0A7                END_:        ; Right parentesis ends a loop
+A0A7   E1                     POP   HL   ; retrieve HL, the loop index
+A0A8   2B           DECLOOP:   DEC   HL   
+A0A9   7C                     LD   A,H   
+A0AA   FE 00                  CP   $00   ; Is H = 0
+A0AC   28 02                  JR   Z,hzero   
+A0AE   18 F8                  JR   decloop   
+A0B0                             ; 
+A0B0   7D           HZERO:    LD   A,L   ; Is L = 0
+A0B1   FE 00                  CP   $00   
+A0B3   28 05                  JR   Z,lzero   
+A0B5   18 F1                  JR   decloop   
+A0B7   C3 26 80               JP   NEXT   
+A0BA                             ; 
+A0BA   E5           LZERO:    PUSH   HL   ; Preserve HL
+A0BB   C1                     POP   BC   ; Restore the IP
+A0BC   C3 26 80               JP   NEXT   
+A0BF                             ; 
+A0BF                STR_:        ; Print the string between underscores
+A0BF   E5                     PUSH   HL   
+A0C0   60 69                  LD   HL,BC   
+A0C2   23                     INC   HL   
+A0C3                NEXTCHAR:      
+A0C3   7E                     LD   A,(HL)   
+A0C4   23                     INC   HL   
+A0C5   FE 5F                  CP   $5F   ; _ is the string terminator
+A0C7   28 06                  JR   Z,stringend   
+A0C9   CD 8D 80               CALL   putchar   
+A0CC                             ; 
+A0CC   18 F5                  JR   nextchar   
+A0CE                             ; 
+A0CE   E1                     POP   HL   
+A0CF                             ; 
+A0CF   C3 26 80     STRINGEND:   JP   NEXT   
+A0D2                             ; 
+A0D2                             ; 
+A0D2                MUL_:        
+A0D2   C3 26 80               JP   NEXT   
+A0D5                             ; 
+A0D5                DIV_:        
+A0D5   C3 26 80               JP   NEXT   
+A0D8                             ; 
+A0D8                LIT_:        
+A0D8   C3 26 80               JP   NEXT   
+A0DB                             ; 
+A0DB                MOD_:        
+A0DB   C3 26 80               JP   NEXT   
+A0DE                             ; 
+A0DE                NUM_:        
+A0DE   C3 26 80               JP   NEXT   
+A0E1                             ; 
+A0E1                LT_:         
+A0E1   C3 26 80               JP   NEXT   
+A0E4                             ; 
+A0E4                EQ_:         
+A0E4   C3 26 80               JP   NEXT   
+A0E7                             ; 
+A0E7                GT_:         
+A0E7   C3 26 80               JP   NEXT   
+A0EA                             ; 
+A0EA                QUERY:       
+A0EA   C3 26 80               JP   NEXT   
+A0ED                             ; 
+A0ED                OPEN:        
+A0ED   C3 26 80               JP   NEXT   
+A0F0                             ; 
+A0F0                CLOSE:       
+A0F0   C3 26 80               JP   NEXT   
+A0F3                             ; 
+A0F3                TICK:        
+A0F3   C3 26 80               JP   NEXT   
+A0F6                             ; 
+A0F6                SAVE:        
+A0F6   C3 26 80               JP   NEXT   
+A0F9                             ; 
+A0F9                LOAD:        
+A0F9   C3 26 80               JP   NEXT   
+A0FC                             ; 
+A0FC                DEL_:        
+A0FC   C3 26 80               JP   NEXT   
+A0FF                             ; 
+A0FF                             ; 
+A0FF                             ; 
+A0FF                             ; 
+A0FF                             ; 
+A0FF                             ; 
+
+
+TABSTART:           8240 DEFINED AT LINE 469
+                    > USED AT LINE 197
+                    > USED AT LINE 732
+TEXTBUF:            8100 DEFINED AT LINE 87
+                    > USED AT LINE 104
+                    > USED AT LINE 140
+STRINGBUF:          8800 DEFINED AT LINE 89
+USERTAB:            00A4 DEFINED AT LINE 91
+                    > USED AT LINE 209
+VARTAB:             00A8 DEFINED AT LINE 93
+                    > USED AT LINE 206
+INCHAR:             8000 DEFINED AT LINE 104
+WAITCHAR:           8003 DEFINED AT LINE 106
+                    > USED AT LINE 120
+ENDCHAR:            8019 DEFINED AT LINE 122
+                    > USED AT LINE 109
+                    > USED AT LINE 111
+                    > USED AT LINE 116
+NEXT:               8026 DEFINED AT LINE 142
+                    > USED AT LINE 219
+                    > USED AT LINE 224
+                    > USED AT LINE 588
+                    > USED AT LINE 596
+                    > USED AT LINE 606
+                    > USED AT LINE 612
+                    > USED AT LINE 619
+                    > USED AT LINE 623
+                    > USED AT LINE 636
+                    > USED AT LINE 648
+                    > USED AT LINE 660
+                    > USED AT LINE 666
+                    > USED AT LINE 680
+                    > USED AT LINE 691
+                    > USED AT LINE 703
+                    > USED AT LINE 711
+                    > USED AT LINE 750
+                    > USED AT LINE 754
+                    > USED AT LINE 763
+                    > USED AT LINE 778
+                    > USED AT LINE 782
+                    > USED AT LINE 799
+                    > USED AT LINE 803
+                    > USED AT LINE 806
+                    > USED AT LINE 809
+                    > USED AT LINE 812
+                    > USED AT LINE 815
+                    > USED AT LINE 818
+                    > USED AT LINE 821
+                    > USED AT LINE 824
+                    > USED AT LINE 827
+                    > USED AT LINE 830
+                    > USED AT LINE 833
+                    > USED AT LINE 836
+                    > USED AT LINE 839
+                    > USED AT LINE 842
+                    > USED AT LINE 845
+NUMBER1:            8037 DEFINED AT LINE 154
+                    > USED AT LINE 176
+TIMES10:            8041 DEFINED AT LINE 162
+ENDNUM:             804E DEFINED AT LINE 178
+                    > USED AT LINE 158
+                    > USED AT LINE 160
+DISPATCH:           804F DEFINED AT LINE 193
+                    > USED AT LINE 146
+                    > USED AT LINE 148
+USERDEF:            8063 DEFINED AT LINE 214
+                    > USED AT LINE 210
+USERVAR:            806A DEFINED AT LINE 221
+                    > USED AT LINE 207
+KACIA1:             0080 DEFINED AT LINE 245
+                    > USED AT LINE 301
+                    > USED AT LINE 302
+KACIA2:             0080 DEFINED AT LINE 246
+                    > USED AT LINE 304
+                    > USED AT LINE 305
+KACIA1CONT:         0080 DEFINED AT LINE 301
+                    > USED AT LINE 344
+                    > USED AT LINE 350
+                    > USED AT LINE 352
+                    > USED AT LINE 354
+                    > USED AT LINE 368
+                    > USED AT LINE 384
+KACIA1DATA:         0081 DEFINED AT LINE 302
+                    > USED AT LINE 371
+                    > USED AT LINE 389
+KACIA2CONT:         0080 DEFINED AT LINE 304
+KACIA2DATA:         0081 DEFINED AT LINE 305
+K6850RESET:         0000 DEFINED AT LINE 308
+                    > USED AT LINE 349
+K6850INIT:          0000 DEFINED AT LINE 309
+                    > USED AT LINE 351
+K6850RXRDY:         0000 DEFINED AT LINE 312
+K6850TXRDY:         0001 DEFINED AT LINE 313
+                    > USED AT LINE 386
+K6850MASK1:         0000 DEFINED AT LINE 323
+                    > USED AT LINE 345
+K6850TEST1:         0000 DEFINED AT LINE 324
+                    > USED AT LINE 346
+K6850MASK2:         0000 DEFINED AT LINE 332
+                    > USED AT LINE 355
+K6850TEST2:         0000 DEFINED AT LINE 333
+                    > USED AT LINE 356
+SERIAL_INIT:        806E DEFINED AT LINE 341
+GETCHAR:            8084 DEFINED AT LINE 367
+                    > USED AT LINE 106
+                    > USED AT LINE 370
+PUTCHAR:            808D DEFINED AT LINE 382
+                    > USED AT LINE 118
+                    > USED AT LINE 123
+                    > USED AT LINE 125
+                    > USED AT LINE 388
+                    > USED AT LINE 415
+                    > USED AT LINE 420
+                    > USED AT LINE 422
+                    > USED AT LINE 426
+                    > USED AT LINE 428
+                    > USED AT LINE 455
+                    > USED AT LINE 793
+PRINTDEC:           809B DEFINED AT LINE 393
+                    > USED AT LINE 708
+DISPHL:             809B DEFINED AT LINE 400
+NUM1:               80B4 DEFINED AT LINE 410
+                    > USED AT LINE 402
+                    > USED AT LINE 404
+                    > USED AT LINE 406
+                    > USED AT LINE 408
+NUM2:               80B6 DEFINED AT LINE 411
+                    > USED AT LINE 413
+CRLF:               80C0 DEFINED AT LINE 419
+                    > USED AT LINE 709
+OK:                 80CB DEFINED AT LINE 425
+                    > USED AT LINE 714
+PRINTHEX:           80D6 DEFINED AT LINE 432
+DISPHLHEX:          80D6 DEFINED AT LINE 435
+OUTHEX8:            80DB DEFINED AT LINE 440
+                    > USED AT LINE 438
+CONV:               80E4 DEFINED AT LINE 449
+                    > USED AT LINE 447
+LOWERTAB:           82C2 DEFINED AT LINE 542
+SPACE:              A000 DEFINED AT LINE 587
+                    > USED AT LINE 471
+FETCH:              A003 DEFINED AT LINE 590
+                    > USED AT LINE 504
+STORE:              A00B DEFINED AT LINE 600
+                    > USED AT LINE 472
+DUP_:               A013 DEFINED AT LINE 609
+                    > USED AT LINE 473
+SWAP:               A019 DEFINED AT LINE 615
+                    > USED AT LINE 475
+DROP:               A020 DEFINED AT LINE 621
+                    > USED AT LINE 478
+AND_:               A024 DEFINED AT LINE 627
+                    > USED AT LINE 477
+OR_:                A030 DEFINED AT LINE 639
+                    > USED AT LINE 574
+XOR_:               A03C DEFINED AT LINE 651
+                    > USED AT LINE 536
+ADD_:               A048 DEFINED AT LINE 662
+                    > USED AT LINE 482
+SUB_:               A04F DEFINED AT LINE 668
+                    > USED AT LINE 484
+INV_:               A05D DEFINED AT LINE 682
+                    > USED AT LINE 576
+NEG_:               A068 DEFINED AT LINE 693
+DOT_:               A074 DEFINED AT LINE 706
+                    > USED AT LINE 485
+QUIT:               A080 DEFINED AT LINE 713
+                    > USED AT LINE 483
+                    > USED AT LINE 534
+DEF_:               A084 DEFINED AT LINE 726
+                    > USED AT LINE 497
+NEXTBYTE:           A091 DEFINED AT LINE 741
+                    > USED AT LINE 747
+END_DEF:            A09B DEFINED AT LINE 749
+                    > USED AT LINE 744
+RET_:               A09F DEFINED AT LINE 752
+                    > USED AT LINE 498
+BEGIN_:             A0A3 DEFINED AT LINE 758
+                    > USED AT LINE 479
+END_:               A0A7 DEFINED AT LINE 766
+                    > USED AT LINE 480
+DECLOOP:            A0A8 DEFINED AT LINE 768
+                    > USED AT LINE 772
+                    > USED AT LINE 777
+HZERO:              A0B0 DEFINED AT LINE 774
+                    > USED AT LINE 771
+LZERO:              A0BA DEFINED AT LINE 780
+                    > USED AT LINE 776
+STR_:               A0BF DEFINED AT LINE 784
+                    > USED AT LINE 538
+NEXTCHAR:           A0C3 DEFINED AT LINE 788
+                    > USED AT LINE 795
+STRINGEND:          A0CF DEFINED AT LINE 799
+                    > USED AT LINE 792
+MUL_:               A0D2 DEFINED AT LINE 802
+                    > USED AT LINE 481
+DIV_:               A0D5 DEFINED AT LINE 805
+                    > USED AT LINE 486
+LIT_:               A0D8 DEFINED AT LINE 808
+                    > USED AT LINE 474
+MOD_:               A0DB DEFINED AT LINE 811
+                    > USED AT LINE 476
+NUM_:               A0DE DEFINED AT LINE 814
+                    > USED AT LINE 487
+                    > USED AT LINE 488
+                    > USED AT LINE 489
+                    > USED AT LINE 490
+                    > USED AT LINE 491
+                    > USED AT LINE 492
+                    > USED AT LINE 493
+                    > USED AT LINE 494
+                    > USED AT LINE 495
+                    > USED AT LINE 496
+LT_:                A0E1 DEFINED AT LINE 817
+                    > USED AT LINE 499
+EQ_:                A0E4 DEFINED AT LINE 820
+                    > USED AT LINE 500
+GT_:                A0E7 DEFINED AT LINE 823
+                    > USED AT LINE 501
+QUERY:              A0EA DEFINED AT LINE 826
+                    > USED AT LINE 502
+OPEN:               A0ED DEFINED AT LINE 829
+                    > USED AT LINE 533
+CLOSE:              A0F0 DEFINED AT LINE 832
+                    > USED AT LINE 535
+TICK:               A0F3 DEFINED AT LINE 835
+                    > USED AT LINE 539
+SAVE:               A0F6 DEFINED AT LINE 838
+                    > USED AT LINE 573
+LOAD:               A0F9 DEFINED AT LINE 841
+                    > USED AT LINE 575
+DEL_:               A0FC DEFINED AT LINE 844
+                    > USED AT LINE 577
