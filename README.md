@@ -1,7 +1,43 @@
 # MINT
 A minimal interpreter in Z80 assembly language for the RC2014 Micro.
 
-## Using Mint
+## Using MINT
+
+MINT was developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8000.
+
+MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. I use TeraTerm because I am working within a windows environment.
+
+Once the MINT code image is pasted into RAM you can run it using the Go command "G8000"
+
+On initialisation it will present a user prompt "OK" followed by a CR and LF. It is now ready to accept commands from the keyboard.  MINT currently uses decimal numbers for calculations - a maximum integer of 65535.
+
+MINT has about 30 built in commands called primitives. They are mostly allocated to arithmetical and punctuation symbols.
+
+There are 26 User Defined Commands that use uppercase alpha characters A-Z
+
+There are 26 User Variables that are assigned to lowercase alpha characters a-z
+
+MINT turns the Z80 into a 16-bit Virtual Machine with 30 instructions, 26 Macros and 26 Registers (variables). This relieves you from the tedium of Z80 assembly language, and presents the user with a very compact, human readable, interactive, extendable bytecode language.
+
+## Examples
+
+1234 5678 + .               ; ADD 1234 to 5678 and print the result
+
+1234 5678 - .               ; Subtract 1234 from 5678 and print the result
+
+1234 a!                     ; Store 1234 in the variable a
+
+5678 b!                     ; Store 5678 in the variable b
+
+b@ .                        ; print the value stored in b
+
+a@ b@ + .                   ; add the contents of a to b and print the sum
+
+a@ b!                       ; copy the contents of a into b
+
+
+
+## MINT - a Description
 
 
 MINT is a small Z80 assembly language program that provides a framework for a bytecode interpreter based on the printable ascii character set. The basic principles, once grasped could be applied to any other 8-bit micro, such as the 6502 or similar.
