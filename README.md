@@ -1,6 +1,8 @@
 # MINT
 A minimal interpreter in Z80 assembly language for the RC2014 Micro.
 
+## mint_1.2 is the latest upload.
+
 ## Using MINT
 
 MINT was developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8000.
@@ -16,6 +18,8 @@ MINT has about 30 built in commands called primitives. They are mostly allocated
 There are 26 User Defined Commands that use uppercase alpha characters A-Z
 
 There are 26 User Variables that are assigned to lowercase alpha characters a-z
+
+The variable i is assigned to the loop counter.
 
 MINT turns the Z80 into a 16-bit Virtual Machine with 30 instructions, 26 Macros and 26 Registers (variables). This relieves you from the tedium of Z80 assembly language, and presents the user with a very compact, human readable, interactive, extendable bytecode language.
 
@@ -35,7 +39,13 @@ a@ b@ + .                   ; add the contents of a to b and print the sum
 
 a@ b!                       ; copy the contents of a into b
 
+##Loops
 
+0(this code will not be executed but skipped)
+1(this code will be execute once)
+10(this code will execute 10 times)
+
+You can use the comparison operators < = and > to compare 2 values and conditionally execute the code between the brackets.
 
 ## MINT - a Description
 
@@ -78,7 +88,7 @@ A basic serial terminal interface is provided, communicating with the familiar g
 MINT provides a simple interactive interpreter based on printable ascii characters. This provides a greater level of human readability compared to assembly language. It is designed to use single ascii character commands - for example, when the interpreter recieves the "+" character, it will perform a 16-bit integer addition. There are approximately 30 such commands, mostly consisting of arithmetic and punctuation characters.
 
 
-mint_1.1 is the latest upload.  On the RC2014 Micro it loads at address $8000.
+mint_1.2 is the latest upload.  On the RC2014 Micro it loads at address $8000.
 
 Mint consists of 4 main sections:
 
