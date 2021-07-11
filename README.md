@@ -1,7 +1,7 @@
 # MINT
 A minimal interpreter in Z80 assembly language for the RC2014 Micro.
 
-## mint_1.2 is the latest upload.
+## mint_1.3 is the latest upload.
 
 ## Using MINT
 
