@@ -1,7 +1,7 @@
 # MINT
 A minimal interpreter in Z80 assembly language for the RC2014 Micro.
 
-## mint_1.3 is the latest upload.
+## mint1_5 is the latest upload.
 
 ## Using MINT
 
@@ -76,7 +76,7 @@ In the hex Dump example, you might choose to specify a starting address and the 
 
 Commands are executed only when the return key is pressed.
 
-****************************************************************************************************
+********************************************************************************************
 In my case I am using a Z80 based RC2014 "Micro", a single board computer that has a serial terminal interface based on the 68B50 ACIA. Credit should be given here to Grant Searle, Spencer Owen and Stephen C Cousins for making these retro systems available to the wider hobbyist community.
 
 
@@ -88,7 +88,7 @@ A basic serial terminal interface is provided, communicating with the familiar g
 MINT provides a simple interactive interpreter based on printable ascii characters. This provides a greater level of human readability compared to assembly language. It is designed to use single ascii character commands - for example, when the interpreter recieves the "+" character, it will perform a 16-bit integer addition. There are approximately 30 such commands, mostly consisting of arithmetic and punctuation characters.
 
 
-mint_1.2 is the latest upload.  On the RC2014 Micro it loads at address $8000.
+mint1_5 is the latest upload.  On the RC2014 Micro it loads at address $8000.
 
 Mint consists of 4 main sections:
 
@@ -218,7 +218,7 @@ _   STRING  _Everything between underscores is printed as a string_
 ,   Separate array members
 
 
-`   TICK
+`   TICK Execute the last conditional code
 
 
 
