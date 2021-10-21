@@ -140,26 +140,26 @@
 ;
 ; *****************************************************************************
 
-         textbuf   EQU  $8100   ; Input text buffer
-         
-         stringbuf EQU  $8800
-         
-         usertab   EQU  $A4     ; Upper byte of user table
-         
-         vartab    EQU  $A8     ; Upper byte of variables table
-         
-         loopstart EQU  $A760   ; Loop code storage area
-         
-         loopcount EQU  $A810   ; Hold the loopcounter in variable i
-         
-         
-         .ORG $8000
-		 LD  IY,NEXT			; IY provides a faster jump to NEXT
-         PUSH BC
-         CALL crlf
-         CALL ok                ; friendly prompt
-         CALL crlf              ; newline
-         POP  BC
+		textbuf   EQU  $8100   ; Input text buffer
+		
+		stringbuf EQU  $8800
+		
+		usertab   EQU  $A4     ; Upper byte of user table
+		
+		vartab    EQU  $A8     ; Upper byte of variables table
+		
+		loopstart EQU  $A760   ; Loop code storage area
+		
+		loopcount EQU  $A810   ; Hold the loopcounter in variable i
+		
+		
+		.ORG $8000
+		LD  IY,NEXT			; IY provides a faster jump to NEXT
+		PUSH BC
+		CALL crlf
+		CALL ok                ; friendly prompt
+		CALL crlf              ; newline
+		POP  BC
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
 ; and store it in the text buffer. Keep accepting characters,
@@ -551,113 +551,113 @@ Conv:
             
 tabstart:                       ; Vector/Jump Table
             
-             DEFW    space      ;
-             DEFW    store      ; !   
-             DEFW    dup_       ; "
-             DEFW    lit_       ; #
-			 DEFW    swap       ; $   
-             DEFW    mod_       ; %   
-             DEFW    and_       ; &
-             DEFW    drop       ; '
-			 DEFW    begin_     ; (  
-             DEFW    end_       ; )
-             DEFW    mul_       ; *   
-             DEFW    add_       ; +
-			 DEFW    quit       ; ,   
-             DEFW    sub_       ; -
-             DEFW    dot_       ; .
-             DEFW    div_       ; /
-             DEFW    num_       ; 0   
-             DEFW    num_       ; 1  
-             DEFW    num_       ; 2   
-             DEFW    num_       ; 3
-			 DEFW    num_       ; 4   
-             DEFW    num_       ; 5   
-             DEFW    num_       ; 6   
-             DEFW    num_       ; 7
-             DEFW    num_       ; 8   
-             DEFW    num_       ; 9  
-             DEFW    def_       ; :  
-             DEFW    ret_       ; ;
-			 DEFW    lt_        ; <
-             DEFW    eq_        ; =   
-             DEFW    gt_        ; >   
-             DEFW    query      ; ?
+			DEFW    space      ;
+			DEFW    store      ; !   
+			DEFW    dup_       ; "
+			DEFW    lit_       ; #
+			DEFW    swap       ; $   
+			DEFW    mod_       ; %   
+			DEFW    and_       ; &
+			DEFW    drop       ; '
+			DEFW    begin_     ; (  
+			DEFW    end_       ; )
+			DEFW    mul_       ; *   
+			DEFW    add_       ; +
+			DEFW    quit       ; ,   
+			DEFW    sub_       ; -
+			DEFW    dot_       ; .
+			DEFW    div_       ; /
+			DEFW    num_       ; 0   
+			DEFW    num_       ; 1  
+			DEFW    num_       ; 2   
+			DEFW    num_       ; 3
+			DEFW    num_       ; 4   
+			DEFW    num_       ; 5   
+			DEFW    num_       ; 6   
+			DEFW    num_       ; 7
+			DEFW    num_       ; 8   
+			DEFW    num_       ; 9  
+			DEFW    def_       ; :  
+			DEFW    ret_       ; ;
+			DEFW    lt_        ; <
+			DEFW    eq_        ; =   
+			DEFW    gt_        ; >   
+			DEFW    query      ; ?
 
-			 DEFW    fetch      ; @ 
-			 
-             DEFW    $A420      ; A 
-             DEFW    $A440      ; B
-             DEFW    $A460      ; C
-			 DEFW    $A480      ; D 
-             DEFW    $A4A0      ; E
-             DEFW    $A4C0      ; F
-             DEFW    $A4E0      ; G
-			 DEFW    $A500      ; H
-             DEFW    $A520      ; I
-             DEFW    $A540      ; J
-             DEFW    $A560      ; K
-			 DEFW    $A580      ; L
-             DEFW    $A5A0      ; M
-             DEFW    $A5C0      ; N
-             DEFW    $A5E0      ; O
-             DEFW    $A600      ; P
-             DEFW    $A620      ; Q
-             DEFW    $A640      ; R
-             DEFW    $A660      ; S
-			 DEFW    $A680      ; T
-             DEFW    $A6A0      ; U
-             DEFW    $A6C0      ; V
-             DEFW    $A6E0      ; W
-             DEFW    $A700      ; X
-             DEFW    $A720      ; Y
-             DEFW    $A740      ; Z
-             
-             DEFW    open       ; [
-			 DEFW    quit       ; \
-             DEFW    close      ; ]
-             DEFW    xor_       ; ^
+			DEFW    fetch      ; @ 
+			
+			DEFW    $A420      ; A 
+			DEFW    $A440      ; B
+			DEFW    $A460      ; C
+			DEFW    $A480      ; D 
+			DEFW    $A4A0      ; E
+			DEFW    $A4C0      ; F
+			DEFW    $A4E0      ; G
+			DEFW    $A500      ; H
+			DEFW    $A520      ; I
+			DEFW    $A540      ; J
+			DEFW    $A560      ; K
+			DEFW    $A580      ; L
+			DEFW    $A5A0      ; M
+			DEFW    $A5C0      ; N
+			DEFW    $A5E0      ; O
+			DEFW    $A600      ; P
+			DEFW    $A620      ; Q
+			DEFW    $A640      ; R
+			DEFW    $A660      ; S
+			DEFW    $A680      ; T
+			DEFW    $A6A0      ; U
+			DEFW    $A6C0      ; V
+			DEFW    $A6E0      ; W
+			DEFW    $A700      ; X
+			DEFW    $A720      ; Y
+			DEFW    $A740      ; Z
+			
+			DEFW    open       ; [
+			DEFW    quit       ; \
+			DEFW    close      ; ]
+			DEFW    xor_       ; ^
 ;             DEFW    neg_       ; _
-             DEFW    str_       ; _
-             DEFW    tick       ; `   
+			DEFW    str_       ; _
+			DEFW    tick       ; `   
 			 
 			 
 lowertab:			 
 
-             DEFW    $A800      ; a
-             DEFW    $A802      ; b
-             DEFW    $A804      ; c
-			 DEFW    $A806      ; d
-             DEFW    $A808      ; e
-             DEFW    $A80A      ; f
-             DEFW    $A80C      ; g
-			 DEFW    $A80E      ; h
-			 
-			 DEFW    $A810      ; i   
-             DEFW    $A812      ; j
-             DEFW    $A814      ; k
-			 DEFW    $A816      ; l
-             DEFW    $A818      ; m
-             DEFW    $A81A      ; n
-             DEFW    $A81C      ; o
-			 DEFW    $A81E      ; p
-			 
-			 DEFW    $A820      ; q   
-             DEFW    $A822      ; r
-             DEFW    $A824      ; s 
-			 DEFW    $A826      ; t
-             DEFW    $A828      ; u
-             DEFW    $A82A      ; v
-             DEFW    $A82C      ; x
-			 DEFW    $A82E      ; y
-			 
-             DEFW    $A830      ; z
-             
-             DEFW    save       ; {
-			 DEFW    or_        ; |   
-             DEFW    load       ; }   
-             DEFW    inv_       ; ~   
-             DEFW    del_       ; BS
+			DEFW    $A800      ; a
+			DEFW    $A802      ; b
+			DEFW    $A804      ; c
+			DEFW    $A806      ; d
+			DEFW    $A808      ; e
+			DEFW    $A80A      ; f
+			DEFW    $A80C      ; g
+			DEFW    $A80E      ; h
+			
+			DEFW    $A810      ; i   
+			DEFW    $A812      ; j
+			DEFW    $A814      ; k
+			DEFW    $A816      ; l
+			DEFW    $A818      ; m
+			DEFW    $A81A      ; n
+			DEFW    $A81C      ; o
+			DEFW    $A81E      ; p
+			
+			DEFW    $A820      ; q   
+			DEFW    $A822      ; r
+			DEFW    $A824      ; s 
+			DEFW    $A826      ; t
+			DEFW    $A828      ; u
+			DEFW    $A82A      ; v
+			DEFW    $A82C      ; x
+			DEFW    $A82E      ; y
+			
+			DEFW    $A830      ; z
+			
+			DEFW    save       ; {
+			DEFW    or_        ; |   
+			DEFW    load       ; }   
+			DEFW    inv_       ; ~   
+			DEFW    del_       ; BS
 			 
 ; **********************************************************************			 
              
@@ -665,7 +665,7 @@ lowertab:
 
 ; **********************************************************************
 
-             .ORG  $A000
+			.ORG  $A000
              
 space:       
             JP      (IY)
@@ -682,124 +682,124 @@ fetch:                          ; Fetch the value from the address placed on the
             
              
 store:                          ; Store the value at the address placed on the top of the stack
-             POP    HL          ; 10t
-             POP    DE          ; 10t
-             LD     (HL),E      ; 7t
-             INC    HL          ; 6t
-             LD     (HL),D      ; 7t
-             JP      (IY)       ; 8t
-             
-                                ; 48t
-             
-             
+			POP    HL          ; 10t
+			POP    DE          ; 10t
+			LD     (HL),E      ; 7t
+			INC    HL          ; 6t
+			LD     (HL),D      ; 7t
+			JP      (IY)       ; 8t
+			
+							; 48t
+			
+			
 dup_:        POP     HL         ; Duplicate the top member of the stack
-             PUSH    HL
-             PUSH    HL
-             JP      (IY)
-             
+			PUSH    HL
+			PUSH    HL
+			JP      (IY)
+			
 
 swap:        POP     HL         ; Swap the top 2 elements of the stack
-             POP     DE
-             PUSH    HL
-             PUSH    DE
-             JP      (IY)
-             
+			POP     DE
+			PUSH    HL
+			PUSH    DE
+			JP      (IY)
+			
 drop:                           ; Discard the top member of the stack
-             POP     HL
-             JP      (IY)
-             
-        
+			POP     HL
+			JP      (IY)
+			
+	
 
 and_:        POP     DE                      ; 10t Bitwise AND the top 2 elements of the stack
-		     POP     HL                      ; 10t
-		     LD      A,E                     ; 4t
-		     AND     L                       ; 4t
-		     LD      L,A                     ; 4t
-             LD      A,D                     ; 4t
-             AND     H                       ; 4t
-             LD      H,A                     ; 4t
-             PUSH    HL                      ; 11t
-             JP      (IY)                    ; 8t
-             
-                                             ; 63t
+		POP     HL                      ; 10t
+		LD      A,E                     ; 4t
+		AND     L                       ; 4t
+		LD      L,A                     ; 4t
+		LD      A,D                     ; 4t
+		AND     H                       ; 4t
+		LD      H,A                     ; 4t
+		PUSH    HL                      ; 11t
+		JP      (IY)                    ; 8t
 		
-		
+										; 63t
+
+
 or_: 		 POP     DE             ; Bitwise OR the top 2 elements of the stack
-		     POP     HL
-		     LD      A,E
-		     OR      L
-		     LD      L,A
-             LD      A,D
-             OR      H
-             LD      H,A
-             PUSH    HL
-             JP      (IY)
-		
-		
+		POP     HL
+		LD      A,E
+		OR      L
+		LD      L,A
+		LD      A,D
+		OR      H
+		LD      H,A
+		PUSH    HL
+		JP      (IY)
+
+
 xor_:		 POP     DE            ; Bitwise XOR the top 2 elements of the stack
-		     POP     HL
-		     LD      A,E
-		     XOR     L
-		     LD      L,A
-             LD      A,D
-             XOR     H
-             LD      H,A
-             PUSH    HL
-             JP      (IY)
-             
+		POP     HL
+		LD      A,E
+		XOR     L
+		LD      L,A
+		LD      A,D
+		XOR     H
+		LD      H,A
+		PUSH    HL
+		JP      (IY)
+		
 
 add_:                               ; Add the top 2 members of the stack
-             POP     DE             ; 10t
-             POP     HL             ; 10t
-             ADD     HL,DE          ; 11t
-             PUSH    HL             ; 11t
-             JP      (IY)           ; 8t
-                                    ; 50t
-             
+		POP     DE             ; 10t
+		POP     HL             ; 10t
+		ADD     HL,DE          ; 11t
+		PUSH    HL             ; 11t
+		JP      (IY)           ; 8t
+							; 50t
+		
 sub_:       						; Subtract the value 2nd on stack from top of stack 
-			 POP     HL             ; 10t
-			 POP     DE             ; 10t
-             OR      A              ;  4t  clear the carry
-			 SBC     HL,DE          ; 15t
-			 PUSH    HL             ; 11t
-			 JP      (IY)           ; 8t
-			                        ; 58t
+		POP     HL             ; 10t
+		POP     DE             ; 10t
+		OR      A              ;  4t  clear the carry
+		SBC     HL,DE          ; 15t
+		PUSH    HL             ; 11t
+		JP      (IY)           ; 8t
+							; 58t
 
 inv_:								; Bitwise INVert the top member of the stack
-			 POP     HL
-             LD A,   L
-			 CPL					; Invert L
-			 LD L,   A
-			 LD A,   H
-			 CPL					; Invert H
-			 LD H,   A
-			 PUSH    HL
-			 JP      (IY)
-			 
+		POP     HL
+		LD A,   L
+		CPL					; Invert L
+		LD L,   A
+		LD A,   H
+		CPL					; Invert H
+		LD H,   A
+		PUSH    HL
+		JP      (IY)
+			
 neg_:       						; NEGate the value on top of stack (2's complement)
-			 POP     HL
-             LD A,   L
-			 CPL					; Invert L
-			 LD L,   A
-			 LD A,   H
-			 CPL					; Invert H
-			 LD H,   A
-			 INC     HL             ; and add 1
-			 PUSH    HL
-			 JP      (IY)		             
-             
-             
+			POP     HL
+			LD A,   L
+			CPL					; Invert L
+			LD L,   A
+			LD A,   H
+			CPL					; Invert H
+			LD H,   A
+			INC     HL             ; and add 1
+			PUSH    HL
+			JP      (IY)		             
+			
+			
 dot_:        POP     HL
-             PUSH    BC         ; Preserve the Instruction Pointer !
-             CALL    printdec
-             CALL    crlf
-             POP     BC
-             JP      (IY)
-             
+			PUSH    BC         ; Preserve the Instruction Pointer !
+			CALL    printdec
+			CALL    crlf
+			POP     BC
+			JP      (IY)
+			
 quit:        
-             CALL    ok         ; Print OK and return to monitor
-             CALL    crlf
-             RET 
+			CALL    ok         ; Print OK and return to monitor
+			CALL    crlf
+			RET 
 ; **************************************************************************             
 ; def is used to create a colon definition
 ; When a colon is detected, the next character (usually uppercase alpha)
@@ -811,43 +811,43 @@ quit:
 ; ***************************************************************************
 
 def_:                           ; Create a colon definition
-            INC      BC
-            LD       A,(BC)     ; Get the next character
-            PUSH BC             ; Push the current IP
-                                ; Look up its CFA in vector table
-            ADD A,A             ; Double A to index even addresses
-            LD BC, msb(tabstart); Start address of jump table         
-            LD C,A              ; Index into table
-            LD A,(BC)           ; get low code field address
-            LD L,A              ; and put into L
-            INC BC              ; 
-            LD A,(BC)           ; Get high code field address
-            LD H,A              ; and put into H
-            POP BC              ; Get IP back
-            
+		INC      BC
+		LD       A,(BC)     ; Get the next character
+		PUSH BC             ; Push the current IP
+							; Look up its CFA in vector table
+		ADD A,A             ; Double A to index even addresses
+		LD BC, msb(tabstart); Start address of jump table         
+		LD C,A              ; Index into table
+		LD A,(BC)           ; get low code field address
+		LD L,A              ; and put into L
+		INC BC              ; 
+		LD A,(BC)           ; Get high code field address
+		LD H,A              ; and put into H
+		POP BC              ; Get IP back
+		
 nextbyte:   INC BC              ; Point to next character
-            LD A, (BC)          ; Get the next character
-            CP $3B              ; Is it a semicolon $3B
-            JR z, end_def       ; end the definition
-            LD (HL), A          ; store the character at the CFA
-            INC HL
-            JR  nextbyte        ; get the next element
-            
+		LD A, (BC)          ; Get the next character
+		CP $3B              ; Is it a semicolon $3B
+		JR z, end_def       ; end the definition
+		LD (HL), A          ; store the character at the CFA
+		INC HL
+		JR  nextbyte        ; get the next element
+		
 end_def:    LD (HL), A          ; Store the semicolon at end of definition
-            INC HL
-            LD A, $0D
-           
-            LD (HL), A          ; and a final Newline
-            
-            PUSH BC
+		INC HL
+		LD A, $0D
+		
+		LD (HL), A          ; and a final Newline
+		
+		PUSH BC
 
-            JP       (IY)             
+		JP       (IY)             
 
 
-		            
+				
 ret_:
-            POP    BC          ; Restore Instruction pointer
-            JP     (IY)             
+		POP    BC          ; Restore Instruction pointer
+		JP     (IY)             
 
 ; ***********************************************************************************
 ; Loop Handling Code
@@ -860,27 +860,27 @@ ret_:
 
 begin_:                         ; Left parentesis begins a loop
 
-            POP  HL             ; Get the loopcounter off the stack
-            LD  (loopcount), HL ; Store the Loop counter in variable i
-            LD  DE,loopstart    ; Loop code is then copied to buffer at loopstart 
+		POP  HL             ; Get the loopcounter off the stack
+		LD  (loopcount), HL ; Store the Loop counter in variable i
+		LD  DE,loopstart    ; Loop code is then copied to buffer at loopstart 
 
 loopbyte:   INC BC              ; Point to next character after the (
-            LD A, (BC)          ; Get the next character
-            CP $29              ; Is it a right bracket $29
-            JR z, end_loop      ; end the code copy
-            LD (DE), A          ; store the character at the loop buffer
-            INC DE
-            JR  loopbyte        ; get the next element
- 
+		LD A, (BC)          ; Get the next character
+		CP $29              ; Is it a right bracket $29
+		JR z, end_loop      ; end the code copy
+		LD (DE), A          ; store the character at the loop buffer
+		INC DE
+		JR  loopbyte        ; get the next element
+
 end_loop:   LD (DE), A          ; Store the closing bracket at the end of the loop           semicolon at end of definition
-            LD A, $0D
-            INC DE
-            LD (DE), A          ; and a final Newline
-            
-            DEC  BC             ; IP now points to the loop terminator )
-            
-            JP   (IY)           ; Execute the closing  )
-            
+		LD A, $0D
+		INC DE
+		LD (DE), A          ; and a final Newline
+		
+		DEC  BC             ; IP now points to the loop terminator )
+		
+		JP   (IY)           ; Execute the closing  )
+		
 ;*************************************************************************            
 ; This code executes the loop
 ; The loopcount is retrieved from RAM and loaded into HL
@@ -891,47 +891,47 @@ end_loop:   LD (DE), A          ; Store the closing bracket at the end of the lo
 ; including the closing ) which causes this routine to repeat until HL is zero
 ; ************************************************************************
 end_:    
-            LD HL, (loopcount)    ; get the loop count
-            
+		LD HL, (loopcount)    ; get the loop count
+		
 loopagain:  LD  BC, loopstart -1  ; Point the IP to loopstart
 
-            LD DE,     $0000  
-            OR       A            ; reset the carry flag
-            SBC      HL,DE        ; test if HL = 0
-            JR      Z, finish     ; end the loop
+		LD DE,     $0000  
+		OR       A            ; reset the carry flag
+		SBC      HL,DE        ; test if HL = 0
+		JR      Z, finish     ; end the loop
 
- 
-            DEC     HL            ; While HL > zero
-            LD  (loopcount), HL   ; preserve the loop count
-            JP      (IY)          ; execute the next instruction
-             
+
+		DEC     HL            ; While HL > zero
+		LD  (loopcount), HL   ; preserve the loop count
+		JP      (IY)          ; execute the next instruction
+			
 finish:     JP     $8000          ; back to OK prompt
 
 
 
 
 tick:                               ; execute a loop
-            LD    BC, loopstart - 1
-            JP   (IY) 
-            
+		LD    BC, loopstart - 1
+		JP   (IY) 
+		
 ; **************************************************************************             
 ; Print the string between underscores
 str_:       ;PUSH BC           ; save the IP                    
-            INC BC
-            
+		INC BC
+		
 nextchar:            
-            LD A, (BC)
-            INC BC
-            CP $5F              ; _ is the string terminator
-            JR Z,stringend
-            CALL putchar
-        
-            JR   nextchar
-            
-           
-            
+		LD A, (BC)
+		INC BC
+		CP $5F              ; _ is the string terminator
+		JR Z,stringend
+		CALL putchar
+	
+		JR   nextchar
+		
+		
+		
 stringend:  CALL crlf
-            JP   (IY)                        
+		JP   (IY)                        
 
 ; ********************************************************           
 ; More Arithmetic Operations   MUL, DIV and MOD
@@ -939,182 +939,182 @@ stringend:  CALL crlf
 
 mul_:                           ; 16-bit multiply  
 
-            POP  DE             ; get first value
-            POP  HL
-            PUSH BC             ; Preserve the IP
-            LD B,H              ; BC = 2nd value
-            LD C,L
-            
-            LD HL,0
-            LD A,16
+		POP  DE             ; get first value
+		POP  HL
+		PUSH BC             ; Preserve the IP
+		LD B,H              ; BC = 2nd value
+		LD C,L
+		
+		LD HL,0
+		LD A,16
 Mul_Loop_1:
-            ADD HL,HL
-            RL E
-            RL D
-            JR NC,$+6
-            ADD HL,BC
-            JR NC,$+3
-            INC DE
-            DEC A
-            JR NZ,Mul_Loop_1
-            
-            POP  BC
-       
-            PUSH DE
-            PUSH HL
+		ADD HL,HL
+		RL E
+		RL D
+		JR NC,$+6
+		ADD HL,BC
+		JR NC,$+3
+		INC DE
+		DEC A
+		JR NZ,Mul_Loop_1
+		
+		POP  BC
+	
+		PUSH DE
+		PUSH HL
 
 
-            JP       (IY)
-            
+		JP       (IY)
+		
 ; *********************************************************************            
 ; This divides DE by BC, storing the result in DE, remainder in HL
 ; *********************************************************************
 div_:  
 
-            POP  DE             ; get first value
-            POP  HL             ; get 2nd value
-            PUSH BC             ; Preserve the IP
-            LD B,H              ; BC = 2nd value
-            LD C,L
-                                  
-                            ;1281-2x, x is at most 16
-            ld a,16         ;7
-            ld hl,0         ;10
-            jp $+5          ;10  
-        
+		POP  DE             ; get first value
+		POP  HL             ; get 2nd value
+		PUSH BC             ; Preserve the IP
+		LD B,H              ; BC = 2nd value
+		LD C,L
+								
+						;1281-2x, x is at most 16
+		ld a,16         ;7
+		ld hl,0         ;10
+		jp $+5          ;10  
+	
 DivLoop:
 
-            add hl,bc       ;--
-            dec a           ;64
-            JR Z, div_end   ;86
+		add hl,bc       ;--
+		dec a           ;64
+		JR Z, div_end   ;86
 
-            sla e           ;128
-            rl d            ;128
-            adc hl,hl       ;240
-            sbc hl,bc       ;240
-            jr nc,DivLoop   ;23|21
-            inc e           ;--
-            jp DivLoop+1
+		sla e           ;128
+		rl d            ;128
+		adc hl,hl       ;240
+		sbc hl,bc       ;240
+		jr nc,DivLoop   ;23|21
+		inc e           ;--
+		jp DivLoop+1
 
 div_end:    
-            POP  BC         ; Restore the IP
-       
-            PUSH DE         ; Push Result
-            PUSH HL         ; Push remainder             
+		POP  BC         ; Restore the IP
+	
+		PUSH DE         ; Push Result
+		PUSH HL         ; Push remainder             
 
-            JP       (IY) 
-            
+		JP       (IY) 
+		
 ; ***************************************************************
 ; MOD is a 16 / 8 Division
 ; ***************************************************************
 
 mod_:        
-            POP  DE            ; get first value TOS
-            POP  HL            ; get 2nd value   NOS
-            PUSH BC            ; Preserve the IP
-            LD B,16            ; C = 1st  value
-            LD D,E
-            
-            
-            ld b,16
-            xor a
-            
+		POP  DE            ; get first value TOS
+		POP  HL            ; get 2nd value   NOS
+		PUSH BC            ; Preserve the IP
+		LD B,16            ; C = 1st  value
+		LD D,E
+		
+		
+		ld b,16
+		xor a
+		
 Div8_loop:            
-            add hl,hl
-            rla
-            cp d
-            jr c,Div8_next
-            inc l
-            sub d
+		add hl,hl
+		rla
+		cp d
+		jr c,Div8_next
+		inc l
+		sub d
 Div8_next:            
-            
-            djnz Div8_loop
-            
-            
-            POP  BC         ; Restore the IP
-            
-            LD   D, 0
-            LD   E, A
-       
-            PUSH DE         ; Push Remainder 
-            PUSH HL         ; Push Quotient      
-            
-            
-            
-            JP       (IY)  
-       
-             
+		
+		djnz Div8_loop
+		
+		
+		POP  BC         ; Restore the IP
+		
+		LD   D, 0
+		LD   E, A
+	
+		PUSH DE         ; Push Remainder 
+		PUSH HL         ; Push Quotient      
+		
+		
+		
+		JP       (IY)  
+	
+			
 lit_:       
-             JP       (IY)             
-            
-           
+			JP       (IY)             
+		
+		
 
 num_:
-             JP       (IY)
-             
+			JP       (IY)
+			
 ; **************************************************************************
 ;  Comparison Operations
 ;  Put 1 on stack if condition is true and 0 if it is false
 ; **************************************************************************
 
 lt_:         POP      DE
-             POP      HL
-             OR       A         ; reset the carry flag
-             SBC      HL,DE
-             JP      M, setone
-             LD      HL,0
-             JR      setzero
-                   
+			POP      HL
+			OR       A         ; reset the carry flag
+			SBC      HL,DE
+			JP      M, setone
+			LD      HL,0
+			JR      setzero
+				
 
 eq_:
-             POP      HL
-             POP      DE
-             OR       A         ; reset the carry flag
-             SBC      HL,DE
-             JR      Z, setone
-             LD      HL,0
-             JR      setzero
-          
+			POP      HL
+			POP      DE
+			OR       A         ; reset the carry flag
+			SBC      HL,DE
+			JR      Z, setone
+			LD      HL,0
+			JR      setzero
+		
 
 gt_:            
-             POP      HL
-             POP      DE
-             OR       A         ; reset the carry flag
-             SBC      HL,DE
-             JP      M, setone
-             LD      HL,0
-             JR      setzero
-             
-             
+			POP      HL
+			POP      DE
+			OR       A         ; reset the carry flag
+			SBC      HL,DE
+			JP      M, setone
+			LD      HL,0
+			JR      setzero
+			
+			
 setone:      LD      HL,1             
-             
+			
 setzero:     PUSH     HL
-             JP       (IY)            
-            
-            
+			JP       (IY)            
+		
+		
 query:
-             JP       (IY) 
-            
+			JP       (IY) 
+		
 open:      
-             JP       (IY)
+			JP       (IY)
 
 close:      
-             JP       (IY)
-            
+			JP       (IY)
+		
 
-            
+		
 save:       
-             JP       (IY)
-            
+			JP       (IY)
+		
 load:      
-             JP       (IY)
-            
+			JP       (IY)
+		
 del_:      
-             JP       (IY) 
-             
-             
-             
-             
+			JP       (IY) 
+			
+			
+			
+			
 
 
-            
+		
