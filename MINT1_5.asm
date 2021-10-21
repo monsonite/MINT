@@ -140,8 +140,6 @@
 ;
 ; *****************************************************************************
 
-         tabstart  EQU  $8200   ; Base Address of Vector table
-         
          textbuf   EQU  $8100   ; Input text buffer
          
          stringbuf EQU  $8800
@@ -551,7 +549,7 @@ Conv:
 
             .ORG $8240
             
-                                ; Vector/Jump Table
+tabstart:                       ; Vector/Jump Table
             
              DEFW    space      ;
              DEFW    store      ; !   
@@ -818,7 +816,7 @@ def_:                           ; Create a colon definition
             PUSH BC             ; Push the current IP
                                 ; Look up its CFA in vector table
             ADD A,A             ; Double A to index even addresses
-            LD BC, tabstart     ; Start address of jump table         
+            LD BC, msb(tabstart); Start address of jump table         
             LD C,A              ; Index into table
             LD A,(BC)           ; get low code field address
             LD L,A              ; and put into L
