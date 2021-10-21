@@ -1,0 +1,7 @@
+.engine mycomputer
+
+TESTMODE equ 0
+
+jp $8000
+         
+.include "mint1_5.asm"

@@ -1,8 +1,9 @@
 ; *************************************************************************
 ;
-;        MINT_1.3 Micro-Interpreter for the Z80 based on SIMPL
+;        MINT_1.5 Micro-Interpreter for the Z80 based on SIMPL
 ;
-;        Ken Boak July 2021
+;        Ken Boak October 19th 2021  
+;        Length  881 bytes
 ;
 ;        Includes serial routines getchar and putchar
 ;        printstring
@@ -16,21 +17,31 @@
 ;        DE is a working register and 2nd on stack NOS
 ;        HL is a working register and Top of stack TOS
 ;        SP is data stack pointer
+;        IY is used as a jump back to NEXT
 ;
 ;        MINT consists of 4 major sections:
 ;
-;        1.  An interpreter kernel and serial interface routines
+;        1.  An interpreter kernel and serial interface routines   250 bytes
 ;
-;        2.  A vector table to dispatch the 96 possible opcodes
+;        2.  A vector table to dispatch the 96 possible opcodes    192 bytes
 ;
-;        3.  A text buffer area to hold keyboard input and User routines
+;        3.  An area containing the Primitive function code fields: up to 582 bytes
 ;
-;        4.  An area containing the Primitive function code fields
+;        4.  A text buffer area to hold keyboard input and User routines  up to 1K bytes
+;
+;        The first 3 can be placed in a 1K ROM or RAM, the last item requires at least 1K RAM
+;        
+;        For simplicity on a modern system, everything is placed in RAM.
 ;
 ;
-;        New in this version 1.2:  Loops and string printing
-
-
+;
+;        New in this version 1.5:
+;
+;        JP NEXT replaced with JP (IY) saves 2 ticks and 36 bytes  
+;
+;		 Improved math operations
+;
+;
 ;        User defined commands and variables
 ;
 ;        User Commands  A-Z
@@ -47,7 +58,8 @@
 ;        %     MOD
 ;        _     NEG
 ;
-;        Comparison
+;        Comparison - compare the top two elements on the stack
+;        Puts 1 on the stack if condition is true, 0 if false
 ;
 ;        <     LT
 ;        =     EQ
@@ -91,7 +103,11 @@
 ;
 ;        1(execute this code only once)
 ;
+;       a@ b@ = (_print this if a=b_)
+;
 ;       1000(i@.)    Print out the value of i from 999 to 0
+;
+;       10(a@ 1+ a! a@ .)  Increment a 10 times and print it out
 ;
 ;       User Commands are allocated to uppercase alpha characters A to Z
 ;
@@ -124,7 +140,7 @@
 ;
 ; *****************************************************************************
 
-        ;  tabstart  EQU  $82     ; High Address of Vector table
+         tabstart  EQU  $8200   ; Base Address of Vector table
          
          textbuf   EQU  $8100   ; Input text buffer
          
@@ -138,7 +154,9 @@
          
          loopcount EQU  $A810   ; Hold the loopcounter in variable i
          
+         
          .ORG $8000
+		 LD  IY,NEXT			; IY provides a faster jump to NEXT
          PUSH BC
          CALL crlf
          CALL ok                ; friendly prompt
@@ -230,6 +248,22 @@ endnum:
 		 
 ; ********************************************************************************
 ; Dispatch Routine.
+;
+; At this stage, numbers have already been processed and placed on the stack
+;
+; Look up the jump address associated with each character
+;
+; The dispatch routine must provide a 3-way handling of remaining characters
+;
+; 1. Detect characters A-Z where their table address will begin $A4xx
+; and handle it as a user command
+;
+; 2. Detect characters a-z where their table address will begin $A8xx
+; and handle it as a user variable
+;
+; 3. All other characters are punctuation and cause a jump to the associated
+; primitive code.
+;
 ; The Instruction Pointer IP BC is pushed to preserve its contents.
 ; The current character from the text buffer is temporarily held in A.
 ; It is doubled so that it forms an even number and will point to even address.
@@ -244,7 +278,7 @@ dispatch:                       ; The character at IP is not a number
 
          PUSH BC                ; 11t   Push the current IP
          ADD A,A                ; 4t    Double A to index even addresses
-         LD B, $82              ; 7t    Start address of jump table         
+         LD BC, tabstart        ; 7t    Start address of jump table         
          LD C,A                 ; 4t    Index into table
          LD A,(BC)              ; 7t    get low jump address
          LD L,A                 ; 4t    and put into L
@@ -252,6 +286,8 @@ dispatch:                       ; The character at IP is not a number
          LD A,(BC)              ; 7t    Get high jump address
          LD H,A                 ; 4t    and put into H
          POP BC                 ; 10t   Get IP back
+         
+; Now check if the address relates to a user variable or definition        
          
          CP  vartab             ; Is H >= to user variable table start
          JR  NC, uservar
@@ -266,11 +302,11 @@ userdef:                        ; The character is a User Definition A-Z
          LD B,H                 ; Instruction Pointer loaded with user address
          LD C,L
          DEC BC
-         JP  NEXT               ; Execute code from User def
+         JP  (IY)               ; Execute code from User def
          
 uservar:                        ; The character is a user variable a-z          
          PUSH HL                ; push variable address on the stack
-         JP   NEXT                     
+         JP   (IY)                     
                                 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
@@ -511,11 +547,11 @@ Conv:
 ; ****************************************************************
             .ORG $821A
             
-             DEFW    $8000      ; Newline returns to inchar routine
+             DEFW    $8000      ; Newline $0D returns to inchar routine
 
             .ORG $8240
             
-tabstart:                       ; Jump Table
+                                ; Vector/Jump Table
             
              DEFW    space      ;
              DEFW    store      ; !   
@@ -634,42 +670,45 @@ lowertab:
              .ORG  $A000
              
 space:       
-            JP      NEXT
+            JP      (IY)
              
 fetch:                          ; Fetch the value from the address placed on the top of the stack      
-            POP     HL
-            LD      E,(HL)
-            INC     HL
-            LD      D,(HL)
-            PUSH    DE
-            JP      NEXT             
-
+            POP     HL          ; 10t
+            LD      E,(HL)      ; 7t
+            INC     HL          ; 6t
+            LD      D,(HL)      ; 7t
+            PUSH    DE          ; 11t
+            JP      (IY)        ; 8t
+            
+                                ; 49t 
             
              
 store:                          ; Store the value at the address placed on the top of the stack
-             POP    HL
-             POP    DE
-             LD     (HL),E
-             INC    HL
-             LD     (HL),D
-             JP      NEXT
+             POP    HL          ; 10t
+             POP    DE          ; 10t
+             LD     (HL),E      ; 7t
+             INC    HL          ; 6t
+             LD     (HL),D      ; 7t
+             JP      (IY)       ; 8t
+             
+                                ; 48t
              
              
 dup_:        POP     HL         ; Duplicate the top member of the stack
              PUSH    HL
              PUSH    HL
-             JP      NEXT
+             JP      (IY)
              
 
 swap:        POP     HL         ; Swap the top 2 elements of the stack
              POP     DE
              PUSH    HL
              PUSH    DE
-             JP      NEXT
+             JP      (IY)
              
 drop:                           ; Discard the top member of the stack
              POP     HL
-             JP      NEXT
+             JP      (IY)
              
         
 
@@ -682,7 +721,9 @@ and_:        POP     DE                      ; 10t Bitwise AND the top 2 element
              AND     H                       ; 4t
              LD      H,A                     ; 4t
              PUSH    HL                      ; 11t
-             JP      NEXT                    ; 10t
+             JP      (IY)                    ; 8t
+             
+                                             ; 63t
 		
 		
 or_: 		 POP     DE             ; Bitwise OR the top 2 elements of the stack
@@ -694,7 +735,7 @@ or_: 		 POP     DE             ; Bitwise OR the top 2 elements of the stack
              OR      H
              LD      H,A
              PUSH    HL
-             JP      NEXT
+             JP      (IY)
 		
 		
 xor_:		 POP     DE            ; Bitwise XOR the top 2 elements of the stack
@@ -706,27 +747,25 @@ xor_:		 POP     DE            ; Bitwise XOR the top 2 elements of the stack
              XOR     H
              LD      H,A
              PUSH    HL
-             JP      NEXT
+             JP      (IY)
              
-add_:        POP     DE             ; Add the top 2 members of the stack
-             POP     HL
-             ADD     HL,DE
-             PUSH    HL
-             JP      NEXT
+
+add_:                               ; Add the top 2 members of the stack
+             POP     DE             ; 10t
+             POP     HL             ; 10t
+             ADD     HL,DE          ; 11t
+             PUSH    HL             ; 11t
+             JP      (IY)           ; 8t
+                                    ; 50t
              
 sub_:       						; Subtract the value 2nd on stack from top of stack 
-			 POP     HL
-			 POP     DE
-             LD A,   E
-			 CPL					; Invert E
-			 LD E,   A
-			 LD A,   D
-			 CPL					; Invert D
-			 LD D,   A
-			 INC     DE			    ; Add 1 to DE
-			 ADD     HL,DE
-			 PUSH    HL
-			 JP      NEXT
+			 POP     HL             ; 10t
+			 POP     DE             ; 10t
+             OR      A              ;  4t  clear the carry
+			 SBC     HL,DE          ; 15t
+			 PUSH    HL             ; 11t
+			 JP      (IY)           ; 8t
+			                        ; 58t
 
 inv_:								; Bitwise INVert the top member of the stack
 			 POP     HL
@@ -737,7 +776,7 @@ inv_:								; Bitwise INVert the top member of the stack
 			 CPL					; Invert H
 			 LD H,   A
 			 PUSH    HL
-			 JP      NEXT
+			 JP      (IY)
 			 
 neg_:       						; NEGate the value on top of stack (2's complement)
 			 POP     HL
@@ -747,9 +786,9 @@ neg_:       						; NEGate the value on top of stack (2's complement)
 			 LD A,   H
 			 CPL					; Invert H
 			 LD H,   A
-			 INC     HL
+			 INC     HL             ; and add 1
 			 PUSH    HL
-			 JP      NEXT		             
+			 JP      (IY)		             
              
              
 dot_:        POP     HL
@@ -757,7 +796,7 @@ dot_:        POP     HL
              CALL    printdec
              CALL    crlf
              POP     BC
-             JP      NEXT
+             JP      (IY)
              
 quit:        
              CALL    ok         ; Print OK and return to monitor
@@ -779,7 +818,7 @@ def_:                           ; Create a colon definition
             PUSH BC             ; Push the current IP
                                 ; Look up its CFA in vector table
             ADD A,A             ; Double A to index even addresses
-            LD B, msb(tabstart) ; Start address of jump table         
+            LD BC, tabstart     ; Start address of jump table         
             LD C,A              ; Index into table
             LD A,(BC)           ; get low code field address
             LD L,A              ; and put into L
@@ -797,13 +836,20 @@ nextbyte:   INC BC              ; Point to next character
             JR  nextbyte        ; get the next element
             
 end_def:    LD (HL), A          ; Store the semicolon at end of definition
-            JP       NEXT             
+            INC HL
+            LD A, $0D
+           
+            LD (HL), A          ; and a final Newline
+            
+            PUSH BC
+
+            JP       (IY)             
 
 
 		            
 ret_:
             POP    BC          ; Restore Instruction pointer
-            JP     NEXT             
+            JP     (IY)             
 
 ; ***********************************************************************************
 ; Loop Handling Code
@@ -835,7 +881,7 @@ end_loop:   LD (DE), A          ; Store the closing bracket at the end of the lo
             
             DEC  BC             ; IP now points to the loop terminator )
             
-            JP   NEXT           ; Execute the closing  )
+            JP   (IY)           ; Execute the closing  )
             
 ;*************************************************************************            
 ; This code executes the loop
@@ -859,7 +905,7 @@ loopagain:  LD  BC, loopstart -1  ; Point the IP to loopstart
  
             DEC     HL            ; While HL > zero
             LD  (loopcount), HL   ; preserve the loop count
-            JP      NEXT          ; execute the next instruction
+            JP      (IY)          ; execute the next instruction
              
 finish:     JP     $8000          ; back to OK prompt
 
@@ -868,11 +914,11 @@ finish:     JP     $8000          ; back to OK prompt
 
 tick:                               ; execute a loop
             LD    BC, loopstart - 1
-            JP   NEXT 
+            JP   (IY) 
             
 ; **************************************************************************             
 ; Print the string between underscores
-str_:                           
+str_:       ;PUSH BC           ; save the IP                    
             INC BC
             
 nextchar:            
@@ -884,10 +930,10 @@ nextchar:
         
             JR   nextchar
             
-            CALL crlf
+           
             
-stringend:  INC BC         ; Restore the IP
-            JP   NEXT                        
+stringend:  CALL crlf
+            JP   (IY)                        
 
 ; ********************************************************           
 ; More Arithmetic Operations   MUL, DIV and MOD
@@ -920,7 +966,7 @@ Mul_Loop_1:
             PUSH HL
 
 
-            JP       NEXT
+            JP       (IY)
             
 ; *********************************************************************            
 ; This divides DE by BC, storing the result in DE, remainder in HL
@@ -958,7 +1004,7 @@ div_end:
             PUSH DE         ; Push Result
             PUSH HL         ; Push remainder             
 
-            JP       NEXT 
+            JP       (IY) 
             
 ; ***************************************************************
 ; MOD is a 16 / 8 Division
@@ -967,20 +1013,24 @@ div_end:
 mod_:        
             POP  DE            ; get first value TOS
             POP  HL            ; get 2nd value   NOS
-            PUSH BC             ; Preserve the IP
-            LD B,16             ; C = 1st  value
-            LD C,E
+            PUSH BC            ; Preserve the IP
+            LD B,16            ; C = 1st  value
+            LD D,E
             
             
             ld b,16
             xor a
+            
+Div8_loop:            
             add hl,hl
             rla
-            cp c
-            jr c,$+4
+            cp d
+            jr c,Div8_next
             inc l
-            sub c
-            djnz $-7
+            sub d
+Div8_next:            
+            
+            djnz Div8_loop
             
             
             POP  BC         ; Restore the IP
@@ -993,16 +1043,16 @@ mod_:
             
             
             
-            JP       NEXT  
+            JP       (IY)  
        
              
 lit_:       
-             JP       NEXT             
+             JP       (IY)             
             
            
 
 num_:
-             JP       NEXT
+             JP       (IY)
              
 ; **************************************************************************
 ;  Comparison Operations
@@ -1041,28 +1091,28 @@ gt_:
 setone:      LD      HL,1             
              
 setzero:     PUSH     HL
-             JP       NEXT            
+             JP       (IY)            
             
             
 query:
-             JP       NEXT 
+             JP       (IY) 
             
 open:      
-             JP       NEXT
+             JP       (IY)
 
 close:      
-             JP       NEXT
+             JP       (IY)
             
 
             
 save:       
-             JP       NEXT
+             JP       (IY)
             
 load:      
-             JP       NEXT
+             JP       (IY)
             
 del_:      
-             JP       NEXT 
+             JP       (IY) 
              
              
              
