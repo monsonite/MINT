@@ -140,35 +140,192 @@
 ;
 ; *****************************************************************************
 
-         tabstart  EQU  $8200   ; Base Address of Vector table
-         
-         textbuf   EQU  $8100   ; Input text buffer
-         
-         stringbuf EQU  $8800
-         
-         usertab   EQU  $A4     ; Upper byte of user table
-         
-         vartab    EQU  $A8     ; Upper byte of variables table
-         
-         loopstart EQU  $A760   ; Loop code storage area
-         
-         loopcount EQU  $A810   ; Hold the loopcounter in variable i
-         
-         
-         .ORG $8000
-		 LD  IY,NEXT			; IY provides a faster jump to NEXT
-         PUSH BC
-         CALL crlf
-         CALL ok                ; friendly prompt
-         CALL crlf              ; newline
-         POP  BC
+            ROMSIZE     EQU $800
+            DSIZE       EQU $100
+            RSIZE       EQU $100
+            VTSIZE      EQU $100
+
+            textbuf   EQU  $8100   ; Input text buffer
+            
+            stringbuf EQU  $8800
+            
+            usertab   EQU  $A4     ; Upper byte of user table
+            
+            vartab    EQU  $A8     ; Upper byte of variables table
+            
+            loopstart EQU  $A760   ; Loop code storage area
+            
+            loopcount EQU  $A810   ; Hold the loopcounter in variable i
+
+            .ORG 0
+ROMSTART:            
+            .ORG $100
+            
+itable:            
+            DW      0           ; NUL
+            DW      0           ; SOH
+            DW      0           ; STX
+            DW      0           ; ETX
+            DW      0           ; EOT
+            DW      0           ; ENQ
+            DW      0           ; ACK
+            DW      0           ; BEL
+            DW      0           ; BS
+            DW      0           ; TAB
+            DW      0           ; LF
+            DW      0           ; VT
+            DW      0           ; FF
+            DW      inchar      ; CR
+            DW      0           ; SO
+            DW      0           ; SI
+            DW      0           ; DLE
+            DW      0           ; DC1
+            DW      0           ; DC2
+            DW      0           ; DC3
+            DW      0           ; DC4
+            DW      0           ; NAK
+            DW      0           ; SYN
+            DW      0           ; ETB
+            DW      0           ; CAN
+            DW      0           ; EM
+            DW      0           ; SUB
+            DW      0           ; ESC
+            DW      0           ; FS
+            DW      0           ; GS
+            DW      0           ; RS
+            DW      0           ; US
+            DW      space       ; SP
+            DW      store       ; !   
+            DW      dup_        ; "
+            DW      lit_        ; #
+            DW      swap        ; $   
+            DW      mod_        ; %   
+            DW      and_        ; &
+            DW      drop        ; '
+            DW      begin_      ; (  
+            DW      end_        ; )
+            DW      mul_        ; *   
+            DW      add_        ; +
+            DW      quit        ; ,   
+            DW      sub_        ; -
+            DW      dot_        ; .
+            DW      div_        ; /
+            DW      num_        ; 0   
+            DW      num_        ; 1  
+            DW      num_        ; 2   
+            DW      num_        ; 3
+            DW      num_        ; 4   
+            DW      num_        ; 5   
+            DW      num_        ; 6   
+            DW      num_        ; 7
+            DW      num_        ; 8   
+            DW      num_        ; 9  
+            DW      def_        ; :  
+            DW      ret_        ; ;
+            DW      lt_         ; <
+            DW      eq_         ; =   
+            DW      gt_         ; >   
+            DW      query       ; ?
+            DW      fetch       ; @ 
+            DW      $A420       ; A 
+            DW      $A440       ; B
+            DW      $A460       ; C
+            DW      $A480       ; D 
+            DW      $A4A0       ; E
+            DW      $A4C0       ; F
+            DW      $A4E0       ; G
+            DW      $A500       ; H
+            DW      $A520       ; I
+            DW      $A540       ; J
+            DW      $A560       ; K
+            DW      $A580       ; L
+            DW      $A5A0       ; M
+            DW      $A5C0       ; N
+            DW      $A5E0       ; O
+            DW      $A600       ; P
+            DW      $A620       ; Q
+            DW      $A640       ; R
+            DW      $A660       ; S
+            DW      $A680       ; T
+            DW      $A6A0       ; U
+            DW      $A6C0       ; V
+            DW      $A6E0       ; W
+            DW      $A700       ; X
+            DW      $A720       ; Y
+            DW      $A740       ; Z
+            DW      open        ; [
+            DW      quit        ; \
+            DW      close       ; ]
+            DW      xor_        ; ^
+;           DW      neg_        ; _
+            DW      str_        ; _
+            DW      tick        ; `   
+            DW      $A800       ; a
+            DW      $A802       ; b
+            DW      $A804       ; c
+            DW      $A806       ; d
+            DW      $A808       ; e
+            DW      $A80A       ; f
+            DW      $A80C       ; g
+            DW      $A80E       ; h
+            DW      $A810       ; i   
+            DW      $A812       ; j
+            DW      $A814       ; k
+            DW      $A816       ; l
+            DW      $A818       ; m
+            DW      $A81A       ; n
+            DW      $A81C       ; o
+            DW      $A81E       ; p
+            DW      $A820       ; q   
+            DW      $A822       ; r
+            DW      $A824       ; s 
+            DW      $A826       ; t
+            DW      $A828       ; u
+            DW      $A82A       ; v
+            DW      $A82A       ; w
+            DW      $A82C       ; x
+            DW      $A82E       ; y
+            DW      $A830       ; z
+            DW      save        ; {
+            DW      or_         ; |   
+            DW      load        ; }   
+            DW      inv_        ; ~   
+            DW      del_        ; 
+
+            .ORG $200
+init:
+            LD SP,DSTACK
+            LD IX,RSTACK
+            LD IY,NEXT			   ; IY provides a faster jump to NEXT
+            LD HL,itable
+            LD DE,vtable
+            LD BC,VTSIZE
+            LDIR
+
+.if TESTMODE=1
+            LD HL,sample+1
+            LD DE,textbuf
+            LD A,(sample)
+            LD C,A
+            LD B,0
+            LDIR
+            JP endchar
+sample:     .pstr "1 2 + \r\n"
+.endif
+
+start:
+            PUSH BC
+            CALL crlf
+            CALL ok                ; friendly prompt
+            CALL crlf              ; newline
+            POP  BC
+
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
 ; and store it in the text buffer. Keep accepting characters,
 ; increasing the instruction pointer BC - until a newline received.
 ; *******************************************************************
 
-            
 inchar:     LD      BC,textbuf  ; input buffer is at $8100      
             
 waitchar:   CALL    getchar     ; loop around waiting for character
@@ -547,119 +704,117 @@ Conv:
 ; ****************************************************************
             .ORG $821A
             
-             DEFW    $8000      ; Newline $0D returns to inchar routine
+            DW      start       ; Newline $0D returns to inchar routine
 
-            .ORG $8240
+            .ORG $8200
+TABSTART:                       ; Vector/Jump Table
+            DS      $20*2
+            DW      space      ;
+            DW      store      ; !   
+            DW      dup_       ; "
+            DW      lit_       ; #
+            DW      swap       ; $   
+            DW      mod_       ; %   
+            DW      and_       ; &
+            DW      drop       ; '
+            DW      begin_     ; (  
+            DW      end_       ; )
+            DW      mul_       ; *   
+            DW      add_       ; +
+            DW      quit       ; ,   
+            DW      sub_       ; -
+            DW      dot_       ; .
+            DW      div_       ; /
+            DW      num_       ; 0   
+            DW      num_       ; 1  
+            DW      num_       ; 2   
+            DW      num_       ; 3
+            DW      num_       ; 4   
+            DW      num_       ; 5   
+            DW      num_       ; 6   
+            DW      num_       ; 7
+            DW      num_       ; 8   
+            DW      num_       ; 9  
+            DW      def_       ; :  
+            DW      ret_       ; ;
+            DW      lt_        ; <
+            DW      eq_        ; =   
+            DW      gt_        ; >   
+            DW      query      ; ?
             
-                                ; Vector/Jump Table
-            
-             DEFW    space      ;
-             DEFW    store      ; !   
-             DEFW    dup_       ; "
-             DEFW    lit_       ; #
-			 DEFW    swap       ; $   
-             DEFW    mod_       ; %   
-             DEFW    and_       ; &
-             DEFW    drop       ; '
-			 DEFW    begin_     ; (  
-             DEFW    end_       ; )
-             DEFW    mul_       ; *   
-             DEFW    add_       ; +
-			 DEFW    quit       ; ,   
-             DEFW    sub_       ; -
-             DEFW    dot_       ; .
-             DEFW    div_       ; /
-             DEFW    num_       ; 0   
-             DEFW    num_       ; 1  
-             DEFW    num_       ; 2   
-             DEFW    num_       ; 3
-			 DEFW    num_       ; 4   
-             DEFW    num_       ; 5   
-             DEFW    num_       ; 6   
-             DEFW    num_       ; 7
-             DEFW    num_       ; 8   
-             DEFW    num_       ; 9  
-             DEFW    def_       ; :  
-             DEFW    ret_       ; ;
-			 DEFW    lt_        ; <
-             DEFW    eq_        ; =   
-             DEFW    gt_        ; >   
-             DEFW    query      ; ?
-
-			 DEFW    fetch      ; @ 
+            DW      fetch      ; @ 
 			 
-             DEFW    $A420      ; A 
-             DEFW    $A440      ; B
-             DEFW    $A460      ; C
-			 DEFW    $A480      ; D 
-             DEFW    $A4A0      ; E
-             DEFW    $A4C0      ; F
-             DEFW    $A4E0      ; G
-			 DEFW    $A500      ; H
-             DEFW    $A520      ; I
-             DEFW    $A540      ; J
-             DEFW    $A560      ; K
-			 DEFW    $A580      ; L
-             DEFW    $A5A0      ; M
-             DEFW    $A5C0      ; N
-             DEFW    $A5E0      ; O
-             DEFW    $A600      ; P
-             DEFW    $A620      ; Q
-             DEFW    $A640      ; R
-             DEFW    $A660      ; S
-			 DEFW    $A680      ; T
-             DEFW    $A6A0      ; U
-             DEFW    $A6C0      ; V
-             DEFW    $A6E0      ; W
-             DEFW    $A700      ; X
-             DEFW    $A720      ; Y
-             DEFW    $A740      ; Z
+upperA:     DW      $A420      ; A 
+upperB:     DW      $A440      ; B
+upperC:     DW      $A460      ; C
+upperD:     DW      $A480      ; D 
+upperE:     DW      $A4A0      ; E
+upperF:     DW      $A4C0      ; F
+upperG:     DW      $A4E0      ; G
+upperH:     DW      $A500      ; H
+upperI:     DW      $A520      ; I
+upperJ:     DW      $A540      ; J
+upperK:     DW      $A560      ; K
+upperL:     DW      $A580      ; L
+upperM:     DW      $A5A0      ; M
+upperN:     DW      $A5C0      ; N
+upperO:     DW      $A5E0      ; O
+upperP:     DW      $A600      ; P
+upperQ:     DW      $A620      ; Q
+upperR:     DW      $A640      ; R
+upperS:     DW      $A660      ; S
+upperT:     DW      $A680      ; T
+upperU:     DW      $A6A0      ; U
+upperV:     DW      $A6C0      ; V
+upperW:     DW      $A6E0      ; W
+upperX:     DW      $A700      ; X
+upperY:     DW      $A720      ; Y
+upperZ:     DW      $A740      ; Z
              
-             DEFW    open       ; [
-			 DEFW    quit       ; \
-             DEFW    close      ; ]
-             DEFW    xor_       ; ^
-;             DEFW    neg_       ; _
-             DEFW    str_       ; _
-             DEFW    tick       ; `   
-			 
-			 
+            DW      open       ; [
+            DW      quit       ; \
+            DW      close      ; ]
+            DW      xor_       ; ^
+;           DW      neg_       ; _
+            DW      str_       ; _
+            DW      tick       ; `   
+
 lowertab:			 
 
-             DEFW    $A800      ; a
-             DEFW    $A802      ; b
-             DEFW    $A804      ; c
-			 DEFW    $A806      ; d
-             DEFW    $A808      ; e
-             DEFW    $A80A      ; f
-             DEFW    $A80C      ; g
-			 DEFW    $A80E      ; h
+lowerA:     DW      $A800      ; a
+lowerB:     DW      $A802      ; b
+lowerC:     DW      $A804      ; c
+lowerD:     DW      $A806      ; d
+lowerE:     DW      $A808      ; e
+lowerF:     DW      $A80A      ; f
+lowerG:     DW      $A80C      ; g
+lowerH:     DW      $A80E      ; h
 			 
-			 DEFW    $A810      ; i   
-             DEFW    $A812      ; j
-             DEFW    $A814      ; k
-			 DEFW    $A816      ; l
-             DEFW    $A818      ; m
-             DEFW    $A81A      ; n
-             DEFW    $A81C      ; o
-			 DEFW    $A81E      ; p
+lowerI:     DW      $A810      ; i   
+lowerJ:     DW      $A812      ; j
+lowerK:     DW      $A814      ; k
+lowerL:     DW      $A816      ; l
+lowerM:     DW      $A818      ; m
+lowerN:     DW      $A81A      ; n
+lowerO:     DW      $A81C      ; o
+lowerP:     DW      $A81E      ; p
 			 
-			 DEFW    $A820      ; q   
-             DEFW    $A822      ; r
-             DEFW    $A824      ; s 
-			 DEFW    $A826      ; t
-             DEFW    $A828      ; u
-             DEFW    $A82A      ; v
-             DEFW    $A82C      ; x
-			 DEFW    $A82E      ; y
-			 
-             DEFW    $A830      ; z
+lowerQ:     DW      $A820      ; q   
+lowerR:     DW      $A822      ; r
+lowerS:     DW      $A824      ; s 
+lowerT:     DW      $A826      ; t
+lowerU:     DW      $A828      ; u
+lowerV:     DW      $A82A      ; v
+lowerW:     DW      $A82A      ; w
+lowerX:     DW      $A82C      ; x
+lowerY:     DW      $A82E      ; y
+lowerZ:     DW      $A830      ; z
              
-             DEFW    save       ; {
-			 DEFW    or_        ; |   
-             DEFW    load       ; }   
-             DEFW    inv_       ; ~   
-             DEFW    del_       ; BS
+            DW      save       ; {
+            DW      or_        ; |   
+            DW      load       ; }   
+            DW      inv_       ; ~   
+            DW      del_       ; BS
 			 
 ; **********************************************************************			 
              
@@ -907,7 +1062,7 @@ loopagain:  LD  BC, loopstart -1  ; Point the IP to loopstart
             LD  (loopcount), HL   ; preserve the loop count
             JP      (IY)          ; execute the next instruction
              
-finish:     JP     $8000          ; back to OK prompt
+finish:     JP     start          ; back to OK prompt
 
 
 
@@ -1114,6 +1269,14 @@ load:
 del_:      
              JP       (IY) 
              
+            .ORG ROMSTART + ROMSIZE
+RAMSTART:
+            DS DSIZE
+DSTACK:        
+            DS RSIZE
+RSTACK:        
+VTABLE:
+            DS VTSIZE
              
              
              
