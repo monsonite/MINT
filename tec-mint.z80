@@ -297,7 +297,7 @@ init:
         LD IX,RSTACK
         LD IY,NEXT			   ; IY provides a faster jump to NEXT
         CALL initVTable
-        LD BC,HEAPSTART
+        LD BC,HEAP
         LD (HERE),BC
         LD (HERE1),BC
         LD A,FALSE
@@ -338,10 +338,9 @@ waitchar:
         CP ":"
         JR NZ,waitchar1
         
-        EX AF,AF'           ; TODO: clarify free register use
         LD A,TRUE
         LD (DEFINE),A
-        EX AF,AF'
+        LD A,":"
         
 waitchar1:        
         CALL putchar        ; echo character to screen
@@ -456,7 +455,7 @@ dispatch:                       ; The character at IP is not a number
         CP  vartab              ; Is H >= to user variable table start
         JR  NC, uservar
         
-        CP  usertab             ; Is H >= to user definition table start
+        CP  msb(HEAP)           ; Is H >= to user definition table start
         JR  NC, userdef
         
         JP  (HL)                ; 4t Jump to routine
@@ -727,13 +726,11 @@ Conv:
 
 
 ; **********************************************************************			 
-         
-; $ A000 Start of primitive routines 
+     
+; Start of primitive routines 
 
 ; **********************************************************************
 
-         .ORG  $A000
-         
 space:       
         JP      (IY)
          
@@ -871,13 +868,10 @@ quit:
 ; def is used to create a colon definition
 ; When a colon is detected, the next character (usually uppercase alpha)
 ; is looked up in the vector table to get its associated code field address
-; This CFA is held in HL
-; The remainder of the characters in the text buffer are then copied
-; up to a buffer beginning at that CFA until the end_def semicolon character 
+; This CFA is updated to point to the character after uppercase alpha
+; The remainder of the characters are then skipped until after a semicolon  
 ; is found.
 ; ***************************************************************************
-
-; NOTE: this code is not yet working JH
 
 def_:                       ; Create a colon definition
         INC      BC
@@ -893,26 +887,16 @@ def_:                       ; Create a colon definition
         LD (HL),B           ; Save high byte of IP in CFA+1
         POP HL              ; Restore HL
 
-nextbyte:                   ; Skip to end of defintion   
+nextbyte:                   ; Skip to end of definition   
         LD A,(BC)           ; Get the next character
         INC BC              ; Point to next character
         CP ";"              ; Is it a semicolon 
         JR z, end_def       ; end the definition
         JR  nextbyte        ; get the next element
-        
 end_def:    
-        LD (HL), A          ; Store the semicolon at end of definition
-        INC HL
-        LD A, $0D
-       
-        LD (HL), A          ; and a final Newline
-        
-        PUSH BC
-
+        DEC BC
         JP (IY)             
 
-
-	            
 ret_:
         LD C,(IX+0)         ; Restore Instruction pointer
         INC IX              
@@ -1213,7 +1197,8 @@ tbPtr:
 
 .endif
     
-HEAPSTART:         
+        .align $100
+HEAP:         
              
              
 
