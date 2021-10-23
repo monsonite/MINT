@@ -1,0 +1,20 @@
+.engine mycomputer
+TESTMODE equ 1
+
+.macro setTBuf,s1
+    ld HL,buf1%%M
+    ld (tbPtr),HL
+    jr buf2%%M
+buf1%%M:
+    db s1,$5C,"\r"
+buf2%%M:
+.endm
+
+LD SP,DSTACK
+
+setTbuf ":X3;X."
+CALL $200
+HALT
+
+.include "tec-mint.z80"
+

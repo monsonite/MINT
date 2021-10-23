@@ -144,9 +144,10 @@
         DSIZE       EQU $100
         RSIZE       EQU $100
         VTSIZE      EQU $100
+        TBUFSIZE    EQU $100
+        TRUE        EQU -1
+        FALSE       EQU 0
 
-        textbuf   EQU  $8100   ; Input text buffer
-        
         stringbuf EQU  $8800
         
         usertab   EQU  $A4     ; Upper byte of user table
@@ -175,7 +176,7 @@ itable:
         DW      0           ; LF
         DW      0           ; VT
         DW      0           ; FF
-        DW      start       ; CR
+        DW      interpret    ; CR
         DW      0           ; SO
         DW      0           ; SI
         DW      0           ; DLE
@@ -293,29 +294,28 @@ itable:
 
         .ORG $200
 init:
-        LD SP,DSTACK
         LD IX,RSTACK
         LD IY,NEXT			   ; IY provides a faster jump to NEXT
         CALL initVTable
+        LD BC,HEAPSTART
+        LD (HERE),BC
+        LD (HERE1),BC
+        LD A,FALSE
+        LD (DEFINE),A
 
-.if TESTMODE=1
-        LD HL,sample+1
-        LD DE,textbuf
-        LD A,(sample)
-        LD C,A
-        LD B,0
-        LDIR
-        JP endchar
-sample:     
-        .pstr "1 2 + \r\n"
-.endif
-
-start:
-        PUSH BC
+interpret:
         CALL crlf
         CALL ok                ; friendly prompt
         CALL crlf              ; newline
-        POP  BC
+        LD A,(DEFINE)
+        OR A
+        JR NZ,inchar
+        LD BC,(HERE1)
+        LD (HERE),BC
+        JR waitchar
+inchar:
+        LD BC,(HERE)        ; input buffer is at $8100      
+        LD (HERE1),BC
 
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
@@ -323,12 +323,8 @@ start:
 ; increasing the instruction pointer BC - until a newline received.
 ; *******************************************************************
 
-inchar:     
-        LD BC,textbuf  ; input buffer is at $8100      
-        
 waitchar:   
-        CALL getchar     ; loop around waiting for character
-
+        CALL getchar        ; loop around waiting for character
         CP $0A              ; Less than $0A
         JR C, endchar       ; Return char
         CP $7F              ; Greater or equal to $7F
@@ -339,11 +335,21 @@ waitchar:
         CP  $0D             ; is it a newline?
         JR Z, endchar
         
+        CP ":"
+        JR NZ,waitchar1
+        
+        EX AF,AF'           ; TODO: clarify free register use
+        LD A,TRUE
+        LD (DEFINE),A
+        EX AF,AF'
+        
+waitchar1:        
         CALL putchar        ; echo character to screen
         
         JR  waitchar        ; wait for next character
         
 endchar:    
+        LD (HERE),BC
         LD A, $0D           ; Send out a CRLF
         CALL putchar
         LD A, $0A
@@ -362,7 +368,8 @@ endchar:
 ; Push HL onto the stack and proceed to the dispatch routine.
 ; ********************************************************************************
          
-        LD BC, textbuf-1        ; Instructions begin at $8100
+        LD BC,(HERE1)           ; Instructions begin at $8100
+        DEC BC
         
 NEXT:   LD HL, $0000            ; 10t   Clear HL to accept new number
         INC BC                  ; 6t    Increment the IP
@@ -618,10 +625,19 @@ serial_init:
 ;             BC DE HL IX IY I AF' BC' DE' HL' preserved
 ; This function does not return until a character is available
 getchar:
+.if TESTMODE=1
+        PUSH HL
+        LD HL,(tbPtr)
+        LD A,(HL)
+        INC HL
+        LD (tbPtr),HL
+        POP HL
+.else
         IN   A,(kACIA1Cont) ;Address of status register
         AND  $01            ;Receive byte available
         JR   Z, getchar     ;Return Z if no character
         IN   A,(kACIA1Data) ;Read data byte
+.endif
         RET                 ;NZ flagged if character input
 
 
@@ -668,14 +684,15 @@ Num2:	    inc	a
         call putchar
         ret 
         
-        
-crlf:       LD A, $0A           ; Send a CRLF
+crlf:       
+        LD A, $0A           ; Send a CRLF
         CALL putchar
         LD A, $0D
         CALL putchar
         RET
         
-ok:         LD A, $4F           ; Print OK
+ok:         
+        LD A, $4F           ; Print OK
         CALL putchar
         LD A, $4B
         CALL putchar
@@ -860,28 +877,25 @@ quit:
 ; is found.
 ; ***************************************************************************
 
-def_:                           ; Create a colon definition
+def_:                       ; Create a colon definition
         INC      BC
         LD       A,(BC)     ; Get the next character
-        PUSH BC             ; Push the current IP
-                            ; Look up its CFA in vector table
+        INC BC
+                            ; Look up CFA in vector table
         ADD A,A             ; Double A to index even addresses
-        LD BC, VTABLE       ; Start address of jump table         
-        LD C,A              ; Index into table
-        LD A,(BC)           ; get low code field address
-        LD L,A              ; and put into L
-        INC BC              ; 
-        LD A,(BC)           ; Get high code field address
-        LD H,A              ; and put into H
-        POP BC              ; Get IP back
-        
-nextbyte:   
+        PUSH HL             ; Save HL
+        LD HL, VTABLE       ; Start address of jump table         
+        LD L,A              ; Index into table
+        LD (HL),C           ; Save low byte of IP in CFA
+        INC HL              
+        LD (HL),B           ; Save high byte of IP in CFA+1
+        POP HL              ; Restore HL
+
+nextbyte:                   ; Skip to end of defintion   
+        LD A,(BC)           ; Get the next character
         INC BC              ; Point to next character
-        LD A, (BC)          ; Get the next character
-        CP $3B              ; Is it a semicolon $3B
+        CP ";"              ; Is it a semicolon 
         JR z, end_def       ; end the definition
-        LD (HL), A          ; store the character at the CFA
-        INC HL
         JR  nextbyte        ; get the next element
         
 end_def:    
@@ -960,7 +974,8 @@ loopagain:  LD  BC, loopstart -1  ; Point the IP to loopstart
         LD  (loopcount), HL   ; preserve the loop count
         JP      (IY)          ; execute the next instruction
          
-finish:     JP     start          ; back to OK prompt
+finish:     
+        JP     interpret         ; back to OK prompt
 
 
 
@@ -1138,8 +1153,7 @@ gt_:
         JP      M, setone
         LD      HL,0
         JR      setzero
-        
-        
+  
 setone:      LD      HL,1             
         
 setzero:     PUSH     HL
@@ -1175,7 +1189,6 @@ DSTACK:
         DS RSIZE
 RSTACK:        
 
-
 ; ****************************************************************
 ; Vector Table - holds the 16-bit target addresses of 
 ; the 96 possible functions as used by the dispatch routine
@@ -1184,7 +1197,20 @@ RSTACK:
 
 VTABLE:
         DS VTSIZE
+HERE:
+        DW 0
+HERE1:
+        DW 0
+DEFINE:
+        DB 0
 
+.if TESTMODE=1
+
+tbPtr:
+        DW 0
+
+.endif
+    
 HEAPSTART:         
              
              

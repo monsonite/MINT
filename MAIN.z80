@@ -1,7 +1,7 @@
 .engine mycomputer
-
 TESTMODE equ 0
 
+LD SP,DSTACK
 JP $200
 
 .include "tec-mint.z80"
