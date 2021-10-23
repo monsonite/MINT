@@ -877,6 +877,8 @@ quit:
 ; is found.
 ; ***************************************************************************
 
+; NOTE: this code is not yet working JH
+
 def_:                       ; Create a colon definition
         INC      BC
         LD       A,(BC)     ; Get the next character

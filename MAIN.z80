@@ -2,7 +2,8 @@
 TESTMODE equ 0
 
 LD SP,DSTACK
-JP $200
+CALL $200
+HALT
 
 .include "tec-mint.z80"
 
