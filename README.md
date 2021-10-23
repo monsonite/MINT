@@ -1,13 +1,15 @@
 # MINT
-A minimal interpreter in Z80 assembly language for the RC2014 Micro.
+A minimal interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems.
 
-## mint1_5 is the latest upload.
+## mint1_6 is the latest upload.
+
+
 
 ## Using MINT
 
 MINT was developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8000.
 
-MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. I use TeraTerm because I am working within a windows environment.
+MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. I use TeraTerm when working within the windows environment.
 
 Once the MINT code image is pasted into RAM you can run it using the Go command "G8000"
 
@@ -24,6 +26,8 @@ The variable i is assigned to the loop counter.
 MINT turns the Z80 into a 16-bit Virtual Machine with 30 instructions, 26 Macros and 26 Registers (variables). This relieves you from the tedium of Z80 assembly language, and presents the user with a very compact, human readable, interactive, extendable bytecode language.
 
 ## Examples
+
+Spaces are shown for clarity, but only necessary to separate consecutive number strings. Most other operators can be concatenated without spaces.
 
 1234 5678 + .               ; ADD 1234 to 5678 and print the result
 
@@ -88,7 +92,7 @@ A basic serial terminal interface is provided, communicating with the familiar g
 MINT provides a simple interactive interpreter based on printable ascii characters. This provides a greater level of human readability compared to assembly language. It is designed to use single ascii character commands - for example, when the interpreter recieves the "+" character, it will perform a 16-bit integer addition. There are approximately 30 such commands, mostly consisting of arithmetic and punctuation characters.
 
 
-mint1_5 is the latest upload.  On the RC2014 Micro it loads at address $8000.
+mint1_6 is the latest upload.  On the RC2014 Micro it loads at address $8000.
 
 Mint consists of 4 main sections:
 
@@ -210,7 +214,7 @@ Miscellaneous:
 _   STRING  _Everything between underscores is printed as a string_
 
 
-\   QUIT
+\   QUIT   Return to the monitor program
 
 
 ?   QUERY
