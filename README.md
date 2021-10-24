@@ -1,17 +1,17 @@
 # MINT
-A minimal interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems.
+A minimal interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
 
-## mint1_8A is the latest upload.
+## mint1_9 is the latest upload.
 
 
 
 ## Using MINT
 
-MINT was developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8000.
+MINT was developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8080.
 
 MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. I use TeraTerm when working within the windows environment.
 
-Once the MINT code image is pasted into RAM you can run it using the Go command "G8000"
+Once the MINT code image is pasted into RAM you can run it using the Go command "G8080"
 
 On initialisation it will present a user prompt "OK" followed by a CR and LF. It is now ready to accept commands from the keyboard.  MINT currently uses decimal numbers for calculations - a maximum integer of 65535.
 
