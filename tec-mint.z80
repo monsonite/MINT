@@ -143,17 +143,10 @@
         ROMSIZE     EQU $800
         DSIZE       EQU $100
         RSIZE       EQU $100
-        VTSIZE      EQU $100
         TBUFSIZE    EQU $100
         TRUE        EQU -1
         FALSE       EQU 0
 
-        stringbuf EQU  $8800
-        
-        usertab   EQU  $A4     ; Upper byte of user table
-        
-        vartab    EQU  $A8     ; Upper byte of variables table
-        
         loopstart EQU  $A760   ; Loop code storage area
         
         loopcount EQU  $A810   ; Hold the loopcounter in variable i
@@ -162,40 +155,40 @@
 ROMSTART:            
         .ORG $100
         
-itable:            
-        DW      0           ; NUL
-        DW      0           ; SOH
-        DW      0           ; STX
-        DW      0           ; ETX
-        DW      0           ; EOT
-        DW      0           ; ENQ
-        DW      0           ; ACK
-        DW      0           ; BEL
-        DW      0           ; BS
-        DW      0           ; TAB
-        DW      0           ; LF
-        DW      0           ; VT
-        DW      0           ; FF
-        DW      interpret    ; CR
-        DW      0           ; SO
-        DW      0           ; SI
-        DW      0           ; DLE
-        DW      0           ; DC1
-        DW      0           ; DC2
-        DW      0           ; DC3
-        DW      0           ; DC4
-        DW      0           ; NAK
-        DW      0           ; SYN
-        DW      0           ; ETB
-        DW      0           ; CAN
-        DW      0           ; EM
-        DW      0           ; SUB
-        DW      0           ; ESC
-        DW      0           ; FS
-        DW      0           ; GS
-        DW      0           ; RS
-        DW      0           ; US
-        DW      space       ; SP
+opcodes:            
+        DW      nop_       ; NUL
+        DW      nop_       ; SOH
+        DW      nop_       ; STX
+        DW      nop_       ; ETX
+        DW      nop_       ; EOT
+        DW      nop_       ; ENQ
+        DW      nop_       ; ACK
+        DW      nop_       ; BEL
+        DW      nop_       ; BS
+        DW      nop_       ; TAB
+        DW      nop_       ; LF
+        DW      nop_       ; VT
+        DW      nop_       ; FF
+        DW      interp      ; CR
+        DW      nop_       ; SO
+        DW      nop_       ; SI
+        DW      nop_       ; DLE
+        DW      nop_       ; DC1
+        DW      nop_       ; DC2
+        DW      nop_       ; DC3
+        DW      nop_       ; DC4
+        DW      nop_       ; NAK
+        DW      nop_       ; SYN
+        DW      nop_       ; ETB
+        DW      nop_       ; CAN
+        DW      nop_       ; EM
+        DW      nop_       ; SUB
+        DW      nop_       ; ESC
+        DW      nop_       ; FS
+        DW      nop_       ; GS
+        DW      nop_       ; RS
+        DW      nop_       ; US
+        DW      nop_       ; SP
         DW      store       ; !   
         DW      dup_        ; "
         DW      lit_        ; #
@@ -228,64 +221,64 @@ itable:
         DW      gt_         ; >   
         DW      query       ; ?
         DW      fetch       ; @ 
-        DW      0           ; A 
-        DW      $A440       ; B
-        DW      $A460       ; C
-        DW      $A480       ; D 
-        DW      $A4A0       ; E
-        DW      $A4C0       ; F
-        DW      $A4E0       ; G
-        DW      $A500       ; H
-        DW      $A520       ; I
-        DW      $A540       ; J
-        DW      $A560       ; K
-        DW      $A580       ; L
-        DW      $A5A0       ; M
-        DW      $A5C0       ; N
-        DW      $A5E0       ; O
-        DW      $A600       ; P
-        DW      $A620       ; Q
-        DW      $A640       ; R
-        DW      $A660       ; S
-        DW      $A680       ; T
-        DW      $A6A0       ; U
-        DW      $A6C0       ; V
-        DW      $A6E0       ; W
-        DW      $A700       ; X
-        DW      $A720       ; Y
-        DW      $A740       ; Z
+        DW      call_       ; A 
+        DW      call_       ; B
+        DW      call_       ; C
+        DW      call_       ; D 
+        DW      call_       ; E
+        DW      call_       ; F
+        DW      call_       ; G
+        DW      call_       ; H
+        DW      call_       ; I
+        DW      call_       ; J
+        DW      call_       ; K
+        DW      call_       ; L
+        DW      call_       ; M
+        DW      call_       ; N
+        DW      call_       ; O
+        DW      call_       ; P
+        DW      call_       ; Q
+        DW      call_       ; R
+        DW      call_       ; S
+        DW      call_       ; T
+        DW      call_       ; U
+        DW      call_       ; V
+        DW      call_       ; W
+        DW      call_       ; X
+        DW      call_       ; Y
+        DW      call_       ; Z
         DW      open        ; [
         DW      quit        ; \
         DW      close       ; ]
         DW      xor_        ; ^
         DW      str_        ; _
         DW      tick        ; `   
-        DW      VARS + 0    ; a
-        DW      VARS + 2    ; b
-        DW      VARS + 4    ; c
-        DW      VARS + 6    ; d
-        DW      VARS + 8    ; e
-        DW      VARS + 10   ; f
-        DW      VARS + 12   ; g
-        DW      VARS + 14   ; h
-        DW      VARS + 16   ; i   
-        DW      VARS + 18   ; j
-        DW      VARS + 20   ; k
-        DW      VARS + 22   ; l
-        DW      VARS + 24   ; m
-        DW      VARS + 26   ; n
-        DW      VARS + 28   ; o
-        DW      VARS + 30   ; p
-        DW      VARS + 32   ; q   
-        DW      VARS + 34   ; r
-        DW      VARS + 36   ; s 
-        DW      VARS + 38   ; t
-        DW      VARS + 40   ; u
-        DW      VARS + 42   ; v
-        DW      VARS + 44   ; w
-        DW      VARS + 46   ; x
-        DW      VARS + 48   ; y
-        DW      VARS + 50   ; z
+        DW      var_        ; a
+        DW      var_        ; b
+        DW      var_        ; c
+        DW      var_        ; d
+        DW      var_        ; e
+        DW      var_        ; f
+        DW      var_        ; g
+        DW      var_        ; h
+        DW      var_        ; i   
+        DW      var_        ; j
+        DW      var_        ; k
+        DW      var_        ; l
+        DW      var_        ; m
+        DW      var_        ; n
+        DW      var_        ; o
+        DW      var_        ; p
+        DW      var_        ; q   
+        DW      var_        ; r
+        DW      var_        ; s 
+        DW      var_        ; t
+        DW      var_        ; u
+        DW      var_        ; v
+        DW      var_        ; w
+        DW      var_        ; x
+        DW      var_        ; y
+        DW      var_        ; z
         DW      save        ; {
         DW      or_         ; |   
         DW      load        ; }   
@@ -295,26 +288,25 @@ itable:
         .ORG $200
 init:
         LD IX,RSTACK
-        LD IY,NEXT			   ; IY provides a faster jump to NEXT
-        CALL initVTable
+        LD IY,NEXT			; IY provides a faster jump to NEXT
         LD BC,HEAP
         LD (HERE),BC
-        LD (HERE0),BC
+        LD (HERE1),BC
         LD A,FALSE
         LD (DEFINE),A
 
-interpret:
+interp:
         CALL crlf
-        CALL ok                ; friendly prompt
-        CALL crlf              ; newline
+        CALL ok             ; friendly prompt
+        CALL crlf           ; newline
         LD A,(DEFINE)
         OR A
-        JR NZ,interpret1
+        JR NZ,interp1
         LD BC,(HERE)
-        LD (HERE0),BC
+        LD (HERE1),BC
         JR waitchar
-interpret1:
-        LD BC,(HERE0)        ; input buffer is at $8100      
+interp1:
+        LD BC,(HERE1)             
         LD (HERE),BC
 
 ; *******************************************************************         
@@ -348,7 +340,7 @@ waitchar1:
         JR  waitchar        ; wait for next character
         
 endchar:    
-        LD (HERE0),BC
+        LD (HERE1),BC
         LD A, $0D           ; Send out a CRLF
         CALL putchar
         LD A, $0A
@@ -430,7 +422,7 @@ endnum:
 ; The Instruction Pointer IP BC is pushed to preserve its contents.
 ; The current character from the text buffer is temporarily held in A.
 ; It is doubled so that it forms an even number and will point to even address.
-; B is loaded with the high byte of the vector table VTABLE and the doubled		 
+; B is loaded with the high byte of the vector table opcodes and the doubled		 
 ; value of A is loaded into C, so that it indexes into the vector table.
 ; At the selected table location is a 2-byte jump address to the selected function
 ; This target jump address is loaded into HL, and BC is restored.
@@ -441,7 +433,7 @@ dispatch:                       ; The character at IP is not a number
 
         PUSH BC                 ; 11t   Push the current IP
         ADD A,A                 ; 4t    Double A to index even addresses
-        LD BC, VTABLE           ; 7t    Start address of jump table         
+        LD BC, opcodes           ; 7t    Start address of jump table         
         LD C,A                  ; 4t    Index into table
         LD A,(BC)               ; 7t    get low jump address
         LD L,A                  ; 4t    and put into L
@@ -449,39 +441,8 @@ dispatch:                       ; The character at IP is not a number
         LD A,(BC)               ; 7t    Get high jump address
         LD H,A                  ; 4t    and put into H
         POP BC                  ; 10t   Get IP back
-        
-        ; Now check if the address relates to a user variable or definition        
-        
-        CP  msb(HEAP)           ; Is H >= to user definition table start
-        JR  NC, userdef
-        
-        CP  msb(VARS)           ; Is H >= to user variable table start
-        JR  NC, uservar
-        
         JP  (HL)                ; 4t Jump to routine
         
-userdef:                        ; The character is a User Definition A-Z
-        DEC IX                  ; save Instruction Pointer
-        LD (IX+0),B
-        DEC IX
-        LD (IX+0),C
-        
-        LD B,H                  ; Instruction Pointer loaded with user address
-        LD C,L
-        DEC BC
-        JP  (IY)                ; Execute code from User def
-        
-uservar:                        ; The character is a user variable a-z          
-        PUSH HL                 ; push variable address on the stack
-        JP   (IY)                     
-        
-initVTable:
-        LD HL,itable
-        LD DE,vtable
-        LD BC,VTSIZE
-        LDIR
-        RET
-
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
 ;        Includes drivers for 68B50 ACIA 
@@ -675,8 +636,10 @@ DispHL:
         ld	c,-10
         call	Num1
         ld	c,-1
-Num1:	    ld	a,'0'-1
-Num2:	    inc	a
+Num1:	    
+        ld	a,'0'-1
+Num2:	    
+        inc	a
         add	hl,bc
         jr	c,Num2
         sbc	hl,bc
@@ -731,7 +694,7 @@ Conv:
 
 ; **********************************************************************
 
-space:       
+nop_:       
         JP      (IY)
          
 fetch:                          ; Fetch the value from the address placed on the top of the stack      
@@ -751,24 +714,47 @@ store:                          ; Store the value at the address placed on the t
         LD     (HL),E      ; 7t
         INC    HL          ; 6t
         LD     (HL),D      ; 7t
-        JP      (IY)       ; 8t
+        JP     (IY)        ; 8t
         
                         ; 48t
     
-    
+call_:
+        DEC IX                  ; save Instruction Pointer
+        LD (IX+0),B
+        DEC IX
+        LD (IX+0),C
+        LD A,(BC)
+        SUB "A"                 ; Calc index
+        ADD A,A
+        LD HL,DEFS
+        LD L,A
+        LD C,(HL)
+        INC HL
+        LD B,(HL)
+        DEC BC
+        JP  (IY)                ; Execute code from User def
+
+var_:
+        LD A,(BC)
+        SUB "a"                 ; Calc index
+        ADD A,A
+        LD HL,VARS
+        LD L,A
+        PUSH HL
+        JP (IY)
+        
 dup_:        
         POP     HL         ; Duplicate the top member of the stack
         PUSH    HL
         PUSH    HL
-        JP      (IY)
-    
-    
+        JP (IY)
+
 swap:        
         POP     HL         ; Swap the top 2 elements of the stack
         POP     DE
         PUSH    HL
         PUSH    DE
-        JP      (IY)
+        JP (IY)
     
 drop:                           ; Discard the top member of the stack
         POP     HL
@@ -883,9 +869,10 @@ def_:                       ; Create a colon definition
         LD  A,(BC)          ; Get the next character
         INC BC
                             ; Look up CFA in vector table
+        SUB "A"             ; Calc index
         ADD A,A             ; Double A to index even addresses
         PUSH HL             ; Save HL
-        LD HL, VTABLE       ; Start address of jump table         
+        LD HL, DEFS       ; Start address of jump table         
         LD L,A              ; Index into table
         LD (HL),C           ; Save low byte of IP in CFA
         INC HL              
@@ -968,7 +955,7 @@ loopagain:
         JP      (IY)          ; execute the next instruction
          
 finish:     
-        JP     interpret         ; back to OK prompt
+        JP     interp         ; back to OK prompt
 
 
 
@@ -1185,17 +1172,9 @@ DSTACK:
         DS RSIZE
 RSTACK:        
 
-; ****************************************************************
-; Vector Table - holds the 16-bit target addresses of 
-; the 96 possible functions as used by the dispatch routine
-; 192 bytes
-; ****************************************************************
-
-VTABLE:
-        DS VTSIZE
 HERE:
         DW 0
-HERE0:
+HERE1:
         DW 0
 DEFINE:
         DB 0
@@ -1207,6 +1186,17 @@ tbPtr:
 
 .endif
     
+
+; ****************************************************************
+; DEFS Table - holds 26 addresses of user routines
+; ****************************************************************
+        .align $100
+DEFS:
+        DS 26 * 2
+
+; ****************************************************************
+; VARS Table - holds 26 16-bit user variables
+; ****************************************************************
         .align $100
 VARS:
         DS 26 * 2

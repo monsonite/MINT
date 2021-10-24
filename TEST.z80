@@ -12,16 +12,16 @@ buf2%%M:
 
 LD SP,DSTACK
 
-setTbuf "1x!x@."
+setTbuf ":X1;X."
 CALL $200
 
-setTbuf ":X3;X."
+setTbuf "2x!x@."
 CALL $200
 
-setTbuf ":Aa!;1Aa@."
+setTbuf ":Aa!;3Aa@."
 CALL $200
 
-setTbuf ":Aa!;:Ba@;1AB."
+setTbuf ":Aa!;:Ba@;4AB."
 CALL $200
 
 HALT
