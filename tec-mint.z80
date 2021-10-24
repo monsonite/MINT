@@ -228,7 +228,7 @@ itable:
         DW      gt_         ; >   
         DW      query       ; ?
         DW      fetch       ; @ 
-        DW      $A420       ; A 
+        DW      0           ; A 
         DW      $A440       ; B
         DW      $A460       ; C
         DW      $A480       ; D 
@@ -260,32 +260,32 @@ itable:
         DW      xor_        ; ^
         DW      str_        ; _
         DW      tick        ; `   
-        DW      $A800       ; a
-        DW      $A802       ; b
-        DW      $A804       ; c
-        DW      $A806       ; d
-        DW      $A808       ; e
-        DW      $A80A       ; f
-        DW      $A80C       ; g
-        DW      $A80E       ; h
-        DW      $A810       ; i   
-        DW      $A812       ; j
-        DW      $A814       ; k
-        DW      $A816       ; l
-        DW      $A818       ; m
-        DW      $A81A       ; n
-        DW      $A81C       ; o
-        DW      $A81E       ; p
-        DW      $A820       ; q   
-        DW      $A822       ; r
-        DW      $A824       ; s 
-        DW      $A826       ; t
-        DW      $A828       ; u
-        DW      $A82A       ; v
-        DW      $A82A       ; w
-        DW      $A82C       ; x
-        DW      $A82E       ; y
-        DW      $A830       ; z
+        DW      VARS + 0    ; a
+        DW      VARS + 2    ; b
+        DW      VARS + 4    ; c
+        DW      VARS + 6    ; d
+        DW      VARS + 8    ; e
+        DW      VARS + 10   ; f
+        DW      VARS + 12   ; g
+        DW      VARS + 14   ; h
+        DW      VARS + 16   ; i   
+        DW      VARS + 18   ; j
+        DW      VARS + 20   ; k
+        DW      VARS + 22   ; l
+        DW      VARS + 24   ; m
+        DW      VARS + 26   ; n
+        DW      VARS + 28   ; o
+        DW      VARS + 30   ; p
+        DW      VARS + 32   ; q   
+        DW      VARS + 34   ; r
+        DW      VARS + 36   ; s 
+        DW      VARS + 38   ; t
+        DW      VARS + 40   ; u
+        DW      VARS + 42   ; v
+        DW      VARS + 44   ; w
+        DW      VARS + 46   ; x
+        DW      VARS + 48   ; y
+        DW      VARS + 50   ; z
         DW      save        ; {
         DW      or_         ; |   
         DW      load        ; }   
@@ -299,7 +299,7 @@ init:
         CALL initVTable
         LD BC,HEAP
         LD (HERE),BC
-        LD (HERE1),BC
+        LD (HERE0),BC
         LD A,FALSE
         LD (DEFINE),A
 
@@ -309,13 +309,13 @@ interpret:
         CALL crlf              ; newline
         LD A,(DEFINE)
         OR A
-        JR NZ,inchar
-        LD BC,(HERE1)
-        LD (HERE),BC
+        JR NZ,interpret1
+        LD BC,(HERE)
+        LD (HERE0),BC
         JR waitchar
-inchar:
-        LD BC,(HERE)        ; input buffer is at $8100      
-        LD (HERE1),BC
+interpret1:
+        LD BC,(HERE0)        ; input buffer is at $8100      
+        LD (HERE),BC
 
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
@@ -348,7 +348,7 @@ waitchar1:
         JR  waitchar        ; wait for next character
         
 endchar:    
-        LD (HERE),BC
+        LD (HERE0),BC
         LD A, $0D           ; Send out a CRLF
         CALL putchar
         LD A, $0A
@@ -367,7 +367,7 @@ endchar:
 ; Push HL onto the stack and proceed to the dispatch routine.
 ; ********************************************************************************
          
-        LD BC,(HERE1)           ; Instructions begin at $8100
+        LD BC,(HERE)           ; Instructions begin at $8100
         DEC BC
         
 NEXT:   LD HL, $0000            ; 10t   Clear HL to accept new number
@@ -452,11 +452,11 @@ dispatch:                       ; The character at IP is not a number
         
         ; Now check if the address relates to a user variable or definition        
         
-        CP  vartab              ; Is H >= to user variable table start
-        JR  NC, uservar
-        
         CP  msb(HEAP)           ; Is H >= to user definition table start
         JR  NC, userdef
+        
+        CP  msb(VARS)           ; Is H >= to user variable table start
+        JR  NC, uservar
         
         JP  (HL)                ; 4t Jump to routine
         
@@ -746,124 +746,129 @@ fetch:                          ; Fetch the value from the address placed on the
         
          
 store:                          ; Store the value at the address placed on the top of the stack
-         POP    HL          ; 10t
-         POP    DE          ; 10t
-         LD     (HL),E      ; 7t
-         INC    HL          ; 6t
-         LD     (HL),D      ; 7t
-         JP      (IY)       ; 8t
-         
-                            ; 48t
-         
-         
-dup_:        POP     HL         ; Duplicate the top member of the stack
-         PUSH    HL
-         PUSH    HL
-         JP      (IY)
-         
-
-swap:        POP     HL         ; Swap the top 2 elements of the stack
-         POP     DE
-         PUSH    HL
-         PUSH    DE
-         JP      (IY)
-         
-drop:                           ; Discard the top member of the stack
-         POP     HL
-         JP      (IY)
-         
+        POP    HL          ; 10t
+        POP    DE          ; 10t
+        LD     (HL),E      ; 7t
+        INC    HL          ; 6t
+        LD     (HL),D      ; 7t
+        JP      (IY)       ; 8t
+        
+                        ; 48t
     
+    
+dup_:        
+        POP     HL         ; Duplicate the top member of the stack
+        PUSH    HL
+        PUSH    HL
+        JP      (IY)
+    
+    
+swap:        
+        POP     HL         ; Swap the top 2 elements of the stack
+        POP     DE
+        PUSH    HL
+        PUSH    DE
+        JP      (IY)
+    
+drop:                           ; Discard the top member of the stack
+        POP     HL
+        JP      (IY)
 
-and_:        POP     DE                      ; 10t Bitwise AND the top 2 elements of the stack
-	     POP     HL                      ; 10t
-	     LD      A,E                     ; 4t
-	     AND     L                       ; 4t
-	     LD      L,A                     ; 4t
-         LD      A,D                     ; 4t
-         AND     H                       ; 4t
-         LD      H,A                     ; 4t
-         PUSH    HL                      ; 11t
-         JP      (IY)                    ; 8t
-         
-                                         ; 63t
-	
-	
-or_: 		 POP     DE             ; Bitwise OR the top 2 elements of the stack
-	     POP     HL
-	     LD      A,E
-	     OR      L
-	     LD      L,A
-         LD      A,D
-         OR      H
-         LD      H,A
-         PUSH    HL
-         JP      (IY)
-	
-	
-xor_:		 POP     DE            ; Bitwise XOR the top 2 elements of the stack
-	     POP     HL
-	     LD      A,E
-	     XOR     L
-	     LD      L,A
-         LD      A,D
-         XOR     H
-         LD      H,A
-         PUSH    HL
-         JP      (IY)
-         
-
+and_:        
+        POP     DE                      ; 10t Bitwise AND the top 2 elements of the stack
+        POP     HL                      ; 10t
+        LD      A,E                     ; 4t
+        AND     L                       ; 4t
+        LD      L,A                     ; 4t
+        LD      A,D                     ; 4t
+        AND     H                       ; 4t
+        LD      H,A                     ; 4t
+        PUSH    HL                      ; 11t
+        JP      (IY)                    ; 8t
+        
+                                     ; 63t
+    
+    
+or_: 		 
+        POP     DE             ; Bitwise OR the top 2 elements of the stack
+        POP     HL
+        LD      A,E
+        OR      L
+        LD      L,A
+        LD      A,D
+        OR      H
+        LD      H,A
+        PUSH    HL
+        JP      (IY)
+    
+    
+xor_:		 
+        POP     DE            ; Bitwise XOR the top 2 elements of the stack
+        POP     HL
+        LD      A,E
+        XOR     L
+        LD      L,A
+        LD      A,D
+        XOR     H
+        LD      H,A
+        PUSH    HL
+        JP      (IY)
+    
+    
 add_:                               ; Add the top 2 members of the stack
-         POP     DE             ; 10t
-         POP     HL             ; 10t
-         ADD     HL,DE          ; 11t
-         PUSH    HL             ; 11t
-         JP      (IY)           ; 8t
-                                ; 50t
-         
+        POP     DE             ; 10t
+        POP     HL             ; 10t
+        ADD     HL,DE          ; 11t
+        PUSH    HL             ; 11t
+        JP      (IY)           ; 8t
+                            ; 50t
+    
 sub_:       						; Subtract the value 2nd on stack from top of stack 
-		 POP     HL             ; 10t
-		 POP     DE             ; 10t
-         OR      A              ;  4t  clear the carry
-		 SBC     HL,DE          ; 15t
-		 PUSH    HL             ; 11t
-		 JP      (IY)           ; 8t
-		                        ; 58t
-
+        POP     HL             ; 10t
+        POP     DE             ; 10t
+        OR      A              ;  4t  clear the carry
+        SBC     HL,DE          ; 15t
+        PUSH    HL             ; 11t
+        JP      (IY)           ; 8t
+                            ; 58t
+    
 inv_:								; Bitwise INVert the top member of the stack
-		 POP     HL
-         LD A,   L
-		 CPL					; Invert L
-		 LD L,   A
-		 LD A,   H
-		 CPL					; Invert H
-		 LD H,   A
-		 PUSH    HL
-		 JP      (IY)
-		 
+        POP     HL
+        LD A,   L
+        CPL					; Invert L
+        LD L,   A
+        LD A,   H
+        CPL					; Invert H
+        LD H,   A
+        PUSH    HL
+        JP      (IY)
+    
 neg_:       						; NEGate the value on top of stack (2's complement)
-		 POP     HL
-         LD A,   L
-		 CPL					; Invert L
-		 LD L,   A
-		 LD A,   H
-		 CPL					; Invert H
-		 LD H,   A
-		 INC     HL             ; and add 1
-		 PUSH    HL
-		 JP      (IY)		             
-         
-         
-dot_:        POP     HL
-         PUSH    BC         ; Preserve the Instruction Pointer !
-         CALL    printdec
-         CALL    crlf
-         POP     BC
-         JP      (IY)
-         
+        POP     HL
+        LD A,   L
+        CPL					; Invert L
+        LD L,   A
+        LD A,   H
+        CPL					; Invert H
+        LD H,   A
+        INC     HL             ; and add 1
+        PUSH    HL
+        JP      (IY)		             
+    
+    
+dot_:        
+        POP     HL
+        PUSH    BC         ; Preserve the Instruction Pointer !
+        CALL    printdec
+        CALL    crlf
+        POP     BC
+        JP      (IY)
+    
 quit:        
-         CALL    ok         ; Print OK and return to monitor
-         CALL    crlf
-         RET 
+        CALL    ok         ; Print OK and return to monitor
+        CALL    crlf
+        RET
+         
 ; **************************************************************************             
 ; def is used to create a colon definition
 ; When a colon is detected, the next character (usually uppercase alpha)
@@ -874,8 +879,8 @@ quit:
 ; ***************************************************************************
 
 def_:                       ; Create a colon definition
-        INC      BC
-        LD       A,(BC)     ; Get the next character
+        INC BC
+        LD  A,(BC)          ; Get the next character
         INC BC
                             ; Look up CFA in vector table
         ADD A,A             ; Double A to index even addresses
@@ -886,7 +891,6 @@ def_:                       ; Create a colon definition
         INC HL              
         LD (HL),B           ; Save high byte of IP in CFA+1
         POP HL              ; Restore HL
-
 nextbyte:                   ; Skip to end of definition   
         LD A,(BC)           ; Get the next character
         INC BC              ; Point to next character
@@ -919,7 +923,8 @@ begin_:                         ; Left parentesis begins a loop
         LD  (loopcount), HL ; Store the Loop counter in variable i
         LD  DE,loopstart    ; Loop code is then copied to buffer at loopstart 
 
-loopbyte:   INC BC              ; Point to next character after the (
+loopbyte:   
+        INC BC              ; Point to next character after the (
         LD A, (BC)          ; Get the next character
         CP $29              ; Is it a right bracket $29
         JR z, end_loop      ; end the code copy
@@ -927,7 +932,8 @@ loopbyte:   INC BC              ; Point to next character after the (
         INC DE
         JR  loopbyte        ; get the next element
 
-end_loop:   LD (DE), A          ; Store the closing bracket at the end of the loop           semicolon at end of definition
+end_loop:   
+        LD (DE), A          ; Store the closing bracket at the end of the loop           semicolon at end of definition
         LD A, $0D
         INC DE
         LD (DE), A          ; and a final Newline
@@ -948,7 +954,8 @@ end_loop:   LD (DE), A          ; Store the closing bracket at the end of the lo
 end_:    
         LD HL, (loopcount)    ; get the loop count
         
-loopagain:  LD  BC, loopstart -1  ; Point the IP to loopstart
+loopagain:  
+        LD  BC, loopstart -1  ; Point the IP to loopstart
 
         LD DE,     $0000  
         OR       A            ; reset the carry flag
@@ -972,13 +979,13 @@ tick:                               ; execute a loop
         
 ; **************************************************************************             
 ; Print the string between underscores
-str_:       ;PUSH BC           ; save the IP                    
+str_:                       
         INC BC
         
 nextchar:            
         LD A, (BC)
         INC BC
-        CP $5F              ; _ is the string terminator
+        CP "_"              ; _ is the string terminator
         JR Z,stringend
         CALL putchar
     
@@ -993,7 +1000,7 @@ stringend:  CALL crlf
 ; More Arithmetic Operations   MUL, DIV and MOD
 ;*********************************************************
 
-mul_:                           ; 16-bit multiply  
+mul_:                       ; 16-bit multiply  
 
         POP  DE             ; get first value
         POP  HL
@@ -1112,7 +1119,8 @@ num_:
 ;  Put 1 on stack if condition is true and 0 if it is false
 ; **************************************************************************
 
-lt_:         POP      DE
+lt_:         
+        POP      DE
         POP      HL
         OR       A         ; reset the carry flag
         SBC      HL,DE
@@ -1140,9 +1148,11 @@ gt_:
         LD      HL,0
         JR      setzero
   
-setone:      LD      HL,1             
+setone:      
+        LD      HL,1             
         
-setzero:     PUSH     HL
+setzero:     
+        PUSH     HL
         JP       (IY)            
         
         
@@ -1185,7 +1195,7 @@ VTABLE:
         DS VTSIZE
 HERE:
         DW 0
-HERE1:
+HERE0:
         DW 0
 DEFINE:
         DB 0
@@ -1197,6 +1207,10 @@ tbPtr:
 
 .endif
     
+        .align $100
+VARS:
+        DS 26 * 2
+        
         .align $100
 HEAP:         
              
