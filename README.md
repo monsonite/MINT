@@ -1,7 +1,7 @@
 # MINT
 A minimal interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems.
 
-## mint1_6 is the latest upload.
+## mint1_8A is the latest upload.
 
 
 
@@ -92,7 +92,9 @@ A basic serial terminal interface is provided, communicating with the familiar g
 MINT provides a simple interactive interpreter based on printable ascii characters. This provides a greater level of human readability compared to assembly language. It is designed to use single ascii character commands - for example, when the interpreter recieves the "+" character, it will perform a 16-bit integer addition. There are approximately 30 such commands, mostly consisting of arithmetic and punctuation characters.
 
 
-mint1_6 is the latest upload.  On the RC2014 Micro it loads at address $8000.
+mint1_8A is the latest upload. It fits into under 1K bytes of RAM.  
+
+On the RC2014 Micro it loads at address $8000, but is executes from $8100
 
 Mint consists of 4 main sections:
 
