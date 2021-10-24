@@ -1,7 +1,28 @@
 # MINT
-A minimal interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
+A Minimal INTerpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
 
-## mint1_9 is the latest upload.
+## What is MINT ?
+
+MINT is a tiny, stack based language based on Forth. On the Z80 it can be implemented in fewer than 1024 bytes of machine code - and it is lightning quick.
+
+It is interactive and interpreted, so you don't have to wait for your code to compile, it happens immediately.
+
+It uses reverse Polish notation (RPN) so you have to put the operands before the operator. It's just like the old HP calculators from 50 years ago.
+
+If you want to add two numbers you just type:
+
+123 456 + . 
+
+When you hit return the result will be displayed thus
+
+00579
+
+OK
+
+But MINT is more than just a glorified calculator - you can write real programs too.
+
+
+## mint1_10 is the latest upload.
 
 
 
