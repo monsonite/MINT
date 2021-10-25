@@ -22,6 +22,36 @@ OK
 But MINT is more than just a glorified calculator - you can write real programs too.
 
 
+## How MINT Works.
+
+MINT is an interpreted language that uses printable ascii characters as its "instructions". There are 95 such characters:
+
+26 Uppercase letters - used as User Commands
+26 Lowercase letters - used as User Variables
+10 Numerals - used for number entry
+33 arithmetic and punctuation symbols - used to select the program operation
+
+The interpreter scans a text string, held in a text buffer, one character at a time. It then uses a look-up table to broadly categorise the current character into one of the above groups.
+
+For each category of character there is a handling routine, which determines how the character should be processed.
+
+NUMBERS
+
+A number string such as 1234 will be scanned one digit at a time and converted into a 16-bit binary number using a routine called num_ .  The converted binary number is then placed on the top of the data stack which is used as a means of temporary storage, before being used later. Multiple numbers may be entered in a sequence separated by spaces: 1234 5678 3579 When the return key is pressed they will be processed in turn and each placed onto the stack. They may then be used as operands or parameters for a calculation or other function.
+
+VARIABLES
+
+User Variables are assigned to the lowercase alpha characters using a routine called var_  The user variables are stored in an array of 26 pairs of bytes in RAM. The lowercase character is a shorthand way of addressing the pair of bytes that holds the variable. It is not usually necessary to know specifically at what address the variable is held at, as it can always be accessed using its name.
+
+For example, the variable addressed by the lowercase character "a" is held in RAM locations 34816 and 34817. Variable "b" will be held in the next locations  34818 and 34819 and so on up to "z".
+
+When a lowercase character is interpreted the variable handler routine converts it to a 16-bit address, and places that address on the top of the stack.
+
+COMMANDS
+
+User Commands are what gives MINT its power and flexibility. Each uppercase letter is a substitute for an address in RAM, where the users code routines are held. For example you may have a routine which produces a hexadecimal dump of the contents of memory. You choose to use the D command to initiate this routine, D for DUMP. You may also pass parameters to a user routine via the stack. In the case of a hex dump routine it would be common to give it the starting address of the section you want to dump, and this might be written 1234 D. On pressing return, the command will be interpreted and the dump routine will commence printing from location 1234. There are clearly 26 User Commands which is usually enough for most small applications.
+
+
 ## mint1_10 is the latest upload.
 
 
