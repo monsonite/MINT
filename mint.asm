@@ -175,7 +175,7 @@
         .ORG ROMSTART
         
 opcodes:
-        DB    lsb(quit_)    ;    NUL
+        DB    lsb(exit_)   ;    NUL
         DB    lsb(nop_)    ;    SOH
         DB    lsb(nop_)    ;    STX
         DB    lsb(nop_)    ;    ETX
@@ -494,14 +494,17 @@ crlf:
         CALL putchar
         RET
         
-ok:         
-        LD A, $4F           ; Print OK
-        CALL putchar
-        LD A, $4B
-        CALL putchar
-        RET            
-        
-        
+ok:    CALL enter
+        .cstr "_Ok_"
+        RET
+
+; ok:         
+;         LD A, $4F           ; Print OK
+;         CALL putchar
+;         LD A, $4B
+;         CALL putchar
+;         RET            
+
 printhex:
 
         ;Display a 16- or 8-bit number in hex.
@@ -530,8 +533,17 @@ Conv:
         
 ; There are 150 spare bytes here (for bitbang serial comms?)        
 
-        .align $100
 
+enter:
+        DEC IX                  ; save Instruction Pointer
+        LD (IX+0),B
+        DEC IX
+        LD (IX+0),C
+        POP BC
+        DEC BC
+        JP  (IY)                ; Execute code from User def
+
+        .align $100
 ; **********************************************************************			 
      
 ; Start of primitive routines 
@@ -539,9 +551,49 @@ Conv:
 ; **********************************************************************
 page1:
 
+exit_:
+        INC BC
+        LD HL,BC
+        LD C,(IX+0)             ; Restore Instruction pointer
+        INC IX              
+        LD B,(IX+0)
+        INC IX                  
+        JP (HL)             
+
 num_:   JP  number
 
+call_:
+        DEC IX                  ; save Instruction Pointer
+        LD (IX+0),B
+        DEC IX
+        LD (IX+0),C
+        LD A,(BC)
+        SUB "A"                 ; Calc index
+        ADD A,A
+        LD HL,DEFS
+        LD L,A
+        LD C,(HL)
+        INC HL
+        LD B,(HL)
+        DEC BC
+        JP  (IY)                ; Execute code from User def
 
+ret_:
+        LD C,(IX+0)         ; Restore Instruction pointer
+        INC IX              
+        LD B,(IX+0)
+        INC IX                  
+        JP (IY)             
+
+var_:
+        LD A,(BC)
+        SUB "a"                 ; Calc index
+        ADD A,A
+        LD HL,VARS
+        LD L,A
+        PUSH HL
+        JP (IY)
+        
 fetch_:                     ; Fetch the value from the address placed on the top of the stack      
         POP     HL          ; 10t
         LD      E,(HL)      ; 7t
@@ -565,31 +617,6 @@ store_:                    ; Store the value at the address placed on the top of
         
                         ; 48t
     
-call_:
-        DEC IX                  ; save Instruction Pointer
-        LD (IX+0),B
-        DEC IX
-        LD (IX+0),C
-        LD A,(BC)
-        SUB "A"                 ; Calc index
-        ADD A,A
-        LD HL,DEFS
-        LD L,A
-        LD C,(HL)
-        INC HL
-        LD B,(HL)
-        DEC BC
-        JP  (IY)                ; Execute code from User def
-
-var_:
-        LD A,(BC)
-        SUB "a"                 ; Calc index
-        ADD A,A
-        LD HL,VARS
-        LD L,A
-        PUSH HL
-        JP (IY)
-        
 dup_:        
         POP     HL         ; Duplicate the top member of the stack
         PUSH    HL
@@ -675,30 +702,6 @@ inv_:								; Bitwise INVert the top member of the stack
         LD H,   A
         PUSH    HL
         JP      (IY)
-    
-neg_:       						; NEGate the value on top of stack (2's complement)
-        POP     HL
-        LD A,   L
-        CPL					; Invert L
-        LD L,   A
-        LD A,   H
-        CPL					; Invert H
-        LD H,   A
-        INC     HL             ; and add 1
-        PUSH    HL
-        JP      (IY)		             
-    
-    
-
-         
-      
-
-ret_:
-        LD C,(IX+0)         ; Restore Instruction pointer
-        INC IX              
-        LD B,(IX+0)
-        INC IX                  
-        JP (IY)             
 
 ; ***********************************************************************************
 ; Loop Handling Code
@@ -780,10 +783,10 @@ nextchar:
         CALL putchar
     
         JR   nextchar
-        
-       
-        
-stringend:  CALL crlf
+
+stringend:  
+        CALL crlf
+        DEC BC
         JP   (IY) 
         
 tick_:                               ; execute a loop
@@ -822,7 +825,6 @@ mod_:        JR mod_1
 ; Page 2 Primitives
 ; Includes more Arithmetic Operations   MUL, DIV and MOD
 ;*********************************************************
-
 lit:       
         JP       (IY)             
         
@@ -888,15 +890,6 @@ load:
 del:      
         JP       (IY) 
         
-        
-; Second bounce trampoline jumps
-
-mul_1:  JR mul
-div_1:  JR div
-mod_1:  JR mod
-
-def_1:       
-
 ; **************************************************************************             
 ; def is used to create a colon definition
 ; When a colon is detected, the next character (usually uppercase alpha)
@@ -906,6 +899,7 @@ def_1:
 ; is found.
 ; ***************************************************************************
 
+def_1:      
 def:                       ; Create a colon definition
         INC BC
         LD  A,(BC)          ; Get the next character
@@ -930,6 +924,15 @@ end_def:
         DEC BC
         JP (IY)       
 
+; Second bounce trampoline jumps
+
+mul_1:  JR mul
+div_1:  JR div
+mod_1:  JR mod
+
+; ********************************************************
+; Page 3 Primitives
+;*********************************************************
 mul:                       ; 16-bit multiply  
 
         POP  DE             ; get first value
@@ -1031,6 +1034,19 @@ Div8_next:
         PUSH DE         ; Push Remainder 
         PUSH HL         ; Push Quotient      
         JP       (IY)  
+   
+neg_:       						; NEGate the value on top of stack (2's complement)
+        POP     HL
+        LD A,   L
+        CPL					; Invert L
+        LD L,   A
+        LD A,   H
+        CPL					; Invert H
+        LD H,   A
+        INC     HL             ; and add 1
+        PUSH    HL
+        JP      (IY)		             
+
    
 ; There are 75 spare bytes here for extended primitives 
 
