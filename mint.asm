@@ -175,7 +175,7 @@
         .ORG ROMSTART
         
 opcodes:
-        DB    lsb(nop_)    ;    NUL
+        DB    lsb(quit_)    ;    NUL
         DB    lsb(nop_)    ;    SOH
         DB    lsb(nop_)    ;    STX
         DB    lsb(nop_)    ;    ETX
@@ -338,12 +338,14 @@ interp1:
 waitchar:   
         CALL getchar        ; loop around waiting for character
         CP $0A              ; Less than $0A
-        JR C, endchar       ; Return char
+        JR Z, endchar       ; Return char
         CP $7F              ; Greater or equal to $7F
         JR NC, endchar             
 
         LD (BC), A          ; store the character in textbuf
         INC BC
+        CP  $0              ; is it end of string?
+        JR Z, endchar
         CP  $0D             ; is it a newline?
         JR Z, endchar
         
@@ -399,7 +401,7 @@ NEXT:
 		
 dispatch:                        
 
-        LD H, msb(nop_)          ; 7t    Load H with the 1st page address
+        LD H, msb(page1)         ; 7t    Load H with the 1st page address
         LD DE, opcodes           ; 7t    Start address of jump table         
         LD E,A                   ; 4t    Index into table
         LD A,(DE)                ; 7t    get low jump address
@@ -528,13 +530,15 @@ Conv:
         
 ; There are 150 spare bytes here (for bitbang serial comms?)        
 
-        .ORG ROMSTART + $200
+        .align $100
 
 ; **********************************************************************			 
      
 ; Start of primitive routines 
 
 ; **********************************************************************
+page1:
+
 num_:   JP  number
 
 

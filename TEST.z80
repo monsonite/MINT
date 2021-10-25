@@ -9,11 +9,14 @@ TESTMODE equ 1
     ld (tbPtr),HL
     jr buf2%%M
 buf1%%M:
-    db s1,$5C,"\r"
+    db s1,0
 buf2%%M:
 .endm
 
 LD SP,DSTACK
+
+setTbuf ""
+CALL mint
 
 setTbuf "123 456+."
 CALL mint
