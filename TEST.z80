@@ -1,4 +1,7 @@
 .engine mycomputer
+
+.include "constants.inc"
+
 TESTMODE equ 1
 
 .macro setTBuf,s1
@@ -12,19 +15,22 @@ buf2%%M:
 
 LD SP,DSTACK
 
+setTbuf "123 456+."
+CALL mint
+
 setTbuf ":X1;X."
-CALL $200
+CALL mint
 
 setTbuf "2x!x@."
-CALL $200
+CALL mint
 
 setTbuf ":Aa!;3Aa@."
-CALL $200
+CALL mint
 
 setTbuf ":Aa!;:Ba@;4AB."
-CALL $200
+CALL mint
 
 HALT
 
-.include "tec-mint.z80"
+.include "mint.asm"
 

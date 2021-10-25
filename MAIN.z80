@@ -1,9 +1,13 @@
 .engine mycomputer
+
+.include "constants.inc"
+
 TESTMODE equ 0
 
 LD SP,DSTACK
-CALL $200
+CALL mint
+
 HALT
 
-.include "tec-mint.z80"
+.include "mint.asm"
 
