@@ -1,6 +1,6 @@
 ; *************************************************************************
 ;
-;        MINT_1.11 Micro-Interpreter for the Z80 based on SIMPL
+;        MINT_1.10 Micro-Interpreter for the Z80 based on SIMPL
 ;
 ;        Ken Boak October 25th 2021 
 ;
