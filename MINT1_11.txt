@@ -40,7 +40,11 @@
 ;
 ;
 ;
-;        New in this version 1.10:
+;        New in this version 1.11:
+;  
+;        handler for hardware specific system calls
+;   
+;        sys_call jump table  sdefs:
 ;
 ;        Major rework by John Hardy 24-10-21
 ;
@@ -158,9 +162,9 @@
 ;
 ; *****************************************************************************
 
-        ; TESTMODE    EQU 0
-        ; ROMSTART    EQU $8000
-        ; RAMSTART    EQU $8400
+        TESTMODE    EQU 0
+        ROMSTART    EQU $8000
+        RAMSTART    EQU $8400
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -176,38 +180,38 @@
         
 opcodes:
         DB    lsb(exit_)   ;    NUL
-        DB    lsb(nop_)    ;    SOH
-        DB    lsb(nop_)    ;    STX
-        DB    lsb(nop_)    ;    ETX
-        DB    lsb(nop_)    ;    EOT
-        DB    lsb(nop_)    ;    ENQ
-        DB    lsb(nop_)    ;    ACK
-        DB    lsb(nop_)    ;    BEL
-        DB    lsb(nop_)    ;    BS
-        DB    lsb(nop_)    ;    TAB
-        DB    lsb(nop_)    ;    LF
-        DB    lsb(nop_)    ;    VT
-        DB    lsb(nop_)    ;    FF
+        DB    lsb(sys_)    ;    SOH
+        DB    lsb(sys_)    ;    STX
+        DB    lsb(sys_)    ;    ETX
+        DB    lsb(sys_)    ;    EOT
+        DB    lsb(sys_)    ;    ENQ
+        DB    lsb(sys_)    ;    ACK
+        DB    lsb(sys_)    ;    BEL
+        DB    lsb(sys_)    ;    BS
+        DB    lsb(sys_)    ;    TAB
+        DB    lsb(sys_)    ;    LF
+        DB    lsb(sys_)    ;    VT
+        DB    lsb(sys_)    ;    FF
         DB    lsb(finish)  ;    CR   This jumps through finish to interp
-        DB    lsb(nop_)    ;    SO
-        DB    lsb(nop_)    ;    SI
-        DB    lsb(nop_)    ;    DLE
-        DB    lsb(nop_)    ;    DC1
-        DB    lsb(nop_)    ;    DC2
-        DB    lsb(nop_)    ;    DC3
-        DB    lsb(nop_)    ;    DC4
-        DB    lsb(nop_)    ;    NAK
-        DB    lsb(nop_)    ;    SYN
-        DB    lsb(nop_)    ;    ETB
-        DB    lsb(nop_)    ;    CAN
-        DB    lsb(nop_)    ;    EM
-        DB    lsb(nop_)    ;    SUB
-        DB    lsb(nop_)    ;    ESC
-        DB    lsb(nop_)    ;    FS
-        DB    lsb(nop_)    ;    GS
-        DB    lsb(nop_)    ;    RS
-        DB    lsb(nop_)    ;    US
-        DB    lsb(nop_)    ;    SP
+        DB    lsb(sys_)    ;    SO
+        DB    lsb(sys_)    ;    SI
+        DB    lsb(sys_)    ;    DLE
+        DB    lsb(sys_)    ;    DC1
+        DB    lsb(sys_)    ;    DC2
+        DB    lsb(sys_)    ;    DC3
+        DB    lsb(sys_)    ;    DC4
+        DB    lsb(sys_)    ;    NAK
+        DB    lsb(sys_)    ;    SYN
+        DB    lsb(sys_)    ;    ETB
+        DB    lsb(sys_)    ;    CAN
+        DB    lsb(sys_)    ;    EM
+        DB    lsb(sys_)    ;    SUB
+        DB    lsb(sys_)    ;    ESC
+        DB    lsb(sys_)    ;    FS
+        DB    lsb(sys_)    ;    GS
+        DB    lsb(sys_)    ;    RS
+        DB    lsb(sys_)    ;    US
+        DB    lsb(sys_)    ;    SP
         DB    lsb(store_)  ;    !            
         DB    lsb(dup_)    ;    "
         DB    lsb(lit_)    ;    #
@@ -303,6 +307,15 @@ opcodes:
         DB    lsb(load_)   ;    }            
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
+
+sysdefs:  ; Addresses for sys_calls
+
+		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;  
+        DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
+		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;    
+        DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
+        	
+		
 
 idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
@@ -564,7 +577,9 @@ exit_:
         INC IX              
         LD B,(IX+0)
         INC IX                  
-        JP (HL)             
+        JP (HL)
+        
+sys_:   JP      (IY)            ; 8t Sys Call handler to be inserted    
 
 num_:   JP  number
 
@@ -681,22 +696,22 @@ xor_:
         JP      (IY)
     
     
-add_:                               ; Add the top 2 members of the stack
+add_:                          ; Add the top 2 members of the stack
         POP     DE             ; 10t
         POP     HL             ; 10t
         ADD     HL,DE          ; 11t
         PUSH    HL             ; 11t
         JP      (IY)           ; 8t
-                            ; 50t
+                               ; 50t
     
-sub_:       						; Subtract the value 2nd on stack from top of stack 
+sub_:       				   ; Subtract the value 2nd on stack from top of stack 
         POP     HL             ; 10t
         POP     DE             ; 10t
         OR      A              ;  4t  clear the carry
         SBC     HL,DE          ; 15t
         PUSH    HL             ; 11t
         JP      (IY)           ; 8t
-                            ; 58t
+                               ; 58t
     
 inv_:								; Bitwise INVert the top member of the stack
         POP     HL
@@ -1072,7 +1087,7 @@ exec_:
         POP HL              ; get TOS
         JP (HL)
         
-; There are 75 spare bytes here for extended primitives 
+
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
@@ -1249,6 +1264,9 @@ putchar:
         OUT  (kACIA1Data),A ;Write data byte
         OR   0xFF           ;Return success A=0xFF and NZ flagged
         RET
+        
+        
+        ; There are a few spare bytes here 
 
 ;**************************************************************
 
