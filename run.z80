@@ -1,6 +1,6 @@
 .engine mycomputer
 
-.include "constants.inc"
+.include "constants.z80"
 
 TESTMODE equ 0
 
@@ -9,5 +9,5 @@ CALL mint
 
 HALT
 
-.include "mint.asm"
+.include "MINT.asm"
 

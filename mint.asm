@@ -304,7 +304,10 @@ opcodes:
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
 
-        .ORG ROMSTART + $80
+idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
+        DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
+        DW  nop_,   nop_,   nop_,   nop_,   util_,  nop_,   nop_,   exec_   ; QRSTUVWX    
+        DW  nop_,   nop_                                                    ; YZ    
 
 mint:
         LD IX,RSTACK
@@ -314,7 +317,10 @@ mint:
         LD (HERE1),BC
         LD A,FALSE
         LD (DEFINE),A
-
+        LD HL,idefs
+        LD DE,defs
+        LD BC,26 * 2
+        LDIR
 interp:
         CALL crlf
         CALL ok             ; friendly prompt
@@ -401,11 +407,11 @@ NEXT:
 		
 dispatch:                        
 
-        LD H, msb(page1)         ; 7t    Load H with the 1st page address
         LD DE, opcodes           ; 7t    Start address of jump table         
         LD E,A                   ; 4t    Index into table
         LD A,(DE)                ; 7t    get low jump address
         LD L,A                   ; 4t    and put into L
+        LD H, msb(page1)         ; 7t    Load H with the 1st page address
         JP  (HL)                 ; 4t    Jump to routine
         
                                  ; 33t  (previously 64t)
@@ -1043,11 +1049,29 @@ neg_:       						; NEGate the value on top of stack (2's complement)
         LD A,   H
         CPL					; Invert H
         LD H,   A
-        INC     HL             ; and add 1
+        INC     HL          ; and add 1
         PUSH    HL
         JP      (IY)		             
 
-   
+; **********************************************************************
+; 
+; routines that are written in Mint
+; Note: opcode zero can exit Mint and go into machine code
+; Mint can be reentered from machine code by CALL enter
+;
+; **********************************************************************
+
+util_:
+        DB 0                ; exit Mint
+        POP HL              ; get TOS
+        LD A,L
+        JP dispatch 
+
+exec_:
+        DB 0                ; exit Mint
+        POP HL              ; get TOS
+        JP (HL)
+        
 ; There are 75 spare bytes here for extended primitives 
 
 ; ************************SERIAL HANDLING ROUTINES**********************        

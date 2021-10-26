@@ -1,8 +1,8 @@
 ; *************************************************************************
 ;
-;        MINT_1.10 Micro-Interpreter for the Z80 based on SIMPL
+;        MINT_1.11 Micro-Interpreter for the Z80 based on SIMPL
 ;
-;        Ken Boak October 25th 2021 
+;        Ken Boak October 19th 2021 
 ;
 ;	     Including major reconfiguration by John Hardy 24-10-21
 ;
@@ -44,15 +44,19 @@
 ;
 ;        Major rework by John Hardy 24-10-21
 ;
+;		 NEXT followed by dispatch is just 46 t states
+;
+;
+;
 ;        All commands accessed via a byte wide look up table
 ;
 ;        Heap used for command storage (HERE and HERE1)
 ;
-;        Primitives are on page $82xx or use trampoline jump to page $83xx.
+;        Primitives are on page $82xx continued using a trampoline jump to page $83xx.
 ;        
 ;        This allows single byte opcodes reducing the dispatch time from
 ;        64 t states to 33 t states
-
+;
 ;        Fits into 1024 bytes of ROM, with 163 bytes to spare.
 ;
 ;
@@ -154,6 +158,10 @@
 ;
 ; *****************************************************************************
 
+        TESTMODE    EQU 0
+        ROMSTART    EQU $8000
+        RAMSTART    EQU $8400
+
         ROMSIZE     EQU $800
         DSIZE       EQU $100
         RSIZE       EQU $100
@@ -162,15 +170,12 @@
         FALSE       EQU 0
 
         loopstart EQU  $A760   ; Loop code storage area
-        
-        loopcount EQU  $8810   ; Hold the loopcounter in variable i
+        loopcount EQU  $A810   ; Hold the loopcounter in variable i
 
-       
-ROMSTART:            
-        .ORG $8000
+        .ORG ROMSTART
         
 opcodes:
-        DB    lsb(nop_)    ;    NUL
+        DB    lsb(exit_)   ;    NUL
         DB    lsb(nop_)    ;    SOH
         DB    lsb(nop_)    ;    STX
         DB    lsb(nop_)    ;    ETX
@@ -299,8 +304,12 @@ opcodes:
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
 
-        .ORG $8080
-init:
+idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
+        DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
+        DW  nop_,   nop_,   nop_,   nop_,   util_,  nop_,   nop_,   exec_   ; QRSTUVWX    
+        DW  nop_,   nop_                                                    ; YZ    
+
+mint:
         LD IX,RSTACK
         LD IY,NEXT			; IY provides a faster jump to NEXT
         LD BC,HEAP
@@ -308,7 +317,10 @@ init:
         LD (HERE1),BC
         LD A,FALSE
         LD (DEFINE),A
-
+        LD HL,idefs
+        LD DE,defs
+        LD BC,26 * 2
+        LDIR
 interp:
         CALL crlf
         CALL ok             ; friendly prompt
@@ -332,12 +344,14 @@ interp1:
 waitchar:   
         CALL getchar        ; loop around waiting for character
         CP $0A              ; Less than $0A
-        JR C, endchar       ; Return char
+        JR Z, endchar       ; Return char
         CP $7F              ; Greater or equal to $7F
         JR NC, endchar             
 
         LD (BC), A          ; store the character in textbuf
         INC BC
+        CP  $0              ; is it end of string?
+        JR Z, endchar
         CP  $0D             ; is it a newline?
         JR Z, endchar
         
@@ -393,11 +407,11 @@ NEXT:
 		
 dispatch:                        
 
-        LD H, msb(nop_)          ; 7t    Load H with the 1st page address
         LD DE, opcodes           ; 7t    Start address of jump table         
         LD E,A                   ; 4t    Index into table
         LD A,(DE)                ; 7t    get low jump address
         LD L,A                   ; 4t    and put into L
+        LD H, msb(page1)         ; 7t    Load H with the 1st page address
         JP  (HL)                 ; 4t    Jump to routine
         
                                  ; 33t  (previously 64t)
@@ -405,6 +419,7 @@ dispatch:
 
 ; ********************************************************************************
 ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
+; Read the first character. 
 ;			
 ; Number characters ($30 to $39) are converted to digits by subtracting $30
 ; and then added into the L register. (HL forms a 16-bit accumulator)
@@ -424,7 +439,7 @@ number1:
         ADD A,L                 ; 4t    Add into bottom of HL
         LD  L,A                 ; 4t
         
-                                ; 15t cycles
+                                ;  15t cycles
       
         INC BC                  ; 6t    Increment IP
         LD A, (BC)              ; 7t    and get the next character
@@ -435,26 +450,19 @@ number1:
        
 times10:                        ; Multiply digit(s) in HL by 10
         ADD HL,HL               ; 11t    2X
-        LD  E,L                 ; 4t    LD DE,HL
-        LD  D,H                 ; 4t
+        LD  E,L                 ;  4t    LD DE,HL
+        LD  D,H                 ;  4t
         ADD HL,HL               ; 11t    4X
         ADD HL,HL               ; 11t    8X
         ADD HL,DE               ; 11t    2X  + 8X  = 10X
                                 ; 52t cycles
 
-        JP  number1             ; 10t
+        JP  number1
                 
 endnum:
-        PUSH HL                 ; 11t   Put the number on the stack
-                                ; and process the next character using inlined dispatch
-        LD H, msb(nop_)         ; 7t    Load H with the 1st page address
-        LD DE, opcodes          ; 7t    Start address of jump table         
-        LD E,A                  ; 4t    Index into table
-        LD A,(DE)               ; 7t    get low jump address
-        LD L,A                  ; 4t    and put into L
-        JP  (HL)                ; 4t    Jump to routine
+        PUSH HL                ; 11t   Put the number on the stack
         
-                                ; 44 t
+        JR dispatch            ; and process the next character
         
 
         
@@ -492,14 +500,17 @@ crlf:
         CALL putchar
         RET
         
-ok:         
-        LD A, $4F           ; Print OK
-        CALL putchar
-        LD A, $4B
-        CALL putchar
-        RET            
-        
-        
+ok:    CALL enter
+        .cstr "_Ok_"
+        RET
+
+; ok:         
+;         LD A, $4F           ; Print OK
+;         CALL putchar
+;         LD A, $4B
+;         CALL putchar
+;         RET            
+
 printhex:
 
         ;Display a 16- or 8-bit number in hex.
@@ -528,16 +539,67 @@ Conv:
         
 ; There are 150 spare bytes here (for bitbang serial comms?)        
 
-        .ORG $8200
 
+enter:
+        DEC IX                  ; save Instruction Pointer
+        LD (IX+0),B
+        DEC IX
+        LD (IX+0),C
+        POP BC
+        DEC BC
+        JP  (IY)                ; Execute code from User def
+
+        .align $100
 ; **********************************************************************			 
      
 ; Start of primitive routines 
 
 ; **********************************************************************
+page1:
+
+exit_:
+        INC BC
+        LD HL,BC
+        LD C,(IX+0)             ; Restore Instruction pointer
+        INC IX              
+        LD B,(IX+0)
+        INC IX                  
+        JP (HL)             
+
 num_:   JP  number
 
+call_:
+        DEC IX                  ; save Instruction Pointer
+        LD (IX+0),B
+        DEC IX
+        LD (IX+0),C
+        LD A,(BC)
+        SUB "A"                 ; Calc index
+        ADD A,A
+        LD HL,DEFS
+        LD L,A
+        LD C,(HL)
+        INC HL
+        LD B,(HL)
+        DEC BC
+        JP  (IY)                ; Execute code from User def
 
+ret_:
+        LD C,(IX+0)         ; Restore Instruction pointer
+        INC IX              
+        LD B,(IX+0)
+        INC IX                  
+        JP (IY)             
+
+var_:
+        LD A,(BC)
+        SUB "a"                 ; Calc index
+        ADD A,A
+        LD HL,VARS
+        LD L,A
+        PUSH HL
+        JP (IY)
+        
 fetch_:                     ; Fetch the value from the address placed on the top of the stack      
         POP     HL          ; 10t
         LD      E,(HL)      ; 7t
@@ -561,31 +623,6 @@ store_:                    ; Store the value at the address placed on the top of
         
                         ; 48t
     
-call_:
-        DEC IX                  ; save Instruction Pointer
-        LD (IX+0),B
-        DEC IX
-        LD (IX+0),C
-        LD A,(BC)
-        SUB "A"                 ; Calc index
-        ADD A,A
-        LD HL,DEFS
-        LD L,A
-        LD C,(HL)
-        INC HL
-        LD B,(HL)
-        DEC BC
-        JP  (IY)                ; Execute code from User def
-
-var_:
-        LD A,(BC)
-        SUB "a"                 ; Calc index
-        ADD A,A
-        LD HL,VARS
-        LD L,A
-        PUSH HL
-        JP (IY)
-        
 dup_:        
         POP     HL         ; Duplicate the top member of the stack
         PUSH    HL
@@ -671,30 +708,6 @@ inv_:								; Bitwise INVert the top member of the stack
         LD H,   A
         PUSH    HL
         JP      (IY)
-    
-neg_:       						; NEGate the value on top of stack (2's complement)
-        POP     HL
-        LD A,   L
-        CPL					; Invert L
-        LD L,   A
-        LD A,   H
-        CPL					; Invert H
-        LD H,   A
-        INC     HL             ; and add 1
-        PUSH    HL
-        JP      (IY)		             
-    
-    
-
-         
-      
-
-ret_:
-        LD C,(IX+0)         ; Restore Instruction pointer
-        INC IX              
-        LD B,(IX+0)
-        INC IX                  
-        JP (IY)             
 
 ; ***********************************************************************************
 ; Loop Handling Code
@@ -765,25 +778,31 @@ finish:
         
 ; **************************************************************************             
 ; Print the string between underscores
-str_:             
-       
-nextchar:
+str_:                       
         INC BC
+        
+nextchar:            
         LD A, (BC)
+        INC BC
         CP "_"              ; _ is the string terminator
         JR Z,stringend
-        CALL putchar        ; print the character
+        CALL putchar
+    
         JR   nextchar
-        
+
 stringend:  
-       
-        JP   (IY)           ; jump to NEXT
+        CALL crlf
+        DEC BC
+        JP   (IY) 
         
 tick_:                               ; execute a loop
         LD    BC, loopstart - 1
         JP   (IY)
         
-
+quit_:        
+        CALL    ok         ; Print OK and return to monitor
+       
+        RET
         
 dot_:        
         POP     HL
@@ -792,8 +811,7 @@ dot_:
         JP      (IY)
         
 ;       Trampoline Jumps to Page 2 of primitives                
-
-quit_:       JR quit        
+        
 lt_:         JR lt
 gt_:         JR gt
 eq_:         JR eq
@@ -813,10 +831,6 @@ mod_:        JR mod_1
 ; Page 2 Primitives
 ; Includes more Arithmetic Operations   MUL, DIV and MOD
 ;*********************************************************
-quit:        
-        CALL    ok         ; Print OK and return to monitor
-        RET
-        
 lit:       
         JP       (IY)             
         
@@ -882,15 +896,6 @@ load:
 del:      
         JP       (IY) 
         
-        
-; Second bounce trampoline jumps
-
-mul_1:  JR mul
-div_1:  JR div
-mod_1:  JR mod
-
-def_1:       
-
 ; **************************************************************************             
 ; def is used to create a colon definition
 ; When a colon is detected, the next character (usually uppercase alpha)
@@ -900,6 +905,7 @@ def_1:
 ; is found.
 ; ***************************************************************************
 
+def_1:      
 def:                       ; Create a colon definition
         INC BC
         LD  A,(BC)          ; Get the next character
@@ -924,6 +930,15 @@ end_def:
         DEC BC
         JP (IY)       
 
+; Second bounce trampoline jumps
+
+mul_1:  JR mul
+div_1:  JR div
+mod_1:  JR mod
+
+; ********************************************************
+; Page 3 Primitives
+;*********************************************************
 mul:                       ; 16-bit multiply  
 
         POP  DE             ; get first value
@@ -1025,15 +1040,38 @@ Div8_next:
         PUSH DE         ; Push Remainder 
         PUSH HL         ; Push Quotient      
         JP       (IY)  
-        
-        
-BC_IX:  ; Push PC onto the return stack
-        DEC IX                  ; save Instruction Pointer
-        LD (IX+0),B
-        DEC IX
-        LD (IX+0),C     
-        RET
    
+neg_:       						; NEGate the value on top of stack (2's complement)
+        POP     HL
+        LD A,   L
+        CPL					; Invert L
+        LD L,   A
+        LD A,   H
+        CPL					; Invert H
+        LD H,   A
+        INC     HL          ; and add 1
+        PUSH    HL
+        JP      (IY)		             
+
+; **********************************************************************
+; 
+; routines that are written in Mint
+; Note: opcode zero can exit Mint and go into machine code
+; Mint can be reentered from machine code by CALL enter
+;
+; **********************************************************************
+
+util_:
+        DB 0                ; exit Mint
+        POP HL              ; get TOS
+        LD A,L
+        JP dispatch 
+
+exec_:
+        DB 0                ; exit Mint
+        POP HL              ; get TOS
+        JP (HL)
+        
 ; There are 75 spare bytes here for extended primitives 
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
@@ -1178,19 +1216,19 @@ serial_init:
 ;             BC DE HL IX IY I AF' BC' DE' HL' preserved
 ; This function does not return until a character is available
 getchar:
-;.if TESTMODE=1
-;        PUSH HL
-;        LD HL,(tbPtr)
-;        LD A,(HL)
-;        INC HL
-;        LD (tbPtr),HL
-;        POP HL
-;.else
+.if TESTMODE=1
+        PUSH HL
+        LD HL,(tbPtr)
+        LD A,(HL)
+        INC HL
+        LD (tbPtr),HL
+        POP HL
+.else
         IN   A,(kACIA1Cont) ;Address of status register
         AND  $01            ;Receive byte available
         JR   Z, getchar     ;Return Z if no character
         IN   A,(kACIA1Data) ;Read data byte
-;.endif
+.endif
         RET                 ;NZ flagged if character input
 
 
@@ -1214,10 +1252,8 @@ putchar:
 
 ;**************************************************************
 
+        .ORG RAMSTART
 
-        .ORG $8400
-
-RAMSTART:
         DS DSIZE
 DSTACK:        
 
@@ -1231,12 +1267,12 @@ HERE1:
 DEFINE:
         DB 0
 
-;.if TESTMODE=1
+.if TESTMODE=1
 
 tbPtr:
         DW 0
 
-;.endif
+.endif
     
 
 ; ****************************************************************
@@ -1255,3 +1291,4 @@ VARS:
         
         .align $100
 HEAP:         
+

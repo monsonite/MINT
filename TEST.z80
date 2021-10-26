@@ -1,7 +1,7 @@
 .engine mycomputer
 
-.include "constants.inc"
-
+.include "constants.z80"
+    
 TESTMODE equ 1
 
 .macro setTBuf,s1
@@ -36,7 +36,10 @@ CALL mint
 setTbuf ":Aa!;:Ba@;4AB."
 CALL mint
 
+setTbuf "5 46U"
+CALL mint
+
 HALT
 
-.include "mint.asm"
+.include "MINT.asm"
 
