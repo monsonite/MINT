@@ -6,6 +6,14 @@
 ;
 ;	     Including major reconfiguration by John Hardy 24-10-21
 ;
+;        New in this version 1.11:
+;  
+;        handler for hardware specific system calls
+;   
+;        sys_call jump table  sdefs:
+;
+
+;
 ;
 ;        Length  862 bytes
 ;
@@ -40,12 +48,7 @@
 ;
 ;
 ;
-;        New in this version 1.11:
-;  
-;        handler for hardware specific system calls
-;   
-;        sys_call jump table  sdefs:
-;
+;        
 ;        Major rework by John Hardy 24-10-21
 ;
 ;		 NEXT followed by dispatch is just 46 t states
