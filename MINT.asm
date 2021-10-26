@@ -1,11 +1,10 @@
 ; *************************************************************************
 ;
-;        MINT_1.10 Micro-Interpreter for the Z80 based on SIMPL
+;        MINT Micro-Interpreter for the Z80 based on SIMPL
 ;
-;        Ken Boak October 19th 2021 
+;        Ken Boak October 26th 2021 
 ;
-;	     Including major reconfiguration by John Hardy 24-10-21
-;
+;	     Including major reconfiguration by John Hardy
 ;
 ;        Length  862 bytes
 ;
