@@ -2,7 +2,7 @@
 ;
 ;        MINT_1.11 Micro-Interpreter for the Z80 based on SIMPL
 ;
-;        Ken Boak October 19th 2021 
+;        Ken Boak October 27th 2021 
 ;
 ;	     Including major reconfiguration by John Hardy 24-10-21
 ;
