@@ -12,10 +12,15 @@
 ;   
 ;        sys_call jump table  sdefs:
 ;
-
+;        over added and linked to %
 ;
+;        placeholder for hexadecimal number routine #ABCD
 ;
-;        Length  862 bytes
+;		 invert inv and negate neg now use the Subtraction routine.
+;
+;        comparison operators tidied up to save 12 bytes
+;
+;        
 ;
 ;        Includes serial routines getchar and putchar
 ;        printstring
@@ -217,9 +222,9 @@ opcodes:
         DB    lsb(sys_)    ;    SP
         DB    lsb(store_)  ;    !            
         DB    lsb(dup_)    ;    "
-        DB    lsb(lit_)    ;    #
+        DB    lsb(hex_)    ;    #
         DB    lsb(swap_)   ;    $            
-        DB    lsb(mod_)    ;    %            
+        DB    lsb(over_)   ;    %            
         DB    lsb(and_)    ;    &
         DB    lsb(drop_)   ;    '
         DB    lsb(begin_)  ;    (        
@@ -573,6 +578,9 @@ enter:
 ; **********************************************************************
 page1:
 
+quit_:        
+        JR    ok                ; Print OK and return to monitor
+
 exit_:
         INC BC
         LD HL,BC
@@ -653,24 +661,31 @@ swap_:
         PUSH    HL
         PUSH    DE
         JP (IY)
+        
+over_:  POP     HL          ; Duplicate 2nd element of the stack
+        POP     DE
+        PUSH    DE
+        PUSH    HL
+        PUSH    DE          ; And push it to top of stack
+        JP (IY)        
     
-drop_:                           ; Discard the top member of the stack
+drop_:                      ; Discard the top member of the stack
         POP     HL
         JP      (IY)
 
 and_:        
-        POP     DE                      ; 10t Bitwise AND the top 2 elements of the stack
-        POP     HL                      ; 10t
-        LD      A,E                     ; 4t
-        AND     L                       ; 4t
-        LD      L,A                     ; 4t
-        LD      A,D                     ; 4t
-        AND     H                       ; 4t
-        LD      H,A                     ; 4t
-        PUSH    HL                      ; 11t
-        JP      (IY)                    ; 8t
+        POP     DE          ; 10t Bitwise AND the top 2 elements of the stack
+        POP     HL          ; 10t
+        LD      A,E         ; 4t
+        AND     L           ; 4t
+        LD      L,A         ; 4t
+        LD      A,D         ; 4t
+        AND     H           ; 4t
+        LD      H,A         ; 4t
+        PUSH    HL          ; 11t
+        JP      (IY)        ; 8t
         
-                                     ; 63t
+                            ; 63t
     
     
 or_: 		 
@@ -706,26 +721,28 @@ add_:                          ; Add the top 2 members of the stack
         PUSH    HL             ; 11t
         JP      (IY)           ; 8t
                                ; 50t
+                               
+                               
+inv_:						   ; Bitwise INVert the top member of the stack
+        LD DE, $FFFF           ; by subtracting from $FFFF
+        JR      SUB_1        
+   
+neg_:   LD HL, 0    		   ; NEGate the value on top of stack (2's complement)
+        POP     DE             ; 10t
+        EX DE,HL
+        JR     SUB_2           ; use the SUBtract routine
     
 sub_:       				   ; Subtract the value 2nd on stack from top of stack 
-        POP     HL             ; 10t
+        
         POP     DE             ; 10t
-        OR      A              ;  4t  clear the carry
+sub_1:  POP     HL             ; 10t  Entry point for INVert
+sub_2:  AND     A              ;  4t  Entry point for NEGate
         SBC     HL,DE          ; 15t
         PUSH    HL             ; 11t
         JP      (IY)           ; 8t
                                ; 58t
     
-inv_:								; Bitwise INVert the top member of the stack
-        POP     HL
-        LD A,   L
-        CPL					; Invert L
-        LD L,   A
-        LD A,   H
-        CPL					; Invert H
-        LD H,   A
-        PUSH    HL
-        JP      (IY)
+
 
 ; ***********************************************************************************
 ; Loop Handling Code
@@ -736,7 +753,7 @@ inv_:								; Bitwise INVert the top member of the stack
 ; The loopcount is held in RAM at user variable i so that it can be used within the loop
 ; ***********************************************************************************
 
-begin_:                         ; Left parentesis begins a loop
+begin_:                     ; Left parentesis begins a loop
 
         POP  HL             ; Get the loopcounter off the stack
         LD  (loopcount), HL ; Store the Loop counter in variable i
@@ -790,10 +807,6 @@ finish:
         JP     interp         ; back to OK prompt
 
 
-
-
-
-        
 ; **************************************************************************             
 ; Print the string between underscores
 str_:                       
@@ -805,35 +818,16 @@ nextchar:
         CP "_"              ; _ is the string terminator
         JR Z,stringend
         CALL putchar
-    
         JR   nextchar
 
-stringend:  
-        CALL crlf
-        DEC BC
-        JP   (IY) 
-        
-tick_:                               ; execute a loop
-        LD    BC, loopstart - 1
-        JP   (IY)
-        
-quit_:        
-        CALL    ok         ; Print OK and return to monitor
-       
-        RET
-        
-dot_:        
-        POP     HL
-        CALL    printdec
-        CALL    crlf
-        JP      (IY)
-        
-;       Trampoline Jumps to Page 2 of primitives                
-        
+
+;       Trampoline Jumps to Page 2 of primitives
+tick_:       JR tick
+dot_:        JR dot
 lt_:         JR lt
 gt_:         JR gt
 eq_:         JR eq
-lit_:        JR lit
+hex_:        JR lit
 query_:      JR query
 open_:       JR open
 close_:      JR close
@@ -845,11 +839,29 @@ mul_:        JR mul_1
 div_:        JR div_1
 mod_:        JR mod_1
 
-; ********************************************************
+;*******************************************************************
 ; Page 2 Primitives
-; Includes more Arithmetic Operations   MUL, DIV and MOD
-;*********************************************************
-lit:       
+;*******************************************************************
+
+stringend:  
+        CALL crlf
+        DEC BC
+        JP   (IY) 
+        
+tick:                               ; execute a loop
+        LD    BC, loopstart - 1
+        JP   (IY)
+        
+dot:        
+        POP     HL
+        CALL    printdec
+        CALL    crlf
+        JP      (IY)
+        
+
+
+
+hex:       
         JP       (IY)             
         
 ; **************************************************************************
@@ -857,43 +869,33 @@ lit:
 ;  Put 1 on stack if condition is true and 0 if it is false
 ; **************************************************************************
 
-lt:         
+eq:     POP      HL
         POP      DE
+        AND      A         ; reset the carry flag
+        SBC      HL,DE     ; only equality sets HL=0 here
+        JR       Z, equal
+        LD       HL, 0
+        JR       less       ; HL = 1    
+
+       
+gt:     POP      DE
         POP      HL
-        OR       A         ; reset the carry flag
-        SBC      HL,DE
-        JP      M, setone
-        LD      HL,0
-        JR      setzero
-           
+        JR       cmp_
         
-eq:
-        POP      HL
+lt:     POP      HL
         POP      DE
-        OR       A         ; reset the carry flag
-        SBC      HL,DE
-        JR      Z, setone
-        LD      HL,0
-        JR      setzero
-        
-        
-gt:            
-        POP      HL
-        POP      DE
-        OR       A         ; reset the carry flag
-        SBC      HL,DE
-        JP      M, setone
-        LD      HL,0
-        JR      setzero
-  
-setone:      
-        LD      HL,1             
-        
-setzero:     
+cmp_:   AND      A         ; reset the carry flag
+        SBC      HL,DE     ; only equality sets HL=0 here
+        LD       HL, 0
+        JP       M, less
+equal:  INC      L          ; HL = 1    
+less:     
         PUSH     HL
-        JP       (IY)            
-        
-        
+        JP       (IY) 
+           
+           
+
+
 query:
         JP       (IY) 
         
@@ -1057,19 +1059,10 @@ Div8_next:
    
         PUSH DE         ; Push Remainder 
         PUSH HL         ; Push Quotient      
-        JP       (IY)  
-   
-neg_:       						; NEGate the value on top of stack (2's complement)
-        POP     HL
-        LD A,   L
-        CPL					; Invert L
-        LD L,   A
-        LD A,   H
-        CPL					; Invert H
-        LD H,   A
-        INC     HL          ; and add 1
-        PUSH    HL
-        JP      (IY)		             
+        JP       (IY)
+        
+
+                              
 
 ; **********************************************************************
 ; 
