@@ -175,6 +175,24 @@
         loopstart EQU  $A760   ; Loop code storage area
         loopcount EQU  $A810   ; Hold the loopcounter in variable i
 
+.macro _rpush,reghi,reglo
+
+        DEC IX                  
+        LD (IX+0),reghi
+        DEC IX
+        LD (IX+0),reglo
+
+.endm
+
+.macro _rpop, reghi, reglo
+
+        LD reglo,(IX+0)         
+        INC IX              
+        LD reghi,(IX+0)
+        INC IX                  
+
+.endm
+
         .ORG ROMSTART
         
 opcodes:
@@ -553,10 +571,7 @@ Conv:
 
 
 enter:
-        DEC IX                  ; save Instruction Pointer
-        LD (IX+0),B
-        DEC IX
-        LD (IX+0),C
+        _rpush B,c              ; save Instruction Pointer
         POP BC
         DEC BC
         JP  (IY)                ; Execute code from User def
@@ -575,10 +590,7 @@ quit_:
 exit_:
         INC BC
         LD HL,BC
-        LD C,(IX+0)             ; Restore Instruction pointer
-        INC IX              
-        LD B,(IX+0)
-        INC IX                  
+        _rpop B,C               ; Restore Instruction pointer
         JP (HL)
         
 sys_:   JP      (IY)            ; 8t Sys Call handler to be inserted    
@@ -586,10 +598,7 @@ sys_:   JP      (IY)            ; 8t Sys Call handler to be inserted
 num_:   JP  number
 
 call_:
-        DEC IX                  ; save Instruction Pointer
-        LD (IX+0),B
-        DEC IX
-        LD (IX+0),C
+        _rpush B,c              ; save Instruction Pointer
         LD A,(BC)
         SUB "A"                 ; Calc index
         ADD A,A
@@ -602,10 +611,7 @@ call_:
         JP  (IY)                ; Execute code from User def
 
 ret_:
-        LD C,(IX+0)         ; Restore Instruction pointer
-        INC IX              
-        LD B,(IX+0)
-        INC IX                  
+        _rpop B,C               ; Restore Instruction pointer
         JP (IY)             
 
 var_:
