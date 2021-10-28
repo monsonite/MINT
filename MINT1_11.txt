@@ -1,18 +1,20 @@
 ; *************************************************************************
 ;
-;        MINT_1.11 Micro-Interpreter for the Z80 based on SIMPL
+;        MINT_1.11 Micro-Interpreter for the Z80
 ;
-;        Ken Boak October 27th 2021 
+;        Ken Boak October 28th 2021 
 ;
 ;	     Including major reconfiguration by John Hardy 24-10-21
 ;
 ;        New in this version 1.11:
 ;  
-;        handler for hardware specific system calls
+;        provision for hardware specific system calls
 ;   
 ;        sys_call jump table  sdefs:
 ;
-;        over added and linked to %
+;        over added and linked to ` (grave)
+;  
+;        Mod operator returned to %
 ;
 ;        placeholder for hexadecimal number routine #ABCD
 ;
@@ -41,35 +43,23 @@
 ;
 ;		 1.  A vector table to dispatch the 128 possible opcodes   128 bytes
 ;
-;        2.  An interpreter kernel and serial interface routines   384 bytes
+;        2.  An interpreter kernel and serial interface routines   128 bytes
 ;
 ;        3.  An area containing the Primitive function code fields: up to 512 bytes
 ;
-;        4.  A text buffer area to hold keyboard input and User routines  up to 1K bytes
+;        4.  A text buffer area (heap) to hold keyboard input and User routines  
 ;
 ;        The first 3 can be placed in a 1K ROM or RAM, the last item requires at least 1K RAM
 ;        
-;        For simplicity on a modern system, everything is placed in RAM.
-;
-;
-;
-;        
-;        Major rework by John Hardy 24-10-21
-;
-;		 NEXT followed by dispatch is just 46 t states
-;
-;
 ;
 ;        All commands accessed via a byte wide look up table
 ;
 ;        Heap used for command storage (HERE and HERE1)
 ;
-;        Primitives are on page $82xx continued using a trampoline jump to page $83xx.
+;        Primitives are on two consecutive pages using a trampoline jump to the 2nd page.
 ;        
 ;        This allows single byte opcodes reducing the dispatch time from
 ;        64 t states to 33 t states
-;
-;        Fits into 1024 bytes of ROM, with 163 bytes to spare.
 ;
 ;
 ;        User defined commands and variables
@@ -86,7 +76,7 @@
 ;        *     MUL     (max product 65535)
 ;        /     DIV
 ;        %     MOD
-;        _     NEG
+;        ~     INV
 ;
 ;        Comparison - compare the top two elements on the stack
 ;        Puts 1 on the stack if condition is true, 0 if false
@@ -107,6 +97,7 @@
 ;        "     DUP
 ;        '     DROP
 ;        $     SWAP
+;		 `     OVER
 ;        .     DOT     (Print the value of the top of stack as a decimal)
 ;
 ;        Memory
@@ -170,9 +161,9 @@
 ;
 ; *****************************************************************************
 
-        TESTMODE    EQU 0
-        ROMSTART    EQU $8000
-        RAMSTART    EQU $8400
+        ;TESTMODE    EQU 0
+        ;ROMSTART    EQU $8000
+        ;RAMSTART    EQU $8400
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -224,7 +215,7 @@ opcodes:
         DB    lsb(dup_)    ;    "
         DB    lsb(hex_)    ;    #
         DB    lsb(swap_)   ;    $            
-        DB    lsb(over_)   ;    %            
+        DB    lsb(mod_)    ;    %            
         DB    lsb(and_)    ;    &
         DB    lsb(drop_)   ;    '
         DB    lsb(begin_)  ;    (        
@@ -283,7 +274,7 @@ opcodes:
         DB    lsb(close_)  ;    ]
         DB    lsb(xor_)    ;    ^
         DB    lsb(str_)    ;    _
-        DB    lsb(tick_)   ;    `            
+        DB    lsb(over_)   ;    `            
         DB    lsb(var_)    ;    a
         DB    lsb(var_)    ;    b
         DB    lsb(var_)    ;    c
@@ -822,12 +813,12 @@ nextchar:
 
 
 ;       Trampoline Jumps to Page 2 of primitives
-tick_:       JR tick
+
 dot_:        JR dot
 lt_:         JR lt
 gt_:         JR gt
 eq_:         JR eq
-hex_:        JR lit
+hex_:        JR hex
 query_:      JR query
 open_:       JR open
 close_:      JR close
@@ -848,9 +839,6 @@ stringend:
         DEC BC
         JP   (IY) 
         
-tick:                               ; execute a loop
-        LD    BC, loopstart - 1
-        JP   (IY)
         
 dot:        
         POP     HL
@@ -979,13 +967,15 @@ Mul_Loop_1:
         INC DE
         DEC A
         JR NZ,Mul_Loop_1
+		
+		JR   mul_end
         
-        POP  BC
+;        POP  BC			; restore the IP
    
-        PUSH DE
-        PUSH HL
+;        PUSH DE
+;        PUSH HL
 
-        JP       (IY)
+;        JP       (IY)
         
 ; *********************************************************************            
 ; This divides DE by BC, storing the result in DE, remainder in HL
@@ -1017,6 +1007,7 @@ DivLoop:
         inc e           ;--
         jp DivLoop+1
 
+mul_end:
 div_end:    
         POP  BC         ; Restore the IP
    
@@ -1050,16 +1041,16 @@ Div8_loop:
 Div8_next:            
         
         djnz Div8_loop
-        
-        
-        POP  BC         ; Restore the IP
-        
+              
         LD   D, 0
         LD   E, A
-   
-        PUSH DE         ; Push Remainder 
-        PUSH HL         ; Push Quotient      
-        JP       (IY)
+		
+		JR		div_end
+		
+;		 POP  BC         ; Restore the IP
+;        PUSH DE         ; Push Remainder 
+;        PUSH HL         ; Push Quotient      
+;        JP       (IY)
         
 
                               
