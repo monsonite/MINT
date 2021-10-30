@@ -1,4 +1,4 @@
-; .engine mycomputer
+.engine mycomputer
 
 .include "constants.z80"
     
@@ -15,29 +15,35 @@ buf2%%M:
 
 LD SP,DSTACK
 
+setTbuf ""
+CALL mint
+
+setTbuf "123 456+."
+CALL mint
+
+setTbuf ":X1;X."
+CALL mint
+
+setTbuf "2x!x@."
+CALL mint
+
+setTbuf ":Aa!;3Aa@."
+CALL mint
+
+setTbuf ":Aa!;:Ba@;4AB."
+CALL mint
+
+setTbuf "5 46U"
+CALL mint
+
+setTbuf "0(6.)"
+CALL mint
+
 setTbuf "1(6.)"
 CALL mint
 
-; setTbuf ""
-; CALL mint
-
-; setTbuf "123 456+."
-; CALL mint
-
-; setTbuf ":X1;X."
-; CALL mint
-
-; setTbuf "2x!x@."
-; CALL mint
-
-; setTbuf ":Aa!;3Aa@."
-; CALL mint
-
-; setTbuf ":Aa!;:Ba@;4AB."
-; CALL mint
-
-; setTbuf "5 46U"
-; CALL mint
+setTbuf "2(6.)"
+CALL mint
 
 HALT
 

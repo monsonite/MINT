@@ -199,21 +199,24 @@
 .endm
 
 .macro _varAddr, var1
-        SUB 'A'
+        LD A,var1-'a'
+        ADD A,A
         LD HL,VARS
         LD L,A
 .endm
 
-.macro _setVar, reghi, reglo
+.macro _varSet, reghi, reglo
         LD (HL),reglo
         INC HL
         LD (HL),reghi
+        DEC HL
 .endm
 
-.macro _getVar, reghi, reglo
+.macro _varGet, reghi, reglo
         LD reglo,(HL)
         INC HL
         LD reghi,(HL)
+        DEC HL
 .endm
 
 .macro _isZero, reghi, reglo
@@ -562,13 +565,6 @@ ok:    CALL enter
         .cstr "_Ok_"
         RET
 
-; ok:         
-;         LD A, $4F           ; Print OK
-;         CALL putchar
-;         LD A, $4B
-;         CALL putchar
-;         RET            
-
 printhex:
 
         ;Display a 16- or 8-bit number in hex.
@@ -910,9 +906,9 @@ nextbyte:                   ; Skip to end of definition
         LD A,(BC)           ; Get the next character
         INC BC              ; Point to next character
         CP ";"              ; Is it a semicolon 
-        JR z, again_def       ; end the definition
+        JR z, end_def       ; end the definition
         JR  nextbyte        ; get the next element
-again_def:    
+end_def:    
         DEC BC
         JP (IY)       
 
@@ -1234,10 +1230,9 @@ begin:
         POP DE
         _isZero D,E
         JR Z,begin1
-        INC BC
         _rpush B,C
         _varAddr 'i'
-        _setVar D,E
+        _varSet D,E
         JP (IY)
 begin1:
         INC BC
@@ -1248,9 +1243,9 @@ begin1:
 
 again:
         _varAddr 'i'
-        _getVar D,E
+        _varGet D,E
         DEC DE
-        _setVar D,E
+        _varSet D,E
         _isZero D,E
         JR Z,again1
         _rpeek B,C
