@@ -1,4 +1,4 @@
-.engine mycomputer
+; .engine mycomputer
 
 .include "constants.z80"
     
@@ -9,35 +9,35 @@ TESTMODE equ 1
     ld (tbPtr),HL
     jr buf2%%M
 buf1%%M:
-    db s1,$5C
+    db s1,$5C,0
 buf2%%M:
 .endm
 
 LD SP,DSTACK
 
-setTbuf "1."
+setTbuf "1(6.)"
 CALL mint
 
-setTbuf ""
-CALL mint
+; setTbuf ""
+; CALL mint
 
-setTbuf "123 456+."
-CALL mint
+; setTbuf "123 456+."
+; CALL mint
 
-setTbuf ":X1;X."
-CALL mint
+; setTbuf ":X1;X."
+; CALL mint
 
-setTbuf "2x!x@."
-CALL mint
+; setTbuf "2x!x@."
+; CALL mint
 
-setTbuf ":Aa!;3Aa@."
-CALL mint
+; setTbuf ":Aa!;3Aa@."
+; CALL mint
 
-setTbuf ":Aa!;:Ba@;4AB."
-CALL mint
+; setTbuf ":Aa!;:Ba@;4AB."
+; CALL mint
 
-setTbuf "5 46U"
-CALL mint
+; setTbuf "5 46U"
+; CALL mint
 
 HALT
 
