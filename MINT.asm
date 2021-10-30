@@ -172,9 +172,6 @@
         TRUE        EQU -1
         FALSE       EQU 0
 
-        loopstart EQU  $A760   ; Loop code storage area
-        loopcount EQU  $A810   ; Hold the loopcounter in variable i
-
 .macro _rpush,reghi,reglo
 
         DEC IX                  
@@ -185,12 +182,46 @@
 .endm
 
 .macro _rpop, reghi, reglo
-
         LD reglo,(IX+0)         
         INC IX              
         LD reghi,(IX+0)
         INC IX                  
+.endm
 
+.macro _rpeek, reghi, reglo
+        LD reglo,(IX+0)         
+        LD reghi,(IX+1)
+.endm
+
+.macro _rdrop
+        INC IX
+        INC IX
+.endm
+
+.macro _varAddr, var1
+        LD A,var1-'a'
+        ADD A,A
+        LD HL,VARS
+        LD L,A
+.endm
+
+.macro _varSet, reghi, reglo
+        LD (HL),reglo
+        INC HL
+        LD (HL),reghi
+        DEC HL
+.endm
+
+.macro _varGet, reghi, reglo
+        LD reglo,(HL)
+        INC HL
+        LD reghi,(HL)
+        DEC HL
+.endm
+
+.macro _isZero, reghi, reglo
+        LD A,reglo
+        OR reghi
 .endm
 
         .ORG ROMSTART
@@ -237,7 +268,7 @@ opcodes:
         DB    lsb(and_)    ;    &
         DB    lsb(drop_)   ;    '
         DB    lsb(begin_)  ;    (        
-        DB    lsb(end_)    ;    )
+        DB    lsb(again_)  ;    )
         DB    lsb(mul_)    ;    *            
         DB    lsb(add_)    ;    +
         DB    lsb(quit_)   ;    ,            
@@ -534,13 +565,6 @@ ok:    CALL enter
         .cstr "_Ok_"
         RET
 
-; ok:         
-;         LD A, $4F           ; Print OK
-;         CALL putchar
-;         LD A, $4B
-;         CALL putchar
-;         RET            
-
 printhex:
 
         ;Display a 16- or 8-bit number in hex.
@@ -739,67 +763,11 @@ sub_2:  AND     A              ;  4t  Entry point for NEGate
         JP      (IY)           ; 8t
                                ; 58t
     
-
-
-; ***********************************************************************************
-; Loop Handling Code
-; 
-; On finding a left bracket, the interpreter copies the code to a loop buffer
-; beginning at loopstart, until it finds a right bracket 
-; Putting the loop code at a fixed address makes it easier to execute multiple times
-; The loopcount is held in RAM at user variable i so that it can be used within the loop
-; ***********************************************************************************
-
 begin_:                     ; Left parentesis begins a loop
+        JP begin
+again_:    
+        JP again
 
-        POP  HL             ; Get the loopcounter off the stack
-        LD  (loopcount), HL ; Store the Loop counter in variable i
-        LD  DE,loopstart    ; Loop code is then copied to buffer at loopstart 
-
-loopbyte:   
-        INC BC              ; Point to next character after the (
-        LD A, (BC)          ; Get the next character
-        CP $29              ; Is it a right bracket $29
-        JR z, end_loop      ; end the code copy
-        LD (DE), A          ; store the character at the loop buffer
-        INC DE
-        JR  loopbyte        ; get the next element
-
-end_loop:   
-        LD (DE), A          ; Store the closing bracket at the end of the loop           semicolon at end of definition
-        LD A, $0D
-        INC DE
-        LD (DE), A          ; and a final Newline
-        
-        DEC  BC             ; IP now points to the loop terminator )
-        
-        JP   (IY)           ; Execute the closing  )
-        
-;*************************************************************************            
-; This code executes the loop
-; The loopcount is retrieved from RAM and loaded into HL
-; The IP is set to point to the start of the loop
-; HL is checked for zero and if zero the loop is terminated
-; HL is decremented and stored back in the loopcount variable
-; JP NEXT will execute each instruction between the brackets in turn
-; including the closing ) which causes this routine to repeat until HL is zero
-; ************************************************************************
-end_:    
-        LD HL, (loopcount)    ; get the loop count
-        
-loopagain:  
-        LD  BC, loopstart -1  ; Point the IP to loopstart
-
-        LD DE,     $0000  
-        OR       A            ; reset the carry flag
-        SBC      HL,DE        ; test if HL = 0
-        JR      Z, finish     ; end the loop
-
-
-        DEC     HL            ; While HL > zero
-        LD  (loopcount), HL   ; preserve the loop count
-        JP      (IY)          ; execute the next instruction
-         
 finish:     
         JP     interp         ; back to OK prompt
 
@@ -1257,9 +1225,34 @@ putchar:
         OUT  (kACIA1Data),A ;Write data byte
         OR   0xFF           ;Return success A=0xFF and NZ flagged
         RET
-        
-        
-        ; There are a few spare bytes here 
+
+begin:
+        POP DE
+        _isZero D,E
+        JR Z,begin1
+        _rpush B,C
+        _varAddr 'i'
+        _varSet D,E
+        JP (IY)
+begin1:
+        INC BC
+        LD A,(BC)
+        CP ')'
+        JR NZ,begin1
+        JP (IY)
+
+again:
+        _varAddr 'i'
+        _varGet D,E
+        DEC DE
+        _varSet D,E
+        _isZero D,E
+        JR Z,again1
+        _rpeek B,C
+        JP (IY)
+again1:   
+        _rdrop
+        JP (IY)
 
 ;**************************************************************
 
