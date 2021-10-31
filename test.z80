@@ -9,13 +9,25 @@ TESTMODE equ 1
     ld (tbPtr),HL
     jr buf2%%M
 buf1%%M:
-    db s1,$5C
+    db s1,$5C,0
 buf2%%M:
 .endm
 
 LD SP,DSTACK
 
-setTbuf "1."
+setTbuf "0(1(_H_))"
+CALL mint
+
+setTbuf "1(1(_H_))"
+CALL mint
+
+setTbuf "1(0(_H_))"
+CALL mint
+
+setTbuf "0(_H_)"
+CALL mint
+
+setTbuf "1(_H_)"
 CALL mint
 
 setTbuf ""
@@ -37,6 +49,15 @@ setTbuf ":Aa!;:Ba@;4AB."
 CALL mint
 
 setTbuf "5 46U"
+CALL mint
+
+setTbuf "0(6.)"
+CALL mint
+
+setTbuf "1(6.)"
+CALL mint
+
+setTbuf "2(6.)"
 CALL mint
 
 HALT
