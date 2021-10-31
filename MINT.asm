@@ -345,7 +345,7 @@ sysdefs:  ; Addresses for sys_calls
 		
 
 idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
-        DW  iter_,  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
+        DW  iterI_, iterJ_, nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
         DW  nop_,   nop_,   nop_,   nop_,   util_,  nop_,   nop_,   exec_   ; QRSTUVWX    
         DW  nop_,   nop_                                                    ; YZ    
 
@@ -746,8 +746,6 @@ begin_:                     ; Left parentesis begins a loop
         JP begin
 again_:    
         JP again
-iter_:    
-        JP iter
 
 finish:     
         JP     interp         ; back to OK prompt
@@ -1018,6 +1016,20 @@ Div8_next:
 ;
 ; **********************************************************************
 
+iterI_:
+        DB 0
+        LD L,(IX+0)         
+        LD H,(IX+1)
+        PUSH HL
+        JP (IY)
+
+iterJ_:
+        DB 0
+        LD L,(IX+4)         
+        LD H,(IX+5)
+        PUSH HL
+        JP (IY)
+
 util_:
         DB 0                ; exit Mint
         POP HL              ; get TOS
@@ -1247,9 +1259,6 @@ again:
         JP (IY)
 again1:   
         _rdrop
-        JP (IY)
-
-iter:
         JP (IY)
 
         .ORG RAMSTART
