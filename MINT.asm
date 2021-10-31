@@ -198,27 +198,6 @@
         INC IX
 .endm
 
-; .macro _varAddr, var1
-;         LD A,var1-'a'
-;         ADD A,A
-;         LD HL,VARS
-;         LD L,A
-; .endm
-
-; .macro _varSet, reghi, reglo
-;         LD (HL),reglo
-;         INC HL
-;         LD (HL),reghi
-;         DEC HL
-; .endm
-
-; .macro _varGet, reghi, reglo
-;         LD reglo,(HL)
-;         INC HL
-;         LD reghi,(HL)
-;         DEC HL
-; .endm
-
 .macro _isZero, reghi, reglo
         LD A,reglo
         OR reghi
