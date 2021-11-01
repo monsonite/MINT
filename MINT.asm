@@ -250,7 +250,7 @@ opcodes:
         DB    lsb(again_)  ;    )
         DB    lsb(mul_)    ;    *            
         DB    lsb(add_)    ;    +
-        DB    lsb(quit_)   ;    ,            
+        DB    lsb(comma_)  ;    ,            
         DB    lsb(sub_)    ;    -
         DB    lsb(dot_)    ;    .
         DB    lsb(div_)    ;    /
@@ -335,14 +335,18 @@ opcodes:
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
 
-sysdefs:  ; Addresses for sys_calls
+; sysdefs:  ; Addresses for sys_calls
 
 		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;  
         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
 		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;    
         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
         	
-		
+imacros:
+        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; ABCDEFGH    
+        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; IJKLMNOP    
+        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; QRSTUVWX    
+        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; YZ[.....    
 
 idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
         DW  iterI_, iterJ_, nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
@@ -360,6 +364,10 @@ mint:
         LD HL,idefs
         LD DE,defs
         LD BC,26 * 2
+        LDIR
+        LD HL,imacros
+        LD DE,macros
+        LD BC,$20
         LDIR
 interp:
         CALL crlf
@@ -383,30 +391,43 @@ interp1:
 
 waitchar:   
         CALL getchar        ; loop around waiting for character
-        CP $0A              ; Less than $0A
-        JR Z, endchar       ; Return char
         CP $7F              ; Greater or equal to $7F
         JR NC, endchar             
+        CP $0              ; is it end of string?
+        JR Z, waitchar1
+        CP $0D             ; is it a newline?
+        JR Z, waitchar1
+        CP $20
+        JR NC,waitchar2
+        
+        DEC A
+        ADD A,A
+        LD HL,MACROS
+        LD D,0
+        LD E,A
+        ADD HL,DE
+        _rpush B,C
+        LD C,(HL)
+        INC HL
+        LD B,(HL)
+        DEC BC
+        JP  (IY)                
 
+waitchar1:
         LD (BC), A          ; store the character in textbuf
         INC BC
-        CP  $0              ; is it end of string?
-        JR Z, endchar
-        CP  $0D             ; is it a newline?
-        JR Z, endchar
-        
+        JR endchar
+waitchar2:
+        LD (BC), A          ; store the character in textbuf
+        INC BC
         CP ":"
-        JR NZ,waitchar1
-        
+        JR NZ,waitchar3
         LD A,TRUE
         LD (DEFINE),A
         LD A,":"
-        
-waitchar1:        
+waitchar3:        
         CALL putchar        ; echo character to screen
-        
         JR  waitchar        ; wait for next character
-        
 endchar:    
         LD (HERE1),BC
         LD A, $0D           ; Send out a CRLF
@@ -588,7 +609,7 @@ enter:
 page1:
 
 quit_:        
-        JR    ok                ; Print OK and return to monitor
+        JP ok                   ; Print OK and return to monitor
 
 exit_:
         INC BC
@@ -768,6 +789,7 @@ nextchar:
 ;       Trampoline Jumps to Page 2 of primitives
 
 dot_:        JR dot
+comma_:      JR comma
 lt_:         JR lt
 gt_:         JR gt
 eq_:         JR eq
@@ -788,7 +810,7 @@ mod_:        JR mod_1
 ;*******************************************************************
 
 stringend:  
-        CALL crlf
+        ; CALL crlf
         DEC BC
         JP   (IY) 
         
@@ -796,11 +818,12 @@ stringend:
 dot:        
         POP     HL
         CALL    printdec
+        ; CALL    crlf
+        JP      (IY)
+
+comma:        
         CALL    crlf
         JP      (IY)
-        
-
-
 
 hex:       
         JP       (IY)             
@@ -1015,6 +1038,10 @@ Div8_next:
 ; Mint can be reentered from machine code by CALL enter
 ;
 ; **********************************************************************
+
+demo_:
+        .cstr "_Demo!_"
+        JP interp
 
 iterI_:
         DB 0
@@ -1284,6 +1311,13 @@ tbPtr:
 .endif
     
 
+; ****************************************************************
+; CDEFS Table - holds $20 ctrl key macros
+; ****************************************************************
+        .align $100
+MACROS:
+        DS 26 * 2
+        
 ; ****************************************************************
 ; DEFS Table - holds 26 addresses of user routines
 ; ****************************************************************
