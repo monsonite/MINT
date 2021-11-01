@@ -1,22 +1,15 @@
 # MINT
-
-A Minimal INTerpreter in Z80 assembly language for the RC2014 Micro, TEC-1 and other simple Z80 systems.
+A Minimal INTerpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
 
 ## What is MINT ?
 
-MINT is a tiny, stack based language based on Forth. It implements a 16-bit virtual machine and provides integer 16-bit arithmetic operations. It shares many commonalities with Forth, but has a greatly simplified execution model when compared to Forth. 
+MINT is a tiny, stack based language based on Forth. On the Z80 it can be implemented in fewer than 1024 bytes of machine code - and it is lightning quick.
 
-There is no dictionary structure, no parsing of multi-character strings (apart from numbers) and no compilation mode, where source code would be converted into threaded code. The number of primitive functions is reduced to about 30, and User functions are limited to 26, by the use of uppercase characters.
+It is interactive and interpreted, so you don't have to wait for your code to compile, it happens immediately.
 
-This means that the size of the interpreter is considerably smaller than a full Forth. On the Z80 it can be implemented in fewer than 1024 bytes of machine code - and it is relatively quick, compared to other interpreted languages such as Tiny BASIC.
+It uses reverse Polish notation (RPN) so you have to put the operands before the operator. It's just like the old HP calculators from 50 years ago.
 
-It's compact size and modularity means that it is relatively easy to port to other 8-bit microprocessors such as the 1802, 6800, 6809, 6502 etc. On a 16-bit microprocessor, the implementation would be greatly simplified.
-
-As it is an interpreted language, you don't have to wait for your code to compile. What you type in is executed immediately after the return key is pressed. This allows small code snippets to be tested interactively, and eliminates the frustrating edit-compile-flash-test cycle.
-
-Like Forth, it uses reverse Polish notation (RPN) so you have to put the operands before the operator. It's just like the old HP calculators from 50 years ago.
-
-If you want to add two numbers you type:
+If you want to add two numbers you just type:
 
 123 456 + . 
 
@@ -26,7 +19,7 @@ When you hit return the result will be displayed thus
 
 OK
 
-Further examples are shown below.
+But MINT is more than just a glorified calculator - you can write real programs too.
 
 
 ## How MINT Works.
@@ -37,8 +30,6 @@ MINT is an interpreted language that uses printable ascii characters as its "ins
 26 Lowercase letters - used as User Variables
 10 Numerals - used for number entry
 33 arithmetic and punctuation symbols - used to select the program operation
-
-There are also 32 non-printable ascii codes between $00 and $1F. Two of these are the familliar carriage return and line feed, but the other 30 non-printable codes can be used to generate system calls to hardware specific routines, for example. 
 
 The interpreter scans a text string, held in a text buffer, one character at a time. It then uses a look-up table to broadly categorise the current character into one of the above groups.
 
@@ -56,14 +47,6 @@ For example, the variable addressed by the lowercase character "a" is held in RA
 
 When a lowercase character is interpreted the variable handler routine converts it to a 16-bit address, and places that address on the top of the stack.
 
-If you want to see this address, you can use the dot operator to print it out e.g.  a.
-
-You can then access that variable using the fetch @ and store ! operators.   e.g.   a@ b!
-
-The a@ b! sequence will fetch the value stored at a, put it on the stack and then store it into the variable b.
-
-You can initialise a variable by typing a number onto the stack and storing it to the variable e.g. 1234 d!
-
 COMMANDS
 
 User Commands are what gives MINT its power and flexibility. Each uppercase letter is a substitute for an address in RAM, where the users code routines are held. For example you may have a routine which produces a hexadecimal dump of the contents of memory. You choose to use the D command to initiate this routine, D for DUMP. You may also pass parameters to a user routine via the stack. In the case of a hex dump routine it would be common to give it the starting address of the section you want to dump, and this might be written 1234 D. On pressing return, the command will be interpreted and the dump routine will commence printing from location 1234. There are clearly 26 User Commands which is usually enough for most small applications.
@@ -74,39 +57,23 @@ A primitive is a built in function, normally stored in ROM and not usually neede
 
 There are also a small group of primitives that perform operations on the stack, DUP is used to duplicate the top item, DROP will remove the top item, making the second item available. SWAP will exchange the top two intems, effectively placing the second item on top.
 
-In total, MINT contains 33 primitives which are executed when the interpreter finds the relevant symbol. Some of these will be commonly used arithmetic symbols like "+" and "-" Others are allocated to punctuation symbols. The full-stop, or dot character is used to print out the number held on the top of the stack. 
+In total, MINT contains 33 primitives which are executed when the interpreter finds the relevant symbol. Some of these will be commonly used arithmetic symbols like "+" and "-" Others are allocated to punctuation symbols. The full-stop, or dot character is used to print out the number held on the top of the stack.   
 
-THE USER INTERFACE
+## mint1_10 is the latest upload.
 
-MINT is designed to work with a lightweight serial interface to a terminal program. By lightweight, there are only two routines needed, getchar and putchar, sometimes called CIN and COUT for character in and character out.
 
-In its idle state, the interpreter sits in a loop waiting for keyboard input. Characters typed at the keyboard are placed consecutively into a buffer until the return key is pressed. Characters are echoed to the terminal to show the user's input.
-
-Following the newline character, the interpreter fetches each character in turn and makes a 4-way decision on how to handle it.
-
-THE INTERPRETER  
-
-MINT uses a large look-up table to convert each character in turn to a unique operation.
-
-The first 256 bytes form a large look-up table, which is used to decode all of the printable ascii characters (and some non-printable ones) into jump addresses or variable storage addresses.
-
-So if the interpreter comes across a "+" character, the look-up table will convert this into the starting address of the ADD routine. These routines are called the primitives and there are about 30 of them hard coded into the ROM. 
-
-They perform the math and logic functions like ADD, SUB, MUL, DIV, AND, OR, XOR etc to name only a few. They also allow the usual stack operations like DUP, DROP, SWAP and control the fetching and storing of variables. LOOPs and other control structures are also coded into the primitives.
-
-The primitives are tightly packed into 2 pages (512) bytes of ROM and using a neat trick called a trampoline bounce to allow each primitive to be addressed with just an 8-bit address. This saves code and is faster to execute.
-
-Other sections of the look up table convert the uppercase characters into the jump addresses for the User Definitions A-Z, and the lowercase characters into the storage address of the 26 variables a-z.
-
-The final 256 bytes contains the code that runs the actual interpreter, converting numbers to binary and providing print routines and the serial communications routines.
 
 ## Using MINT
 
-Once the MINT code image is pasted into RAM you can run it using the Go command "G8100"
+MINT was developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8080.
+
+MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. I use TeraTerm when working within the windows environment.
+
+Once the MINT code image is pasted into RAM you can run it using the Go command "G8080"
 
 On initialisation it will present a user prompt "OK" followed by a CR and LF. It is now ready to accept commands from the keyboard.  MINT currently uses decimal numbers for calculations - a maximum integer of 65535.
 
-MINT has about 30 built in commands known as primitives. They are mostly allocated to arithmetical and punctuation symbols.
+MINT has about 30 built in commands called primitives. They are mostly allocated to arithmetical and punctuation symbols.
 
 There are 26 User Defined Commands that use uppercase alpha characters A-Z
 
@@ -120,19 +87,19 @@ MINT turns the Z80 into a 16-bit Virtual Machine with 30 instructions, 26 Macros
 
 Spaces are shown for clarity, but only necessary to separate consecutive number strings. Most other operators can be concatenated without spaces.
 
-1234 5678 + .                ADD 1234 to 5678 and print the result
+1234 5678 + .               ; ADD 1234 to 5678 and print the result
 
-1234 5678 - .                Subtract 1234 from 5678 and print the result
+1234 5678 - .               ; Subtract 1234 from 5678 and print the result
 
-1234 a!                      Store 1234 in the variable a
+1234 a!                     ; Store 1234 in the variable a
 
-5678 b!                      Store 5678 in the variable b
+5678 b!                     ; Store 5678 in the variable b
 
-b@ .                         Print the value stored in b
+b@ .                        ; print the value stored in b
 
-a@ b@ + .                    Add the contents of a to b and print the sum
+a@ b@ + .                   ; add the contents of a to b and print the sum
 
-a@ b!                        Copy the contents of a into b
+a@ b!                       ; copy the contents of a into b
 
 ##Loops
 
@@ -140,26 +107,70 @@ a@ b!                        Copy the contents of a into b
 1(this code will be execute once)
 10(this code will execute 10 times)
 
-For example use the loop function to print out numbers 0 to 9999 to the terminal is:
-
-0a!10000(a@.a@1+a!)  
-
-Breaking this down into recognisable chunks, as whitespace is optional:
-
-0 a!      Store 0 in variable a
-
-10000(    Set loop counter to 10000 and begin a loop
-
-a@.       Fetch the value from a and print it out
-
-a@ 1+     Fetch it again and add 1
-
-a!        Store it back in variable a
-
-)         End the Loop
-
-
 You can use the comparison operators < = and > to compare 2 values and conditionally execute the code between the brackets.
+
+## MINT - a Description
+
+
+MINT is a small Z80 assembly language program that provides a framework for a bytecode interpreter based on the printable ascii character set. The basic principles, once grasped could be applied to any other 8-bit micro, such as the 6502 or similar.
+
+MINT is a simple tool to provide an interactive user interface through a set of commands - based on single printable ascii characters. MINT allocates the uppercase letter A to Z as User Definable  Commands. Using these commands, the User can develop simple applications, which could be anything from a few commands to exercise I/O, flash LEDs or even drive stepper motors. 
+
+
+However simple or complex the application, MINT provides an easy means to interract with the hardware, where ideas can be tried out quickly without having to keep going around the edit, compile, reflash cycle.
+
+Using familliar uppercase characters allows the User to create shortcut commands that make sense to the specific application.  For example a simple hex monitor application might use the following:
+
+A   Specify an Address
+E   Edit memory
+D   Show a hex Dump of the memory
+G   Go to the address and run the program.
+
+For exercising simple I/O you might like to define O as send to an Output port and I as read an Input port. A more complex system might be a 2D-plotter or 3D printer where you might choose commands X, Y and Z to move the head to a specific position.
+
+MINT provides a framework that makes it easy to define new commands and attach whatever functional code you wish to them.
+
+Commands are of little use without parameters, so MINT allows several parameters to be attached to a command. Parameters are placed in order on a data stack before the command is called. Parameters are 16-bit positive integers - so any value between 0 and 65535.
+
+In the hex Dump example, you might choose to specify a starting address and the number of bytes to dump:
+
+8192 256 D   this would display 256 bytes starting at address 8192
+
+Commands are executed only when the return key is pressed.
+
+********************************************************************************************
+In my case I am using a Z80 based RC2014 "Micro", a single board computer that has a serial terminal interface based on the 68B50 ACIA. Credit should be given here to Grant Searle, Spencer Owen and Stephen C Cousins for making these retro systems available to the wider hobbyist community.
+
+
+The framework consists of the minimum number of routines that will provide interactive support for developing simple applications. Once in place, it will mean that the user can develop applications without having to resort to native assembly language.
+
+
+A basic serial terminal interface is provided, communicating with the familiar getchar and putchar routines. Further support routines are included to allow decimal and hexadecimal numerical output, decimal input, string printing etc.
+
+MINT provides a simple interactive interpreter based on printable ascii characters. This provides a greater level of human readability compared to assembly language. It is designed to use single ascii character commands - for example, when the interpreter recieves the "+" character, it will perform a 16-bit integer addition. There are approximately 30 such commands, mostly consisting of arithmetic and punctuation characters.
+
+
+mint1_8A is the latest upload. It fits into under 1K bytes of RAM.  
+
+On the RC2014 Micro it loads at address $8000, but is executes from $8100
+
+Mint consists of 4 main sections:
+
+1.  A kernel between $8000 and $80FF that implements the bytecode interpreter and includes the serial ACIA drivers and routines for putchar, getchar and numerical input and output. The kernel is approximately 256 bytes long.
+
+2.  A text buffer area beginning at $8100 and further storage for the User's definitions
+
+3.  A vector table beginning at $8240 which allocates a code field address (CFA) to each of the primitive and user defined functions. The vector table is 192 bytes long, which allocates 2 byte addresses for each of the 96 functions.
+
+4.  A storage area for the primitive function definitions- currently located at $A000.
+
+
+Whilst these 4 areas are relatively widely spaced in RAM - this is only an artifact of the code development process. In reality, the 4 main sections may be concatenated such that the total memory requirement is about 1K bytes. 
+
+
+Operation
+
+Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ascii characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
 
 There are roughly 30 punctuation and arithmetical symbols available in the printable ascii codes. These are assigned to the primitive functions, from which more complex programs can be built.
 
@@ -239,10 +250,11 @@ User Definitions:
 
 Variables:
 
-}   SAVE the top of stack to the return stack
+}   SAVE the top of stack to a variable
 
 
-{   LOAD the top of stack from the return stack
+{   LOAD the top of stack from a variable
+
 
 Loops and conditional execution:
 
