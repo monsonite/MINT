@@ -2,9 +2,15 @@
 
 .include "constants.z80"
 
-TESTMODE equ 0
+; TESTMODE equ 0
 
 LD SP,DSTACK
+
+CALL init
+
+CALL enter
+.cstr "_MINT_"
+
 CALL mint
 
 HALT

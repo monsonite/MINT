@@ -1,76 +1,84 @@
 .engine mycomputer
 
 .include "constants.z80"
-    
-TESTMODE equ 1
 
-.macro setTBuf,s1
-    ld HL,buf1%%M
-    ld (tbPtr),HL
-    jr buf2%%M
-buf1%%M:
-    db s1,$5C,0
-buf2%%M:
-.endm
+; TESTMODE equ 1
+
+; .macro setTBuf,s1
+;     ld HL,buf1%%M
+;     ld (tbPtr),HL
+;     jr buf2%%M
+; buf1%%M:
+;     db s1,$5C,0
+; buf2%%M:
+; .endm
 
 LD SP,DSTACK
 
-setTbuf {1,$0D}
-CALL mint
+; setTBuf "1."
+; call mint
 
-setTbuf ""
-CALL mint
+CALL init
 
-setTbuf "123 456+."
-CALL mint
+CALL enter
+.cstr "1."
 
-setTbuf ":X1;X."
-CALL mint
+; CALL enter
+; .cstr {1,$0D}
 
-setTbuf "2x!x@."
-CALL mint
+CALL enter
+.cstr ""
 
-setTbuf ":Aa!;3Aa@."
-CALL mint
+CALL enter
+.cstr "123 456+."
 
-setTbuf ":Aa!;:Ba@;4AB."
-CALL mint
+CALL enter
+.cstr ":X1;X."
 
-setTbuf "5 46U"
-CALL mint
+CALL enter
+.cstr "2x!x@."
 
-setTbuf "0(6.)"
-CALL mint
+CALL enter
+.cstr ":Aa!;3Aa@."
 
-setTbuf "1(6.)"
-CALL mint
+CALL enter
+.cstr ":Aa!;:Ba@;4AB."
 
-setTbuf "2(6.)"
-CALL mint
+CALL enter
+.cstr "5 46U"
 
-setTbuf "0(1(_H_))"
-CALL mint
+CALL enter
+.cstr "0(6.)"
 
-setTbuf "1(1(_H_))"
-CALL mint
+CALL enter
+.cstr "1(6.)"
 
-setTbuf "1(0(_H_))"
-CALL mint
+CALL enter
+.cstr "2(6.)"
 
-setTbuf "0(_H_)"
-CALL mint
+CALL enter
+.cstr "0(1(_H_))"
 
-setTbuf "1(_H_)"
-CALL mint
+CALL enter
+.cstr "1(1(_H_))"
 
-setTbuf "1(I.)"
-CALL mint
+CALL enter
+.cstr "1(0(_H_))"
 
-setTbuf "1(1(I.J.))"
-CALL mint
+CALL enter
+.cstr "0(_H_)"
 
-setTbuf "3(3(J._ x _I.,))"
-CALL mint
+CALL enter
+.cstr "1(_H_)"
+
+CALL enter
+.cstr "1(I.)"
+
+CALL enter
+.cstr "1(1(I.J.))"
+
+CALL enter
+.cstr "3(3(J._ x _I.,))"
 
 HALT
 

@@ -161,9 +161,8 @@
 ;
 ; *****************************************************************************
 
-        ;TESTMODE    EQU 0
         ;ROMSTART    EQU $8000
-        ;RAMSTART    EQU $8400
+        ;RAMSTART    EQU $8800
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -206,39 +205,7 @@
         .ORG ROMSTART
         
 opcodes:
-        DB    lsb(exit_)   ;    NUL
-        DB    lsb(sys_)    ;    SOH
-        DB    lsb(sys_)    ;    STX
-        DB    lsb(sys_)    ;    ETX
-        DB    lsb(sys_)    ;    EOT
-        DB    lsb(sys_)    ;    ENQ
-        DB    lsb(sys_)    ;    ACK
-        DB    lsb(sys_)    ;    BEL
-        DB    lsb(sys_)    ;    BS
-        DB    lsb(sys_)    ;    TAB
-        DB    lsb(sys_)    ;    LF
-        DB    lsb(sys_)    ;    VT
-        DB    lsb(sys_)    ;    FF
-        DB    lsb(finish)  ;    CR   This jumps through finish to interp
-        DB    lsb(sys_)    ;    SO
-        DB    lsb(sys_)    ;    SI
-        DB    lsb(sys_)    ;    DLE
-        DB    lsb(sys_)    ;    DC1
-        DB    lsb(sys_)    ;    DC2
-        DB    lsb(sys_)    ;    DC3
-        DB    lsb(sys_)    ;    DC4
-        DB    lsb(sys_)    ;    NAK
-        DB    lsb(sys_)    ;    SYN
-        DB    lsb(sys_)    ;    ETB
-        DB    lsb(sys_)    ;    CAN
-        DB    lsb(sys_)    ;    EM
-        DB    lsb(sys_)    ;    SUB
-        DB    lsb(sys_)    ;    ESC
-        DB    lsb(sys_)    ;    FS
-        DB    lsb(sys_)    ;    GS
-        DB    lsb(sys_)    ;    RS
-        DB    lsb(sys_)    ;    US
-        DB    lsb(sys_)    ;    SP
+        DB    lsb(nop_)    ;    SP            
         DB    lsb(store_)  ;    !            
         DB    lsb(dup_)    ;    "
         DB    lsb(hex_)    ;    #
@@ -344,34 +311,20 @@ opcodes:
         	
 imacros:
         DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; ABCDEFGH    
-        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; IJKLMNOP    
+        DW  demo_,  empty_,   demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; IJKLMNOP    
         DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; QRSTUVWX    
         DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; YZ[.....    
 
-idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
-        DW  iterI_, iterJ_, nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
-        DW  nop_,   nop_,   nop_,   nop_,   util_,  nop_,   nop_,   exec_   ; QRSTUVWX    
-        DW  nop_,   nop_                                                    ; YZ    
+idefs:  DW  empty_,   empty_,   empty_,   empty_,   empty_,   empty_,   empty_,   empty_    ; ABCDEFGH    
+        DW  iterI_, iterJ_, empty_,   empty_,   empty_,   empty_,   empty_,   empty_    ; IJKLMNOP    
+        DW  empty_,   empty_,   empty_,   empty_,   util_,  empty_,   empty_,   exec_   ; QRSTUVWX    
+        DW  empty_,   empty_                                                    ; YZ    
 
 mint:
-        LD IX,RSTACK
-        LD IY,NEXT			; IY provides a faster jump to NEXT
-        LD BC,HEAP
-        LD (HERE),BC
-        LD (HERE1),BC
-        LD A,FALSE
-        LD (DEFINE),A
-        LD HL,idefs
-        LD DE,defs
-        LD BC,26 * 2
-        LDIR
-        LD HL,imacros
-        LD DE,macros
-        LD BC,$20
-        LDIR
+        CALL init
 interp:
         CALL crlf
-        CALL ok             ; friendly prompt
+        ; CALL ok             ; friendly prompt
         CALL crlf           ; newline
         LD A,(DEFINE)
         OR A
@@ -463,20 +416,39 @@ endchar:
 ; *********************************************************************************
 
 NEXT:   
-        INC BC                   ; 6t    Increment the IP
-        LD A, (BC)               ; 7t    Get the next character and dispatch
+        INC BC                  ; 6t    Increment the IP
+        LD A, (BC)              ; 7t    Get the next character and dispatch
 		
 dispatch:                        
-
-        LD DE, opcodes           ; 7t    Start address of jump table         
-        LD E,A                   ; 4t    Index into table
-        LD A,(DE)                ; 7t    get low jump address
-        LD L,A                   ; 4t    and put into L
-        LD H, msb(page1)         ; 7t    Load H with the 1st page address
-        JP  (HL)                 ; 4t    Jump to routine
+        OR A
+        JP Z, exit_
+        SUB " "                 ; 7t    Subtract first printable char      
+        LD DE, opcodes          ; 7t    Start address of jump table         
+        LD E,A                  ; 4t    Index into table
+        LD A,(DE)               ; 7t    get low jump address
+        LD L,A                  ; 4t    and put into L
+        LD H, msb(page1)        ; 7t    Load H with the 1st page address
+        JP (HL)                 ; 4t    Jump to routine
         
-                                 ; 33t  (previously 64t)
+                                ; 40t  (previously 64t)
 
+init:         
+        LD IX,RSTACK
+        LD IY,NEXT			    ; IY provides a faster jump to NEXT
+        LD BC,HEAP
+        LD (HERE),BC
+        LD (HERE1),BC
+        LD A,FALSE
+        LD (DEFINE),A
+        LD HL,imacros
+        LD DE,macros
+        LD BC,$20
+        LDIR
+        LD HL,idefs
+        LD DE,defs
+        LD BC,26 * 2
+        LDIR
+        RET
 
 ; ********************************************************************************
 ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
@@ -1039,6 +1011,10 @@ Div8_next:
 ;
 ; **********************************************************************
 
+empty_:
+        DB 0
+        JP (IY)
+
 demo_:
         .cstr "_Demo!_"
         JP interp
@@ -1212,19 +1188,19 @@ serial_init:
 ;             BC DE HL IX IY I AF' BC' DE' HL' preserved
 ; This function does not return until a character is available
 getchar:
-.if TESTMODE=1
-        PUSH HL
-        LD HL,(tbPtr)
-        LD A,(HL)
-        INC HL
-        LD (tbPtr),HL
-        POP HL
-.else
+; .if TESTMODE=1
+;         PUSH HL
+;         LD HL,(tbPtr)
+;         LD A,(HL)
+;         INC HL
+;         LD (tbPtr),HL
+;         POP HL
+; .else
         IN   A,(kACIA1Cont) ;Address of status register
         AND  $01            ;Receive byte available
         JR   Z, getchar     ;Return Z if no character
         IN   A,(kACIA1Data) ;Read data byte
-.endif
+; .endif
         RET                 ;NZ flagged if character input
 
 
@@ -1303,13 +1279,12 @@ HERE1:
 DEFINE:
         DB 0
 
-.if TESTMODE=1
+; .if TESTMODE=1
 
-tbPtr:
-        DW 0
+; tbPtr:
+;         DW 0
 
-.endif
-    
+; .endif
 
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros
