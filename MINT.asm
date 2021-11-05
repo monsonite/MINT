@@ -1,12 +1,16 @@
 ; *************************************************************************
 ;
-;        MINT1_12 Micro-Interpreter for the Z80
+;        MINT1_13 Micro-Interpreter for the Z80
 ;
-;        Ken Boak October 28th 2021 
+;        Ken Boak November 5th 2021 
 ;
 ;	     Interim snapshot file to be merged later when confirmed 
 ;
-;        New in this version 1_12:
+;        New in this version 1_13:
+;
+;        Macros and new loop code
+;
+;        Serial Routines pushed out to 2nd 1K
 ;  
 ;        provision for hardware specific system calls
 ;   
@@ -16,11 +20,13 @@
 ;  
 ;        Mod operator returned to %
 ;
-;        placeholder for hexadecimal number routine #ABCD
+;        Division routine now working (but over-long)
 ;
-;		 invert inv and negate neg now use the Subtraction routine.
+;        Placeholder for hexadecimal number routine #ABCD
 ;
-;        comparison operators tidied up to save 12 bytes
+;		 Invert inv and Negate neg now use the Subtraction routine.
+;
+;        Comparison operators tidied up to save 12 bytes
 ;
 ;        
 ;
@@ -38,19 +44,6 @@
 ;        SP is data stack pointer
 ;        IX is used to implement the return stack
 ;        IY is used as a jump back to NEXT
-;
-;        MINT consists of 4 major sections:
-;
-;		 1.  A vector table to dispatch the 128 possible opcodes   128 bytes
-;
-;        2.  An interpreter kernel and serial interface routines   128 bytes
-;
-;        3.  An area containing the Primitive function code fields: up to 512 bytes
-;
-;        4.  A text buffer area (heap) to hold keyboard input and User routines  
-;
-;        The first 3 can be placed in a 1K ROM or RAM, the last item requires at least 1K RAM
-;        
 ;
 ;        All commands accessed via a byte wide look up table
 ;
@@ -76,7 +69,7 @@
 ;        *     MUL     (max product 65535)
 ;        /     DIV
 ;        %     MOD
-;        ~     INV
+
 ;
 ;        Comparison - compare the top two elements on the stack
 ;        Puts 1 on the stack if condition is true, 0 if false
@@ -113,18 +106,18 @@
 ;        \     QUIT    (Print OK and return to monitor)
 ;
 ;
-;       Loops    - execute the code between parenthesis
+;        Loops    - execute the code between parenthesis
 ;
-;       The user variable i is used as the loop counter
-;       It is decremented every time the loop is executed
+;        The user variable i is used as the loop counter
+;        It is decremented every time the loop is executed
 ;
-;       10(repeat this code 10 times)
+;        10(repeat this code 10 times)
 ;
 ;        0(skip this code)
 ;
 ;        1(execute this code only once)
 ;
-;       a@ b@ = (_print this if a=b_)
+;        a@ b@ = (_print this if a=b_)
 ;
 ;       1000(i@.)    Print out the value of i from 999 to 0
 ;
@@ -172,9 +165,6 @@
         TRUE        EQU -1
         FALSE       EQU 0
 
-        loopstart EQU  $A760   ; Loop code storage area
-        loopcount EQU  $A810   ; Hold the loopcounter in variable i
-
 .macro _rpush,reghi,reglo
 
         DEC IX                  
@@ -185,12 +175,25 @@
 .endm
 
 .macro _rpop, reghi, reglo
-
         LD reglo,(IX+0)         
         INC IX              
         LD reghi,(IX+0)
         INC IX                  
+.endm
 
+.macro _rpeek, reghi, reglo
+        LD reglo,(IX+0)         
+        LD reghi,(IX+1)
+.endm
+
+.macro _rdrop
+        INC IX
+        INC IX
+.endm
+
+.macro _isZero, reghi, reglo
+        LD A,reglo
+        OR reghi
 .endm
 
         .ORG ROMSTART
@@ -237,10 +240,10 @@ opcodes:
         DB    lsb(and_)    ;    &
         DB    lsb(drop_)   ;    '
         DB    lsb(begin_)  ;    (        
-        DB    lsb(end_)    ;    )
+        DB    lsb(again_)  ;    )
         DB    lsb(mul_)    ;    *            
         DB    lsb(add_)    ;    +
-        DB    lsb(quit_)   ;    ,            
+        DB    lsb(hexp_)   ;    ,            
         DB    lsb(sub_)    ;    -
         DB    lsb(dot_)    ;    .
         DB    lsb(div_)    ;    /
@@ -335,7 +338,7 @@ sysdefs:  ; Addresses for sys_calls
 		
 
 idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
-        DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
+        DW  iterI_, iterJ_, nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
         DW  nop_,   nop_,   nop_,   nop_,   util_,  nop_,   nop_,   exec_   ; QRSTUVWX    
         DW  nop_,   nop_                                                    ; YZ    
 
@@ -419,11 +422,9 @@ endchar:
 ;
 ; Individual handler routines will deal with each category:
 ;
-; 1. Detect characters A-Z where their table address will begin $A4xx
-; and handle it as a user command
+; 1. Detect characters A-Z and jump to the User Command handler routine
 ;
-; 2. Detect characters a-z where their table address will begin $A8xx
-; and handle it as a user variable
+; 2. Detect characters a-z and jump to the variable handler routine
 ;
 ; 3. All other characters are punctuation and cause a jump to the associated
 ; primitive code.
@@ -534,47 +535,44 @@ ok:    CALL enter
         .cstr "_Ok_"
         RET
 
-; ok:         
-;         LD A, $4F           ; Print OK
-;         CALL putchar
-;         LD A, $4B
-;         CALL putchar
-;         RET            
-
-printhex:
-
-        ;Display a 16- or 8-bit number in hex.
-DispHLhex:
-; Input: HL
-        ld  c,h
-        call  OutHex8
-        ld  c,l
-OutHex8:
-; Input: C
-        ld  a,c
-        rra
-        rra
-        rra
-        rra
-        call  Conv
-        ld  a,c
-Conv:
-        and  $0F
-        add  a,$90
-        daa
-        adc  a,$40
-        daa
-        call putchar  
-        ret                
-        
-; There are 150 spare bytes here (for bitbang serial comms?)        
-
-
 enter:
-        _rpush B,c              ; save Instruction Pointer
+        _rpush B,C              ; save Instruction Pointer
         POP BC
         DEC BC
         JP  (IY)                ; Execute code from User def
+        
+; **********************************************************************
+; 
+; routines that are written in Mint - placed here to fill up zeroth page
+; Note: opcode zero can exit Mint and go into machine code
+; Mint can be reentered from machine code by CALL enter
+;
+; **********************************************************************
+
+iterI_:
+        DB 0
+        LD L,(IX+0)         
+        LD H,(IX+1)
+        PUSH HL
+        JP (IY)
+
+iterJ_:
+        DB 0
+        LD L,(IX+4)         
+        LD H,(IX+5)
+        PUSH HL
+        JP (IY)
+
+util_:
+        DB 0                ; exit Mint
+        POP HL              ; get TOS
+        LD A,L
+        JP dispatch 
+
+exec_:
+        DB 0                ; exit Mint
+        POP HL              ; get TOS
+        JP (HL)        
 
         .align $100
 ; **********************************************************************			 
@@ -598,7 +596,7 @@ sys_:   JP      (IY)            ; 8t Sys Call handler to be inserted
 num_:   JP  number
 
 call_:
-        _rpush B,c              ; save Instruction Pointer
+        _rpush B,C              ; save Instruction Pointer
         LD A,(BC)
         SUB "A"                 ; Calc index
         ADD A,A
@@ -739,67 +737,11 @@ sub_2:  AND     A              ;  4t  Entry point for NEGate
         JP      (IY)           ; 8t
                                ; 58t
     
-
-
-; ***********************************************************************************
-; Loop Handling Code
-; 
-; On finding a left bracket, the interpreter copies the code to a loop buffer
-; beginning at loopstart, until it finds a right bracket 
-; Putting the loop code at a fixed address makes it easier to execute multiple times
-; The loopcount is held in RAM at user variable i so that it can be used within the loop
-; ***********************************************************************************
-
 begin_:                     ; Left parentesis begins a loop
+        JP begin
+again_:    
+        JP again
 
-        POP  HL             ; Get the loopcounter off the stack
-        LD  (loopcount), HL ; Store the Loop counter in variable i
-        LD  DE,loopstart    ; Loop code is then copied to buffer at loopstart 
-
-loopbyte:   
-        INC BC              ; Point to next character after the (
-        LD A, (BC)          ; Get the next character
-        CP $29              ; Is it a right bracket $29
-        JR z, end_loop      ; end the code copy
-        LD (DE), A          ; store the character at the loop buffer
-        INC DE
-        JR  loopbyte        ; get the next element
-
-end_loop:   
-        LD (DE), A          ; Store the closing bracket at the end of the loop           semicolon at end of definition
-        LD A, $0D
-        INC DE
-        LD (DE), A          ; and a final Newline
-        
-        DEC  BC             ; IP now points to the loop terminator )
-        
-        JP   (IY)           ; Execute the closing  )
-        
-;*************************************************************************            
-; This code executes the loop
-; The loopcount is retrieved from RAM and loaded into HL
-; The IP is set to point to the start of the loop
-; HL is checked for zero and if zero the loop is terminated
-; HL is decremented and stored back in the loopcount variable
-; JP NEXT will execute each instruction between the brackets in turn
-; including the closing ) which causes this routine to repeat until HL is zero
-; ************************************************************************
-end_:    
-        LD HL, (loopcount)    ; get the loop count
-        
-loopagain:  
-        LD  BC, loopstart -1  ; Point the IP to loopstart
-
-        LD DE,     $0000  
-        OR       A            ; reset the carry flag
-        SBC      HL,DE        ; test if HL = 0
-        JR      Z, finish     ; end the loop
-
-
-        DEC     HL            ; While HL > zero
-        LD  (loopcount), HL   ; preserve the loop count
-        JP      (IY)          ; execute the next instruction
-         
 finish:     
         JP     interp         ; back to OK prompt
 
@@ -818,27 +760,8 @@ nextchar:
         JR   nextchar
 
 
-;       Trampoline Jumps to Page 2 of primitives
 
-dot_:        JR dot
-lt_:         JR lt
-gt_:         JR gt
-eq_:         JR eq
-hex_:        JR hex
-query_:      JR query
-open_:       JR open
-close_:      JR close
-save_:       JR save
-load_:       JR load
-del_:        JR del
-def_:        JR def_1
-mul_:        JR mul_1
-div_:        JR div_1
-mod_:        JR mod_1
 
-;*******************************************************************
-; Page 2 Primitives
-;*******************************************************************
 
 stringend:  
         CALL crlf
@@ -846,24 +769,25 @@ stringend:
         JP   (IY) 
         
         
-dot:        
+dot_:        
         POP     HL
         CALL    printdec
         CALL    crlf
         JP      (IY)
         
+hexp_:                      ; Print HL as a hexadecimal
+        POP     HL
+        CALL    printhex
+        JP      (IY)
 
-
-
-hex:       
-        JP       (IY)             
+            
         
 ; **************************************************************************
 ;  Comparison Operations
 ;  Put 1 on stack if condition is true and 0 if it is false
 ; **************************************************************************
 
-eq:     POP      HL
+eq_:    POP      HL
         POP      DE
         AND      A         ; reset the carry flag
         SBC      HL,DE     ; only equality sets HL=0 here
@@ -872,11 +796,11 @@ eq:     POP      HL
         JR       less       ; HL = 1    
 
        
-gt:     POP      DE
+gt_:    POP      DE
         POP      HL
         JR       cmp_
         
-lt:     POP      HL
+lt_:    POP      HL
         POP      DE
 cmp_:   AND      A         ; reset the carry flag
         SBC      HL,DE     ; only equality sets HL=0 here
@@ -886,9 +810,31 @@ equal:  INC      L          ; HL = 1
 less:     
         PUSH     HL
         JP       (IY) 
-           
-           
+        
+;       Trampoline Jumps to Page 2 of primitives
 
+
+hex_:        JR hex
+query_:      JR query
+open_:       JR open
+close_:      JR close
+save_:       JR save
+load_:       JR load
+del_:        JR del
+def_:        JR def_1
+mul_:        JR mul
+div_:        JR div
+mod_:        JR mod        
+           
+;*******************************************************************
+; Page 2 Primitives
+;*******************************************************************
+           
+hex:
+        CALL     get_hex
+        PUSH     HL
+        JP       (IY)
+        
 
 query:
         JP       (IY) 
@@ -944,15 +890,7 @@ end_def:
         DEC BC
         JP (IY)       
 
-; Second bounce trampoline jumps
 
-mul_1:  JR mul
-div_1:  JR div
-mod_1:  JR mod
-
-; ********************************************************
-; Page 3 Primitives
-;*********************************************************
 mul:                       ; 16-bit multiply  
 
         POP  DE             ; get first value
@@ -976,13 +914,12 @@ Mul_Loop_1:
 		
 		JR   mul_end
         
-;        POP  BC			; restore the IP
-   
-;        PUSH DE
-;        PUSH HL
 
-;        JP       (IY)
-        
+; ********************************************************************
+; 16-bit division subroutine.
+;
+; BC: divisor, DE: dividend, HL: remainder
+
 ; *********************************************************************            
 ; This divides DE by BC, storing the result in DE, remainder in HL
 ; *********************************************************************
@@ -993,34 +930,47 @@ div:
         PUSH BC             ; Preserve the IP
         LD B,H              ; BC = 2nd value
         LD C,L
-                              
-                        ;1281-2x, x is at most 16
-        ld a,16         ;7
-        ld hl,0         ;10
-        jp $+5          ;10  
-    
-DivLoop:
 
-        add hl,bc       ;--
-        dec a           ;64
-        JR Z, div_end   ;86
-
-        sla e           ;128
-        rl d            ;128
-        adc hl,hl       ;240
-        sbc hl,bc       ;240
-        jr nc,DivLoop   ;23|21
-        inc e           ;--
-        jp DivLoop+1
+Div16:
+        ld hl,0
+        ld a,b
+        ld b,8
+Div16_Loop1:
+        rla
+        adc hl,hl
+        sbc hl,de
+        jr nc,Div16_NoAdd1
+        add hl,de
+Div16_NoAdd1:
+        djnz Div16_Loop1
+        rla
+        cpl
+        ld b,a
+        ld a,c
+        ld c,b
+        ld b,8
+Div16_Loop2:
+        rla
+        adc hl,hl
+        sbc hl,de
+        jr nc,Div16_NoAdd2
+        add hl,de
+Div16_NoAdd2:
+        djnz Div16_Loop2
+        rla
+        cpl
+        ld d,c
+        ld e,a
 
 mul_end:
 div_end:    
-        POP  BC         ; Restore the IP
+        POP  BC             ; Restore the IP
    
-        PUSH DE         ; Push Result
-        PUSH HL         ; Push remainder             
+        PUSH DE             ; Push Result
+        PUSH HL             ; Push remainder             
 
-        JP       (IY) 
+        JP       (IY)
+        	        
         
 ; ***************************************************************
 ; MOD is a 16 / 8 Division
@@ -1033,55 +983,72 @@ mod:
         LD B,16            ; C = 1st  value
         LD D,E
         
-        
-        ld b,16
-        xor a
+        LD B,16
+        XOR A
         
 Div8_loop:            
-        add hl,hl
-        rla
-        cp d
-        jr c,Div8_next
-        inc l
-        sub d
+        ADD HL,HL
+        RLA 
+        CP D
+        JR C,Div8_next
+        INC L
+        SUB D
+        
 Div8_next:            
         
-        djnz Div8_loop
+        DJNZ Div8_loop
               
         LD   D, 0
         LD   E, A
 		
 		JR		div_end
 		
-;		 POP  BC         ; Restore the IP
-;        PUSH DE         ; Push Remainder 
-;        PUSH HL         ; Push Quotient      
-;        JP       (IY)
+ 
+
+begin:
+        POP DE
+        _isZero D,E
+        JR Z,begin1
+        _rpush B,C
+        _rpush D,E
+        JP (IY)
+begin1:
+        LD E,1
+begin2:
+        INC BC
+        LD A,(BC)
+        CP '_'
+        JR NZ,begin3
+        LD A,$80
+        XOR E
+        LD E,A
+        JR begin2
+begin3:
+        CP '('
+        JR NZ,begin4
+        INC E
+        JR begin2
+begin4:
+        CP ')'
+        JR NZ,begin2
+        DEC E
+        JR NZ,begin2
+        JP (IY)
+
+again:
+        _rpop D,E
+        DEC DE
+        _isZero D,E
+        JR Z,again1
+        _rpeek B,C
+        _rpush D,E
+        JP (IY)
+again1:   
+        _rdrop
+        JP (IY)
+
+        .ORG RAMSTART
         
-
-                              
-
-; **********************************************************************
-; 
-; routines that are written in Mint
-; Note: opcode zero can exit Mint and go into machine code
-; Mint can be reentered from machine code by CALL enter
-;
-; **********************************************************************
-
-util_:
-        DB 0                ; exit Mint
-        POP HL              ; get TOS
-        LD A,L
-        JP dispatch 
-
-exec_:
-        DB 0                ; exit Mint
-        POP HL              ; get TOS
-        JP (HL)
-        
-
-
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
 ;        Includes drivers for 68B50 ACIA 
@@ -1259,11 +1226,81 @@ putchar:
         RET
         
         
-        ; There are a few spare bytes here 
+get_hex:
+		LD HL,$0000				; 10t Clear HL to accept the number
+		LD A,(BC)				; 7t  Get the character which is a numeral
+        
+get_hex1:        
+        BIT 6,A                ; 7t    is it alpha?
+        JR Z, ASCHX1           ; no 
+        ADD A,$09              ; add 9 to make $A - $F
+aschx1:
+        AND $0F                 ; form hex nybble
+        ADD A,L                 ; 4t    Add into bottom of HL
+        LD  L,A                 ; 4t
+        
+                                ;  15t cycles
+      
+        INC BC                  ; 6t    Increment IP
+        LD A, (BC)              ; 7t    and get the next character
+        CP $30                  ; 7t    Is it a space terminator?
+        JR C, endhex            ; 7/12t Not a number / end of number
+        
+        
+       
+times16:                        ; Multiply digit(s) in HL by 16
+        ADD HL,HL               ; 11t    2X
+        ADD HL,HL               ; 11t    4X
+        ADD HL,HL               ; 11t    8X
+        ADD HL,HL               ; 11t   16X     
+                                ; 44t cycles
 
-;**************************************************************
+        JR  get_hex1
+                
+endhex:
+;        PUSH HL                ; 11t   Put the number on the stack
+        
+;        JR dispatch            ; and process the next character
 
-        .ORG RAMSTART
+        RET
+        
+printhex:       
+
+                                ; Display HL as a 16-bit number in hex.
+            PUSH BC             ; preserve the IP
+            LD	A,H
+			CALL	Print_Hex8
+			LD	A,L
+			CALL	Print_Hex8
+			POP BC
+			RET
+
+; Print an 8-bit HEX number
+; A: Number to print
+;
+Print_Hex8:		
+            LD	C,A
+			RRA 
+			RRA 
+			RRA 
+			RRA 
+		
+
+conv:		AND	0x0F
+			ADD	A,0x90
+			DAA
+			ADC	A,0x40
+			DAA
+			CALL putchar
+			LD A,C
+			AND	0x0F
+			ADD	A,0x90
+			DAA
+			ADC	A,0x40
+			DAA
+			CALL putchar
+            RET                
+        
 
         DS DSIZE
 DSTACK:        
@@ -1302,4 +1339,3 @@ VARS:
         
         .align $100
 HEAP:         
-
