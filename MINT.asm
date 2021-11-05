@@ -1025,6 +1025,7 @@ begin:
         JR Z,begin1
         _rpush B,C
         _rpush D,E
+        JP (IY)
 begin1:
         LD E,1
 begin2:
