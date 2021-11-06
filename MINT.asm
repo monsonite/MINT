@@ -341,13 +341,13 @@ waitchar:
         CP $7F              ; Greater or equal to $7F
         JR NC, endchar             
         CP $20
-        JR NC, waitchar2
+        JR NC, waitchar1
         CP $0               ; is it end of string?
         JR Z, endchar
         CP $0A              ; newline?
-        JR Z, waitchar1
+        JR Z, waitchar2
         CP $0D              ; carriage return?
-        JR Z, waitchar0
+        JR Z, waitchar3
         
         DEC A
         ADD A,A
@@ -362,22 +362,22 @@ waitchar:
         DEC BC
         JP  (IY)                
 
-waitchar2:
+waitchar1:
         LD (BC), A          ; store the character in textbuf
         INC BC
 
         CP ":"
-        JR NZ,waitchar1
+        JR NZ,waitchar2
         
         LD A,TRUE
         LD (DEFINE),A
         LD A,":"
         
-waitchar1:        
+waitchar2:        
         CALL putchar        ; echo character to screen
         JR  waitchar        ; wait for next character
 
-waitchar0:
+waitchar3:
         LD (BC), A          ; store the character in textbuf
         INC BC
 
