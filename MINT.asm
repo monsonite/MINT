@@ -199,38 +199,6 @@
         .ORG ROMSTART
         
 opcodes:
-        DB    lsb(exit_)   ;    NUL
-        DB    lsb(sys_)    ;    SOH
-        DB    lsb(sys_)    ;    STX
-        DB    lsb(sys_)    ;    ETX
-        DB    lsb(sys_)    ;    EOT
-        DB    lsb(sys_)    ;    ENQ
-        DB    lsb(sys_)    ;    ACK
-        DB    lsb(sys_)    ;    BEL
-        DB    lsb(sys_)    ;    BS
-        DB    lsb(sys_)    ;    TAB
-        DB    lsb(sys_)    ;    LF
-        DB    lsb(sys_)    ;    VT
-        DB    lsb(sys_)    ;    FF
-        DB    lsb(finish)  ;    CR   This jumps through finish to interp
-        DB    lsb(sys_)    ;    SO
-        DB    lsb(sys_)    ;    SI
-        DB    lsb(sys_)    ;    DLE
-        DB    lsb(sys_)    ;    DC1
-        DB    lsb(sys_)    ;    DC2
-        DB    lsb(sys_)    ;    DC3
-        DB    lsb(sys_)    ;    DC4
-        DB    lsb(sys_)    ;    NAK
-        DB    lsb(sys_)    ;    SYN
-        DB    lsb(sys_)    ;    ETB
-        DB    lsb(sys_)    ;    CAN
-        DB    lsb(sys_)    ;    EM
-        DB    lsb(sys_)    ;    SUB
-        DB    lsb(sys_)    ;    ESC
-        DB    lsb(sys_)    ;    FS
-        DB    lsb(sys_)    ;    GS
-        DB    lsb(sys_)    ;    RS
-        DB    lsb(sys_)    ;    US
         DB    lsb(sys_)    ;    SP
         DB    lsb(store_)  ;    !            
         DB    lsb(dup_)    ;    "
@@ -336,8 +304,8 @@ sysdefs:  ; Addresses for sys_calls
         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
         	
 imacros:
-        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; ABCDEFGH    
-        DW  demo_,  empty_, demo_,  demo_,  empty_,  demo_,  demo_,  demo_  ; IJKLMNOP    
+        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  backsp_ ; ABCDEFGH    
+        DW  demo_,  empty_, demo_,  demo_,  empty_, demo_,  demo_,  demo_   ; IJKLMNOP    
         DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; QRSTUVWX    
         DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; YZ[.....    
 
@@ -370,18 +338,34 @@ interp1:
 
 waitchar:   
         CALL getchar        ; loop around waiting for character
-        CP $0A              ; Less than $0A
-        JR Z, endchar       ; Return char
         CP $7F              ; Greater or equal to $7F
         JR NC, endchar             
+        CP $20
+        JR NC, waitchar2
+        CP $0               ; is it end of string?
+        JR Z, endchar
+        CP $0A              ; newline?
+        JR Z, waitchar1
+        CP $0D              ; carriage return?
+        JR Z, waitchar0
+        
+        DEC A
+        ADD A,A
+        LD HL,MACROS
+        LD D,0
+        LD E,A
+        ADD HL,DE
+        LD (HERE1),BC
+        LD C,(HL)
+        INC HL
+        LD B,(HL)
+        DEC BC
+        JP  (IY)                
 
+waitchar2:
         LD (BC), A          ; store the character in textbuf
         INC BC
-        CP  $0              ; is it end of string?
-        JR Z, endchar
-        CP  $0D             ; is it a newline?
-        JR Z, endchar
-        
+
         CP ":"
         JR NZ,waitchar1
         
@@ -391,9 +375,12 @@ waitchar:
         
 waitchar1:        
         CALL putchar        ; echo character to screen
-        
         JR  waitchar        ; wait for next character
-        
+
+waitchar0:
+        LD (BC), A          ; store the character in textbuf
+        INC BC
+
 endchar:    
         LD (HERE1),BC
         LD A, $0D           ; Send out a CRLF
@@ -431,8 +418,12 @@ NEXT:
         LD A, (BC)               ; 7t    Get the next character and dispatch
 		
 dispatch:                        
-
+        OR A                     ;       check for opcode 0
+        JP Z, exit_
+        CP $0D
+        JP Z, finish
         LD DE, opcodes           ; 7t    Start address of jump table         
+        sub ' '                  ; 7t    remove char offset
         LD E,A                   ; 4t    Index into table
         LD A,(DE)                ; 7t    get low jump address
         LD L,A                   ; 4t    and put into L
@@ -452,6 +443,10 @@ initialize:
         LD HL,idefs
         LD DE,defs
         LD BC,26 * 2
+        LDIR
+        LD HL,imacros
+        LD DE,macros
+        LD BC,$20
         LDIR
         RET
         
@@ -550,7 +545,25 @@ enter:
         
 ; **********************************************************************
 ; 
-; routines that are written in Mint - placed here to fill up zeroth page
+; macros that are written in Mint 
+;
+; **********************************************************************
+
+backsp_:
+        DB 0
+        LD BC,(HERE1)
+        DEC BC
+        LD A,$08
+        call putchar
+        JP waitchar
+
+demo_:
+        .cstr "_Demo!_"
+        JP waitchar
+
+; **********************************************************************
+; 
+; defs that are written in Mint - placed here to fill up zeroth page
 ; Note: opcode zero can exit Mint and go into machine code
 ; Mint can be reentered from machine code by CALL enter
 ;
@@ -559,10 +572,6 @@ enter:
 empty_:
         DB 0
         JP (IY)
-
-demo_:
-        .cstr "_Demo!_"
-        JP interp
 
 iterI_:
         DB 0

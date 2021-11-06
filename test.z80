@@ -9,28 +9,26 @@ TESTMODE equ 1
 ;     ld (tbPtr),HL
 ;     jr buf2%%M
 ; buf1%%M:
-;     db s1,$5C,0
+;     db s1,$5C,$0D,$C9
 ; buf2%%M:
 ; .endm
 
 LD SP,DSTACK
 
-; setTBuf "1."
+; ; setTBuf {"12",8,"."}
+; setTBuf {"1",$0D,"2",$0D,".",$0D}
 ; call mint
 
 CALL initialize
 
-; CALL enter
-; .cstr {1,$0D}
-
 CALL enter
-.cstr ""
-
-CALL enter
-.cstr "123 456+."
+.cstr "0."
 
 CALL enter
 .cstr "1."
+
+CALL enter
+.cstr "123 456+."
 
 CALL enter
 .cstr ":X1;X."
