@@ -156,7 +156,7 @@
 
         ;TESTMODE    EQU 0
         ;ROMSTART    EQU $8000
-        ;RAMSTART    EQU $8400
+        ;RAMSTART    EQU $8800
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -335,25 +335,19 @@ sysdefs:  ; Addresses for sys_calls
 		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;    
         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
         	
-		
+imacros:
+        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; ABCDEFGH    
+        DW  demo_,  empty_, demo_,  demo_,  empty_,  demo_,  demo_,  demo_  ; IJKLMNOP    
+        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; QRSTUVWX    
+        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; YZ[.....    
 
-idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
-        DW  iterI_, iterJ_, nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
-        DW  nop_,   nop_,   nop_,   nop_,   util_,  nop_,   nop_,   exec_   ; QRSTUVWX    
-        DW  nop_,   nop_                                                    ; YZ    
+idefs:  DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_  ; ABCDEFGH    
+        DW  iterI_, iterJ_, empty_, empty_, empty_, empty_, empty_, empty_  ; IJKLMNOP    
+        DW  empty_, empty_, empty_, empty_, util_,  empty_, empty_, exec_   ; QRSTUVWX    
+        DW  empty_, empty_                                                  ; YZ    
 
 mint:
-        LD IX,RSTACK
-        LD IY,NEXT			; IY provides a faster jump to NEXT
-        LD BC,HEAP
-        LD (HERE),BC
-        LD (HERE1),BC
-        LD A,FALSE
-        LD (DEFINE),A
-        LD HL,idefs
-        LD DE,defs
-        LD BC,26 * 2
-        LDIR
+        CALL initialize
 interp:
         CALL crlf
         CALL ok             ; friendly prompt
@@ -447,7 +441,20 @@ dispatch:
         
                                  ; 33t  (previously 64t)
 
-
+initialize:
+        LD IX,RSTACK
+        LD IY,NEXT			; IY provides a faster jump to NEXT
+        LD BC,HEAP
+        LD (HERE),BC
+        LD (HERE1),BC
+        LD A,FALSE
+        LD (DEFINE),A
+        LD HL,idefs
+        LD DE,defs
+        LD BC,26 * 2
+        LDIR
+        RET
+        
 ; ********************************************************************************
 ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
 ; Read the first character. 
@@ -549,6 +556,14 @@ enter:
 ;
 ; **********************************************************************
 
+empty_:
+        DB 0
+        JP (IY)
+
+demo_:
+        .cstr "_Demo!_"
+        JP interp
+
 iterI_:
         DB 0
         LD L,(IX+0)         
@@ -583,7 +598,7 @@ exec_:
 page1:
 
 quit_:        
-        JR    ok                ; Print OK and return to monitor
+        JP    ok                ; Print OK and return to monitor
 
 exit_:
         INC BC
@@ -1322,6 +1337,12 @@ tbPtr:
 
 .endif
     
+; ****************************************************************
+; CDEFS Table - holds $20 ctrl key macros
+; ****************************************************************
+        .align $100
+MACROS:
+        DS 26 * 2
 
 ; ****************************************************************
 ; DEFS Table - holds 26 addresses of user routines
