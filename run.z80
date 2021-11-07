@@ -5,7 +5,15 @@
 TESTMODE equ 0
 
 LD SP,DSTACK
-CALL mint
+CALL initialize
+
+CALL enter
+.cstr "_Mint_"
+
+CALL interp
+
+CALL enter
+.cstr "_quit_"
 
 HALT
 

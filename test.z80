@@ -4,22 +4,20 @@
 
 TESTMODE equ 1
 
-; .macro setTBuf,s1
-;     ld HL,buf1%%M
-;     ld (tbPtr),HL
-;     jr buf2%%M
-; buf1%%M:
-;     db s1,$5C,$0D,$C9
-; buf2%%M:
-; .endm
+.macro setTBuf,s1
+    ld HL,buf1%%M
+    ld (tbPtr),HL
+    jr buf2%%M
+buf1%%M:
+    db s1,$5C,"q",$0D
+buf2%%M:
+.endm
 
 LD SP,DSTACK
-
-; ; setTBuf {"12",8,"."}
-; setTBuf {"1",$0D,"2",$0D,".",$0D}
-; call mint
-
 CALL initialize
+
+setTBuf {"12",8,"."}
+call mint
 
 CALL enter
 .cstr "0."

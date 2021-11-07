@@ -259,7 +259,7 @@ opcodes:
         DB    lsb(call_)   ;    Y
         DB    lsb(call_)   ;    Z
         DB    lsb(open_)   ;    [
-        DB    lsb(quit_)   ;    \
+        DB    lsb(alt_)    ;    \
         DB    lsb(close_)  ;    ]
         DB    lsb(xor_)    ;    ^
         DB    lsb(str_)    ;    _
@@ -610,9 +610,8 @@ exec_:
 ; **********************************************************************
 page1:
 
-quit_:        
-        JP    ok                ; Print OK and return to monitor
-
+alt_:        
+        JP alt
 exit_:
         INC BC
         LD HL,BC
@@ -1069,6 +1068,16 @@ again:
         JP (IY)
 again1:   
         _rdrop
+        JP (IY)
+
+alt:
+        INC BC
+        LD A,(BC)
+        CP 'q'
+        JP NZ,alt2                 ; Print OK and return to monitor
+        CALL ok
+        RET
+alt2:
         JP (IY)
 
         .ORG RAMSTART
