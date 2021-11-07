@@ -298,10 +298,10 @@ opcodes:
 
 ; sysdefs:  ; Addresses for sys_calls
 
-; 	DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;  
-;       DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
-; 	DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;    
-;       DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
+; 		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;  
+;         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
+; 		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;    
+;         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
         	
 imacros:
         DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  backsp_ ; ABCDEFGH    
@@ -414,23 +414,23 @@ endchar:
 ; *********************************************************************************
 
 NEXT:   
-        INC BC                   ; 6t    Increment the IP
-        LD A, (BC)               ; 7t    Get the next character and dispatch
+        INC BC                      ; 6t    Increment the IP
+        LD A, (BC)                  ; 7t    Get the next character and dispatch
 		
 dispatch:                        
-        OR A                     ;       check for opcode 0
+        sub ' '                     ; 7t    remove char offset
+        JR NC,dispatch1
+        CP 0 - ' '                  ;       expected values: 0 or $0D
         JP Z, exit_
-        CP $0D
-        JP Z, finish
-        LD DE, opcodes           ; 7t    Start address of jump table         
-        sub ' '                  ; 7t    remove char offset
-        LD E,A                   ; 4t    Index into table
-        LD A,(DE)                ; 7t    get low jump address
-        LD L,A                   ; 4t    and put into L
-        LD H, msb(page1)         ; 7t    Load H with the 1st page address
-        JP  (HL)                 ; 4t    Jump to routine
+        JR interp                   ;       back to OK prompt
+dispatch1:
+        LD DE, opcodes              ; 7t    Start address of jump table         
+        LD E,A                      ; 4t    Index into table
+        LD A,(DE)                   ; 7t    get low jump address
+        LD L,A                      ; 4t    and put into L
+        LD H, msb(page1)            ; 7t    Load H with the 1st page address
+        JP  (HL)                    ; 4t    Jump to routine
         
-                                 ; 33t  (previously 64t)
 
 initialize:
         LD IX,RSTACK
@@ -555,11 +555,15 @@ backsp_:
         DEC BC
         LD A,$08
         call putchar
+        LD A,' '
+        call putchar
+        LD A,$08
+        call putchar
         JP waitchar
 
 demo_:
         .cstr "_Demo!_"
-        JP waitchar
+        JP interp
 
 ; **********************************************************************
 ; 
@@ -765,10 +769,6 @@ begin_:                     ; Left parentesis begins a loop
         JP begin
 again_:    
         JP again
-
-finish:     
-        JP     interp         ; back to OK prompt
-
 
 ; **************************************************************************             
 ; Print the string between underscores
