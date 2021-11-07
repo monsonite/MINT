@@ -295,23 +295,16 @@ opcodes:
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
 
-; sysdefs:  ; Addresses for sys_calls
+alts:   DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
+        DW  i_,     j_,     nop_,   nop_,   ominus_,newln_, nop_,   oplus_  ; IJKLMNOP    
+        DW  quit_,  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   exec_   ; QRSTUVWX    
+        DW  nop_,   nop_                                                    ; YZ    
 
-; 		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;  
-;         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
-; 		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;    
-;         DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
-        	
 imacros:
-        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  backsp_ ; ABCDEFGH    
-        DW  demo_,  empty_, demo_,  demo_,  empty_, demo_,  demo_,  demo_   ; IJKLMNOP    
-        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; QRSTUVWX    
-        DW  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_,  demo_   ; YZ[.....    
-
-idefs:  DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_  ; ABCDEFGH    
-        DW  iterI_, iterJ_, empty_, empty_, empty_, empty_, empty_, empty_  ; IJKLMNOP    
-        DW  empty_, empty_, empty_, empty_, util_,  empty_, empty_, exec_   ; QRSTUVWX    
-        DW  empty_, empty_                                                  ; YZ    
+        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, backsp_  ; ABCDEFGH    
+        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; IJKLMNOP    
+        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; QRSTUVWX    
+        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; YZ[.....    
 
 initialize:
         LD IX,RSTACK
@@ -323,13 +316,17 @@ initialize:
         LD (DEFINE),A
         LD HL,getCharImpl
         LD (VGETCHAR),HL
-        LD HL,idefs
-        LD DE,defs
-        LD BC,26 * 2
-        LDIR
+        LD HL,defs
+        LD B,26
+init1:
+        LD (HL),lsb(empty_)
+        INC HL
+        LD (HL),msb(empty_)
+        INC HL
+        DJNZ init1
         LD HL,imacros
         LD DE,macros
-        LD BC,$20
+        LD BC,$20 * 2
         LDIR
         RET
 
@@ -562,10 +559,6 @@ backsp_:
         call putchar
         JP waitchar
 
-demo_:
-        .cstr "_Demo!_"
-        JP interp
-
 ; **********************************************************************
 ; 
 ; defs that are written in Mint - placed here to fill up zeroth page
@@ -577,31 +570,6 @@ demo_:
 empty_:
         DB 0
         JP (IY)
-
-iterI_:
-        DB 0
-        LD L,(IX+0)         
-        LD H,(IX+1)
-        PUSH HL
-        JP (IY)
-
-iterJ_:
-        DB 0
-        LD L,(IX+4)         
-        LD H,(IX+5)
-        PUSH HL
-        JP (IY)
-
-util_:
-        DB 0                ; exit Mint
-        POP HL              ; get TOS
-        LD A,L
-        JP dispatch 
-
-exec_:
-        DB 0                ; exit Mint
-        POP HL              ; get TOS
-        JP (HL)        
 
         .align $100
 ; **********************************************************************			 
@@ -658,10 +626,8 @@ fetch_:                     ; Fetch the value from the address placed on the top
         
 nop_:                       ; Sneakily piggy back nop here
         JP      (IY)        ; 8t
-        
                             ; 49t 
-        
-         
+
 store_:                    ; Store the value at the address placed on the top of the stack
         POP    HL          ; 10t
         POP    DE          ; 10t
@@ -1074,12 +1040,63 @@ again1:
 alt:
         INC BC
         LD A,(BC)
-        CP 'q'
-        JP NZ,alt2                 ; Print OK and return to monitor
-        CALL ok
-        RET
-alt2:
+        SUB "A"                 ; Use lowercase letters for now
+        ADD A,A
+        LD HL,ALTS
+        LD DE,0
+        LD E,A
+        ADD HL,DE
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        EX DE,HL
+        JP (HL)                 ; Execute code from Alt
+
+exec_:
+        POP HL              ; get TOS
+        JP (HL)        
+
+i_:
+        LD L,(IX+0)         
+        LD H,(IX+1)
+        PUSH HL
         JP (IY)
+
+j_:
+        LD L,(IX+4)         
+        LD H,(IX+5)
+        PUSH HL
+        JP (IY)
+
+oplus_:
+        POP HL
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        DEC HL
+        INC DE
+        LD (HL),E
+        INC HL
+        LD (HL),D
+        JP (IY)        
+
+ominus_:
+        POP HL
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        DEC HL
+        DEC DE
+        LD (HL),E
+        INC HL
+        LD (HL),D
+        JP (IY)        
+
+newln_:
+        call crlf
+        JP (IY)        
+quit_:
+        JP ok                   ; display OK and exit interpreter
 
         .ORG RAMSTART
         

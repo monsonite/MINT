@@ -28,11 +28,15 @@ expect%%M:
 
 LD SP,DSTACK
 CALL initialize
-ld HL,testGetCharImpl                   ; change getchar implmentation to use tbuf
+ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
-; ; setTBuf {"12",8,"."}                  ; test for macros, 12 backspace leaves 1 to parse and print 
-; ; call interp                           ; NOTE: call to interp cannot leave items on stack
+; setTBuf {"12",8,"."}                    ; test for macros, 12 backspace leaves 1 to parse and print 
+; call interp                             ; NOTE: call to interp cannot leave items on stack
+
+CALL enter
+.cstr "100a!a\\Pa@"
+expect 101,"expected 101"
 
 CALL enter
 .cstr "0"
@@ -75,11 +79,15 @@ CALL enter
 expect 12,"expected 12"
 
 CALL enter
-.cstr "100 1(1(I J+))"
+.cstr "1(\\I)"
+expect 1,"expected 1"
+
+CALL enter
+.cstr "1(1(\\I \\J+))"
 expect 2,"expected 2"
 
 CALL enter
-.cstr "2(2(I J))+++++++"
+.cstr "2(2(\\I \\J))+++++++"
 expect 12,"expected 12"
 
 CALL enter
