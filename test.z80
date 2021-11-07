@@ -35,10 +35,6 @@ LD (VGETCHAR),HL
 ; call interp                             ; NOTE: call to interp cannot leave items on stack
 
 CALL enter
-.cstr "100a!a\\Pa@"
-expect 101,"expected 101"
-
-CALL enter
 .cstr "0"
 expect 0,"expected 0"
 
@@ -89,6 +85,10 @@ expect 2,"expected 2"
 CALL enter
 .cstr "2(2(\\I \\J))+++++++"
 expect 12,"expected 12"
+
+CALL enter
+.cstr "100a!a\\Pa@"
+expect 101,"expected 101"
 
 CALL enter
 .cstr "_Done!_"

@@ -160,8 +160,7 @@
         ROMSIZE     EQU $800
         DSIZE       EQU $100
         RSIZE       EQU $100
-        TBUFSIZE    EQU $100
-        TRUE        EQU -1
+        TRUE        EQU 1
         FALSE       EQU 0
 
 .macro _rpush,reghi,reglo
