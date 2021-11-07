@@ -2,8 +2,6 @@
 
 .include "constants.z80"
 
-TESTMODE equ 1
-
 .macro setTBuf,s1
     ld HL,buf1%%M
     ld (tbPtr),HL
@@ -13,70 +11,89 @@ buf1%%M:
 buf2%%M:
 .endm
 
+.macro expect,val1,msg1
+    POP HL
+    LD DE,val1
+    OR A
+    SBC HL,DE
+    LD A,L
+    OR H
+    JR Z,expect%%M
+    CALL enter
+    .cstr "_",msg1,"_"
+    HALT
+    .cstr
+expect%%M:
+.endm
+
 LD SP,DSTACK
 CALL initialize
+ld HL,testGetCharImpl                   ; change getchar implmentation to use tbuf
+LD (VGETCHAR),HL
 
-setTBuf {"12",8,"."}
-call mint
-
-CALL enter
-.cstr "0."
-
-CALL enter
-.cstr "1."
+; ; setTBuf {"12",8,"."}                  ; test for macros, 12 backspace leaves 1 to parse and print 
+; ; call interp                           ; NOTE: call to interp cannot leave items on stack
 
 CALL enter
-.cstr "123 456+."
+.cstr "0"
+expect 0,"expected 0"
 
 CALL enter
-.cstr ":X1;X."
+.cstr "1"
+expect 1,"expected 1"
 
 CALL enter
-.cstr "2x!x@."
+.cstr "123 456+"
+expect 579,"123 + 456 should equal 579"
 
 CALL enter
-.cstr ":Aa!;3Aa@."
+.cstr ":X1;X"
+expect 1,"expected 1"
 
 CALL enter
-.cstr ":Aa!;:Ba@;4AB."
+.cstr "2x!x@"
+expect 2,"expected 2"
 
 CALL enter
-.cstr "5 46U"
+.cstr ":Aa!;3Aa@"
+expect 3,"expected 3"
 
 CALL enter
-.cstr "0(6.)"
+.cstr ":Aa!;:Ba@;4AB"
+expect 4,"expected 4"
 
 CALL enter
-.cstr "1(6.)"
+.cstr "100 0(6)"
+expect 100,"expected 100"
 
 CALL enter
-.cstr "2(6.)"
+.cstr "100 1(6)"
+expect 6,"expected 6"
 
 CALL enter
-.cstr "0(1(_H_))"
+.cstr "2(6)+"
+expect 12,"expected 12"
 
 CALL enter
-.cstr "1(1(_H_))"
+.cstr "100 1(1(I J+))"
+expect 2,"expected 2"
 
 CALL enter
-.cstr "1(0(_H_))"
+.cstr "2(2(I J))+++++++"
+expect 12,"expected 12"
 
 CALL enter
-.cstr "0(_H_)"
-
-CALL enter
-.cstr "1(_H_)"
-
-CALL enter
-.cstr "1(I.)"
-
-CALL enter
-.cstr "1(1(I.J.))"
-
-CALL enter
-.cstr "3(3(J._ x _I.))"
+.cstr "_Done!_"
 
 HALT
 
-.include "MINT.asm"
+testGetCharImpl:
+        PUSH HL
+        LD HL,(tbPtr)
+        LD A,(HL)
+        INC HL
+        LD (tbPtr),HL
+        POP HL
+        RET                 ;NZ flagged if character input
 
+.include "MINT.asm"

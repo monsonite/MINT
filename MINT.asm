@@ -154,7 +154,6 @@
 ;
 ; *****************************************************************************
 
-        ;TESTMODE    EQU 0
         ;ROMSTART    EQU $8000
         ;RAMSTART    EQU $8800
 
@@ -314,6 +313,26 @@ idefs:  DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_  ; AB
         DW  empty_, empty_, empty_, empty_, util_,  empty_, empty_, exec_   ; QRSTUVWX    
         DW  empty_, empty_                                                  ; YZ    
 
+initialize:
+        LD IX,RSTACK
+        LD IY,NEXT			; IY provides a faster jump to NEXT
+        LD BC,HEAP
+        LD (HERE),BC
+        LD (HERE1),BC
+        LD A,FALSE
+        LD (DEFINE),A
+        LD HL,getCharImpl
+        LD (VGETCHAR),HL
+        LD HL,idefs
+        LD DE,defs
+        LD BC,26 * 2
+        LDIR
+        LD HL,imacros
+        LD DE,macros
+        LD BC,$20
+        LDIR
+        RET
+
 mint:
         CALL initialize
 interp:
@@ -432,24 +451,6 @@ dispatch1:
         JP  (HL)                    ; 4t    Jump to routine
         
 
-initialize:
-        LD IX,RSTACK
-        LD IY,NEXT			; IY provides a faster jump to NEXT
-        LD BC,HEAP
-        LD (HERE),BC
-        LD (HERE1),BC
-        LD A,FALSE
-        LD (DEFINE),A
-        LD HL,idefs
-        LD DE,defs
-        LD BC,26 * 2
-        LDIR
-        LD HL,imacros
-        LD DE,macros
-        LD BC,$20
-        LDIR
-        RET
-        
 ; ********************************************************************************
 ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
 ; Read the first character. 
@@ -1221,22 +1222,18 @@ serial_init:
 ;   On entry: No parameters required
 ;   On exit:  A = Character input from the device
 ;             NZ flagged if character input
-;             BC DE HL IX IY I AF' BC' DE' HL' preserved
+;             BC DE IX IY I AF' BC' DE' HL' preserved
+;             HL destroyed
 ; This function does not return until a character is available
 getchar:
-.if TESTMODE=1
-        PUSH HL
-        LD HL,(tbPtr)
-        LD A,(HL)
-        INC HL
-        LD (tbPtr),HL
-        POP HL
-.else
+        LD HL,(VGETCHAR)
+        JP (HL)
+        
+getCharImpl:
         IN   A,(kACIA1Cont) ;Address of status register
         AND  $01            ;Receive byte available
         JR   Z, getchar     ;Return Z if no character
         IN   A,(kACIA1Data) ;Read data byte
-.endif
         RET                 ;NZ flagged if character input
 
 
@@ -1341,6 +1338,10 @@ DSTACK:
         DS RSIZE
 RSTACK:        
 
+tbPtr:
+        DW 0                    ; reserved for tests
+VGETCHAR:
+        DW 0                    ; vector with pointer to getchar implementation
 HERE:
         DW 0
 HERE1:
@@ -1348,12 +1349,6 @@ HERE1:
 DEFINE:
         DB 0
 
-.if TESTMODE=1
-
-tbPtr:
-        DW 0
-
-.endif
     
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros

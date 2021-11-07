@@ -2,8 +2,6 @@
 
 .include "constants.z80"
 
-TESTMODE equ 0
-
 LD SP,DSTACK
 CALL initialize
 
