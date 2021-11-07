@@ -811,10 +811,10 @@ close_:      JR close
 save_:       JR save
 load_:       JR load
 del_:        JR del
-def_:        JR def_1
 mul_:        JR mul
 div_:        JR div
 mod_:        JR mod        
+def_:        JP def
            
 ;*******************************************************************
 ; Page 2 Primitives
@@ -846,41 +846,6 @@ load:
 del:      
         JP       (IY) 
         
-; **************************************************************************             
-; def is used to create a colon definition
-; When a colon is detected, the next character (usually uppercase alpha)
-; is looked up in the vector table to get its associated code field address
-; This CFA is updated to point to the character after uppercase alpha
-; The remainder of the characters are then skipped until after a semicolon  
-; is found.
-; ***************************************************************************
-
-def_1:      
-def:                       ; Create a colon definition
-        INC BC
-        LD  A,(BC)          ; Get the next character
-        INC BC
-                            ; Look up CFA in vector table
-        SUB "A"             ; Calc index
-        ADD A,A             ; Double A to index even addresses
-        PUSH HL             ; Save HL
-        LD HL, DEFS         ; Start address of jump table         
-        LD L,A              ; Index into table
-        LD (HL),C           ; Save low byte of IP in CFA
-        INC HL              
-        LD (HL),B           ; Save high byte of IP in CFA+1
-        POP HL              ; Restore HL
-nextbyte:                   ; Skip to end of definition   
-        LD A,(BC)           ; Get the next character
-        INC BC              ; Point to next character
-        CP ";"              ; Is it a semicolon 
-        JR z, end_def       ; end the definition
-        JR  nextbyte        ; get the next element
-end_def:    
-        DEC BC
-        JP (IY)       
-
-
 mul:                       ; 16-bit multiply  
 
         POP  DE             ; get first value
@@ -1036,6 +1001,38 @@ again:
 again1:   
         _rdrop
         JP (IY)
+
+; **************************************************************************             
+; def is used to create a colon definition
+; When a colon is detected, the next character (usually uppercase alpha)
+; is looked up in the vector table to get its associated code field address
+; This CFA is updated to point to the character after uppercase alpha
+; The remainder of the characters are then skipped until after a semicolon  
+; is found.
+; ***************************************************************************
+
+def:                       ; Create a colon definition
+        INC BC
+        LD  A,(BC)          ; Get the next character
+        INC BC
+        PUSH HL             ; Save HL
+        LD HL, DEFS         ; Start address of jump table         
+        SUB "A"             ; Calc index
+        ADD A,A             ; Double A to index even addresses
+        LD L,A              ; Index into table
+        LD (HL),C           ; Save low byte of IP in CFA
+        INC HL              
+        LD (HL),B           ; Save high byte of IP in CFA+1
+        POP HL              ; Restore HL
+nextbyte:                   ; Skip to end of definition   
+        LD A,(BC)           ; Get the next character
+        INC BC              ; Point to next character
+        CP ";"              ; Is it a semicolon 
+        JR z, end_def       ; end the definition
+        JR  nextbyte        ; get the next element
+end_def:    
+        DEC BC
+        JP (IY)       
 
 alt:
         INC BC
