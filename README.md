@@ -1,6 +1,6 @@
 # MINT
 
-A Minimal INTerpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
+A Minimal Interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
 
 ## What is MINT ?
 
