@@ -127,7 +127,7 @@ LIST OF PRIMITIVES
 
 Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ascii characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
 
-There are roughly 30 punctuation and arithmetical symbols available in the printable ascii codes. These are assigned to the primitive functions, from which more complex programs can be built.
+There are roughly 32 punctuation and arithmetic symbols available in the printable ascii codes. These are assigned to the primitive functions, from which more complex programs can be built.
 
 Maths Operators:
 
@@ -139,7 +139,9 @@ Maths Operators:
 
 / 16-bit by 8-bit division DIV
 
-% 16-bit by 8-bit modulo MOD
+} Perform a right shift on the TOS (2/)
+
+{ Perform a left shift on the TOS (2*)
 
 < 16-bit comparison LT
 
@@ -149,9 +151,9 @@ Maths Operators:
 
 Logical Operators:
 
-~ 16-bit bitwise inversion INV
+~ 16-bit bitwise inversion INVert
 
-(#) 16-bit negation (2's complement) NEG
+_ 16-bit negation (2's complement) NEGate
 
 & 16-bit bitwise AND
 
@@ -167,11 +169,15 @@ Stack Operations:
 
 $ Swap the top 2 members of the stack SWAP
 
-` Over - take the 2nd member of the stack and copy it onto the top of the stack
+% Over - take the 2nd member of the stack and copy it onto the top of the stack
 
-. Print the top member of the stack as a decimal number DOT, and remove the top element.
+. DOT Print the top member of the stack as a decimal number, and remove the top element.
 
-Memory Operations:
+, HEXPRINT Print the TOS as a Hexadecimal Number
+
+"#" HEX Accept numbers in hexadecimal format
+
+Memory (and variable) Operations:
 
 @ FETCH a value from memory
 
@@ -182,12 +188,6 @@ User Definitions:
 : Define a new word DEF
 
 ; End of user definition END
-
-Variables:
-
-} SAVE the top of stack to a variable
-
-{ LOAD the top of stack from a variable
 
 Loops and conditional execution:
 
@@ -201,10 +201,10 @@ Loops and conditional execution:
 
 Miscellaneous:
 
-_ STRING \_Everything between underscores is printed as a string_
+`STRING` Everything between the "ticks" is printed as a string_
 
-\ QUIT Return to the monitor program
+\ ESCAPE  allows non-printable characters such as \n newline
 
-? QUERY
+? QUERY await keyboard entry
 
-, Separate array members
+
