@@ -22,23 +22,25 @@ OK confirms that the code has been executed and control has been passed back to 
 
 ## Fundamentals
 
-An interpreter can be reduced to a switch-case structure contained within a loop.
+Like other small interpreted languages, the intention of MINT is to create a 16-bit virtual machine by combining the mostly 8-bit operations available on the Z80, to provide 16-bit integer arithmetic and variable handling.
 
-With MINT, the instructions are just one byte long and a look-up table is used instead of a switch-case structure. When using an 8-bit microprocessor, such as the Z80, it is simpler and faster to handle 8-bit instructions, so MINT uses a bytecode system, rather than the 16-bit threaded code that is used by a conventional Forth.
+The language needs the basic arithmetic operations of ADD, SUBTRACT, MULTIPLY and DIVIDE. These are implemented as 16-bit integer operations and invoked using the familiar characters +, -, \* and /.
+
+These are augmented by the bitwise Boolean operators AND, OR, XOR, INVERT and 2's complement NEGATE. 
+
+With MINT, these instructions are just one byte long and a look-up table is used instead of a switch-case structure. When using an 8-bit microprocessor, such as the Z80, it is simpler and faster to handle 8-bit instructions, so MINT uses a bytecode system, rather than the 16-bit threaded code that is used by a conventional Forth.
 
 In the example above 123 456 + .
 
 The numerical strings 123 and 456 are evaluated as 16-bit binary numbers and placed on the data stack. The plus symbol is interpreted as a jump to the routine that performs a 16-bit addition of the top two elements on the data stack, placing their sum on the top of the datastack. The dot character prints out the top value of the data stack, consuming it at the same time.
 
-Any tiny language needs the basic arithmetic operations of ADD, SUBTRACT, MULTIPLY and DIVIDE. These are implemented as 16-bit integer operations and invoked using the familiar characters +, -, \* and /.
-
-These are augmented by the bitwise Boolean operators AND, OR, XOR, INVERT and 2's complement NEGATE.
-
-There are also the three comparison operators Greater Than, Less Than and Equal to, represented by symbols > < and =.
+In addition to the arithmetic and boolean operations, there are also the three comparison operators Greater Than, Less Than and Equal to, represented by symbols > < and =.
 
 The top two elements on the stack will be compared, resulting in 1 if the comparison is TRUE and 0 if the comparison is FALSE.
 
 With the comparison operators, it becomes possible to develop conditionally executed code, which forms the basis of program control words, such as IF, THEN, ELSE, and looping and branching structures.
+
+In total there are approximately 30 characters that are recognised as the internal instruction set, or primitives. From these characters the user can construct further definitions to extend the usefulness of the language.              
 
 ## How MINT Works.
 
