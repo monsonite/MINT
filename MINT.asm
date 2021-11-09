@@ -2,7 +2,7 @@
 ;
 ;        MINT1_13 Micro-Interpreter for the Z80
 ;
-;        Ken Boak November 5th 2021 
+;        Ken Boak and John Hardy November 9th 2021 
 ;
 ;	     Interim snapshot file to be merged later when confirmed 
 ;
@@ -197,7 +197,7 @@
         .ORG ROMSTART
         
 opcodes:
-        DB    lsb(sys_)    ;    SP
+        DB    lsb(nop_)    ;    SP
         DB    lsb(store_)  ;    !            
         DB    lsb(dup_)    ;    "
         DB    lsb(hex_)    ;    #
@@ -293,11 +293,6 @@ opcodes:
         DB    lsb(load_)   ;    }            
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
-
-alts:   DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
-        DW  i_,     j_,     nop_,   nop_,   ominus_,newln_, nop_,   oplus_  ; IJKLMNOP    
-        DW  quit_,  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   exec_   ; QRSTUVWX    
-        DW  nop_,   nop_                                                    ; YZ    
 
 imacros:
         DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, backsp_  ; ABCDEFGH    
@@ -586,8 +581,6 @@ exit_:
         _rpop B,C               ; Restore Instruction pointer
         JP (HL)
         
-sys_:   JP      (IY)            ; 8t Sys Call handler to be inserted    
-
 num_:   JP  number
 
 call_:
@@ -1011,11 +1004,11 @@ again1:
 ; ***************************************************************************
 
 def:                       ; Create a colon definition
+        PUSH HL             ; Save HL
+        LD HL, DEFS         ; Start address of jump table         
         INC BC
         LD  A,(BC)          ; Get the next character
         INC BC
-        PUSH HL             ; Save HL
-        LD HL, DEFS         ; Start address of jump table         
         SUB "A"             ; Calc index
         ADD A,A             ; Double A to index even addresses
         LD L,A              ; Index into table
@@ -1036,47 +1029,126 @@ end_def:
 alt:
         INC BC
         LD A,(BC)
-        SUB "A"                 ; Use lowercase letters for now
+        SUB "!"                 ; Use lowercase letters for now
         ADD A,A
-        LD HL,ALTS
-        LD DE,0
-        LD E,A
-        ADD HL,DE
+        LD HL,altcodes
+        LD L,A
         LD E,(HL)
         INC HL
         LD D,(HL)
         EX DE,HL
         JP (HL)                 ; Execute code from Alt
 
-exec_:
-        POP HL              ; get TOS
-        JP (HL)        
+      
+        .align $400             ; 1K boundary
 
-i_:
-        LD L,(IX+0)         
-        LD H,(IX+1)
-        PUSH HL
+altcodes:
+        DW   anop_      ;    !            
+        DW   anop_      ;    "
+        DW   anop_      ;    #
+        DW   anop_      ;    $            
+        DW   anop_      ;    %            
+        DW   anop_      ;    &
+        DW   anop_      ;    '
+        DW   anop_      ;    (        
+        DW   anop_      ;    )
+        DW   anop_      ;    *            
+        DW   incr_      ;    +
+        DW   anop_      ;    ,            
+        DW   decr_      ;    -
+        DW   anop_      ;    .
+        DW   anop_      ;    /
+        DW   anop_      ;    0            
+        DW   anop_      ;    1        
+        DW   anop_      ;    2            
+        DW   anop_      ;    3
+        DW   anop_      ;    4            
+        DW   anop_      ;    5            
+        DW   anop_      ;    6            
+        DW   anop_      ;    7
+        DW   anop_      ;    8            
+        DW   anop_      ;    9        
+        DW   adef_      ;    :        
+        DW   anop_      ;    ;
+        DW   anop_      ;    <
+        DW   anop_      ;    =            
+        DW   anop_      ;    >            
+        DW   anop_      ;    ?
+        DW   anop_      ;    @    
+        DW   anop_      ;    A    
+        DW   anop_      ;    B
+        DW   anop_      ;    C
+        DW   anop_      ;    D    
+        DW   anop_      ;    E
+        DW   anop_      ;    F
+        DW   anop_      ;    G
+        DW   anop_      ;    H
+        DW   i_         ;    I
+        DW   j_         ;    J
+        DW   anop_      ;    K
+        DW   anop_      ;    L
+        DW   anop_      ;    M
+        DW   anop_      ;    N
+        DW   anop_      ;    O
+        DW   anop_      ;    P
+        DW   anop_      ;    Q
+        DW   anop_      ;    R
+        DW   anop_      ;    S
+        DW   anop_      ;    T
+        DW   anop_      ;    U
+        DW   anop_      ;    V
+        DW   anop_      ;    W
+        DW   exec_      ;    X
+        DW   anop_      ;    Y
+        DW   anop_      ;    Z
+        DW   anop_      ;    [
+        DW   comment_   ;    \
+        DW   anop_      ;    ]
+        DW   anop_      ;    ^
+        DW   anop_      ;    _
+        DW   anop_      ;    `            
+        DW   anop_      ;    a
+        DW   anop_      ;    b
+        DW   anop_      ;    c
+        DW   anop_      ;    d
+        DW   anop_      ;    e
+        DW   anop_      ;    f
+        DW   anop_      ;    g
+        DW   anop_      ;    h
+        DW   i_         ;    i            
+        DW   j_         ;    j
+        DW   anop_      ;    k
+        DW   anop_      ;    l
+        DW   anop_      ;    m
+        DW   newln_     ;    n
+        DW   anop_      ;    o
+        DW   anop_      ;    p
+        DW   quit_      ;    q            
+        DW   anop_      ;    r
+        DW   space_     ;    s    
+        DW   tab_       ;    t
+        DW   anop_      ;    u
+        DW   anop_      ;    v
+        DW   anop_      ;    w
+        DW   anop_      ;    x
+        DW   anop_      ;    y
+        DW   anop_      ;    z
+        DW   anop_      ;    {
+        DW   anop_      ;    |            
+        DW   anop_      ;    }            
+        DW   anop_      ;    ~            
+        DW   anop_      ;    backspace
+
+adef_:
         JP (IY)
 
-j_:
-        LD L,(IX+4)         
-        LD H,(IX+5)
-        PUSH HL
+anop_:
         JP (IY)
 
-oplus_:
-        POP HL
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        DEC HL
-        INC DE
-        LD (HL),E
-        INC HL
-        LD (HL),D
-        JP (IY)        
+comment_:
+        JP (IY)
 
-ominus_:
+decr_:
         POP HL
         LD E,(HL)
         INC HL
@@ -1088,13 +1160,50 @@ ominus_:
         LD (HL),D
         JP (IY)        
 
+exec_:
+        POP HL              ; get TOS
+        JP (HL)        
+
+i_:
+        LD L,(IX+0)         
+        LD H,(IX+1)
+        PUSH HL
+        JP (IY)
+
+incr_:
+        POP HL
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        DEC HL
+        INC DE
+        LD (HL),E
+        INC HL
+        LD (HL),D
+        JP (IY)        
+
+j_:
+        LD L,(IX+4)         
+        LD H,(IX+5)
+        PUSH HL
+        JP (IY)
+
 newln_:
         call crlf
         JP (IY)        
+
 quit_:
         JP ok                   ; display OK and exit interpreter
 
-        .ORG RAMSTART
+space_:
+        LD A,' '
+        CALL putchar
+        JP (IY)        
+        
+tab_:
+        LD A,'\t'
+        CALL putchar
+        JP (IY)        
         
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
@@ -1345,6 +1454,8 @@ conv:		AND	0x0F
             RET                
         
 
+        .ORG RAMSTART
+        
         DS DSIZE
 DSTACK:        
 

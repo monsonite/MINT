@@ -87,7 +87,7 @@ CALL enter
 expect 12,"expected 12"
 
 CALL enter
-.cstr "100a!a\\Pa@"
+.cstr "100a!a\\+a@"
 expect 101,"expected 101"
 
 CALL enter
