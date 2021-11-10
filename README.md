@@ -81,7 +81,7 @@ In total, MINT contains 33 primitives which are executed when the interpreter fi
 
 ## Using MINT
 
-MINT was developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
+MINT was originally developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
 
 MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. I use TeraTerm when working within the windows environment.
 
@@ -232,19 +232,11 @@ Loops and conditional execution:
 
 Miscellaneous:
 
-`   STRING  `Everything between ticks is printed as a string`
+`    `Everything between ticks is printed as a string`
 
 
 \   QUIT   Return to the monitor program
 
 
-?   QUERY  
+?   QUERY  Wait for keyboard input
 
-
-
-
-
-
-
-
->>>>>>> 12c52446ddf074f76052f1762df56a0e9b132283
