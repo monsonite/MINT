@@ -907,6 +907,8 @@ Div16_NoAdd2:
         cpl
         ld d,c
         ld e,a
+		
+		EX DE,HL
 
 mul_end:
 div_end:    
