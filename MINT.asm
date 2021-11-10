@@ -2,11 +2,7 @@
 ;
 ;        MINT1_13 Micro-Interpreter for the Z80
 ;
-<<<<<<< HEAD
 ;        Ken Boak and John Hardy November 10th 2021 
-=======
-;        Ken Boak and John Hardy November 9th 2021 
->>>>>>> a4b839c93d2cd5efadc3ee20b8c9621342de5ffa
 ;
 ;	     Interim snapshot file to be merged later when confirmed  
 ;
@@ -558,7 +554,6 @@ backsp_:
         LD A,$08
         call putchar
         JP waitchar
-<<<<<<< HEAD
 
 ; **********************************************************************
 ; 
@@ -568,17 +563,6 @@ backsp_:
 ;
 ; **********************************************************************
 
-=======
-
-; **********************************************************************
-; 
-; defs that are written in Mint - placed here to fill up zeroth page
-; Note: opcode zero can exit Mint and go into machine code
-; Mint can be reentered from machine code by CALL enter
-;
-; **********************************************************************
-
->>>>>>> a4b839c93d2cd5efadc3ee20b8c9621342de5ffa
 empty_:
         DB 0
         JP (IY)
@@ -744,14 +728,7 @@ sub_2:  AND     A              ;  4t  Entry point for NEGate
         JP      (IY)           ; 8t
                                ; 58t
     
-<<<<<<< HEAD
 
-=======
-begin_:                     ; Left parentesis begins a loop
-        JP begin
-again_:    
-        JP again
->>>>>>> a4b839c93d2cd5efadc3ee20b8c9621342de5ffa
 
 ; **************************************************************************             
 ; Print the string between underscores
@@ -829,16 +806,10 @@ close_:      JR close
 shr_:        JR shr
 del_:        JR del
 mul_:        JR mul
-<<<<<<< HEAD
 div_:        JR div      
 def_:        JP def
 begin_:      JR begin                   
 again_:      JP again
-=======
-div_:        JR div
-mod_:        JR mod        
-def_:        JP def
->>>>>>> a4b839c93d2cd5efadc3ee20b8c9621342de5ffa
            
 ;*******************************************************************
 ; Page 2 Primitives
@@ -947,44 +918,9 @@ div_end:
         JP       (IY)
         	        
         
-<<<<<<< HEAD
 
 		
 begin:                               ; Left parentesis begins a loop
-=======
-; ***************************************************************
-; MOD is a 16 / 8 Division
-; ***************************************************************
-
-mod:        
-        POP  DE            ; get first value TOS
-        POP  HL            ; get 2nd value   NOS
-        PUSH BC            ; Preserve the IP
-        LD B,16            ; C = 1st  value
-        LD D,E
-        
-        LD B,16
-        XOR A
-        
-Div8_loop:            
-        ADD HL,HL
-        RLA 
-        CP D
-        JR C,Div8_next
-        INC L
-        SUB D
-        
-Div8_next:            
-        
-        DJNZ Div8_loop
-              
-        LD D, 0
-        LD E, A
-		
-		JR div_end
-		
-begin:
->>>>>>> a4b839c93d2cd5efadc3ee20b8c9621342de5ffa
         POP HL
         _isZero H,L
         JR Z,begin1
