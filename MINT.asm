@@ -4,7 +4,7 @@
 ;
 ;        Ken Boak and John Hardy November 10th 2021 
 ;
-;	     Interim snapshot file to be merged later when confirmed 
+;	     Interim snapshot file to be merged later when confirmed  
 ;
 ;        New in this version 1_13:
 ;
