@@ -75,16 +75,16 @@ CALL enter
 expect 12,"expected 12"
 
 CALL enter
-.cstr "1(\\I)"
-expect 1,"expected 1"
+.cstr "1(\\i@)"
+expect 0,"expected 0"
 
 CALL enter
-.cstr "1(1(\\I \\J+))"
-expect 2,"expected 2"
+.cstr "1(1(\\i@ \\j@+))"
+expect 0,"expected 0"
 
 CALL enter
-.cstr "2(2(\\I \\J))+++++++"
-expect 12,"expected 12"
+.cstr "2(2(\\i@ \\j@))+++++++"
+expect 4,"expected 4"
 
 CALL enter
 .cstr "100a!a\\+a@"

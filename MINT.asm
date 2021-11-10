@@ -179,16 +179,6 @@
         INC IX                  
 .endm
 
-.macro _rpeek, reghi, reglo
-        LD reglo,(IX+0)         
-        LD reghi,(IX+1)
-.endm
-
-.macro _rdrop
-        INC IX
-        INC IX
-.endm
-
 .macro _isZero, reghi, reglo
         LD A,reglo
         OR reghi
@@ -354,9 +344,9 @@ waitchar:
         JR NC, waitchar1
         CP $0               ; is it end of string?
         JR Z, endchar
-        CP $0A              ; newline?
+        CP '\n'              ; newline?
         JR Z, waitchar2
-        CP $0D              ; carriage return?
+        CP '\r'              ; carriage return?
         JR Z, waitchar3
         
         DEC A
@@ -393,15 +383,11 @@ waitchar3:
 
 endchar:    
         LD (HERE1),BC
-        LD A, $0D           ; Send out a CRLF
-        CALL putchar
-        LD A, $0A
-        CALL putchar
-			
+        CALL crlf
 
-        LD BC,(HERE)            ; Instructions stored on heap at address HERE
+        LD BC,(HERE)        ; Instructions stored on heap at address HERE
         DEC BC
-                                ; Drop into the NEXT and dispatch routines
+                            ; Drop into the NEXT and dispatch routines
 
 ; ********************************************************************************
 ; Dispatch Routine.
@@ -430,7 +416,7 @@ NEXT:
 dispatch:                        
         sub ' '                     ; 7t    remove char offset
         JR NC,dispatch1
-        CP 0 - ' '                  ;       expected values: 0 or $0D
+        CP 0 - ' '                  ;       expected values: 0 or '\r'
         JP Z, exit_
         JR interp                   ;       back to OK prompt
 dispatch1:
@@ -519,14 +505,23 @@ Num2:
         ret 
         
 crlf:       
-        LD A, $0A           ; Send a CRLF
+        LD A, '\r'
         CALL putchar
-        LD A, $0D
+        LD A, '\n'           
         CALL putchar
         RET
         
-ok:    CALL enter
-        .cstr "_Ok_"
+space:       
+        LD A, ' '           
+        CALL putchar
+        RET
+
+ok:    
+        LD A, 'O'           
+        CALL putchar
+        LD A, 'K'
+        CALL putchar
+        CALL crlf
         RET
 
 enter:
@@ -746,7 +741,6 @@ nextchar:
 
 
 stringend:  
-        CALL crlf
         DEC BC
         JP   (IY) 
         
@@ -754,7 +748,7 @@ stringend:
 dot_:        
         POP     HL
         CALL    printdec
-        CALL    crlf
+        CALL    space
         JP      (IY)
         
 hexp_:                      ; Print HL as a hexadecimal
@@ -945,19 +939,19 @@ Div8_next:
         
         DJNZ Div8_loop
               
-        LD   D, 0
-        LD   E, A
+        LD D, 0
+        LD E, A
 		
-		JR		div_end
+		JR div_end
 		
- 
-
 begin:
-        POP DE
-        _isZero D,E
+        POP HL
+        _isZero H,L
         JR Z,begin1
-        _rpush B,C
-        _rpush D,E
+        _rpush B,C                  ; push loop address
+        DEC HL
+        _rpush H,L                  ; push loop limit
+        _rpush 0,0                  ; push loop var=0
         JP (IY)
 begin1:
         LD E,1
@@ -983,15 +977,26 @@ begin4:
         JP (IY)
 
 again:
-        _rpop D,E
-        DEC DE
-        _isZero D,E
+        LD E,(IX+0)                 ; peek loop var
+        LD D,(IX+1)                 
+        LD L,(IX+2)                 ; peek loop limit
+        LD H,(IX+3)                 
+        OR A
+        SBC HL,DE
         JR Z,again1
-        _rpeek B,C
-        _rpush D,E
+        INC DE
+        LD (IX+0),E                 ; poke loop var
+        LD (IX+1),D                 
+        LD C,(IX+4)                 ; peek loop address
+        LD B,(IX+5)                 
         JP (IY)
 again1:   
-        _rdrop
+        INC IX                      ; drop loop var
+        INC IX
+        INC IX                      ; drop loop limit
+        INC IX
+        INC IX                      ; drop loop address
+        INC IX
         JP (IY)
 
 ; **************************************************************************             
@@ -1040,7 +1045,7 @@ alt:
         JP (HL)                 ; Execute code from Alt
 
       
-        .align $400             ; 1K boundary
+        .align $100             ; page boundary
 
 altcodes:
         DW   anop_      ;    !            
@@ -1083,8 +1088,8 @@ altcodes:
         DW   anop_      ;    F
         DW   anop_      ;    G
         DW   anop_      ;    H
-        DW   i_         ;    I
-        DW   j_         ;    J
+        DW   anop_      ;    I
+        DW   anop_      ;    J
         DW   anop_      ;    K
         DW   anop_      ;    L
         DW   anop_      ;    M
@@ -1165,9 +1170,7 @@ exec_:
         JP (HL)        
 
 i_:
-        LD L,(IX+0)         
-        LD H,(IX+1)
-        PUSH HL
+        PUSH IX
         JP (IY)
 
 incr_:
@@ -1183,8 +1186,10 @@ incr_:
         JP (IY)        
 
 j_:
-        LD L,(IX+4)         
-        LD H,(IX+5)
+        PUSH IX
+        POP HL
+        LD DE,6
+        ADD HL,DE
         PUSH HL
         JP (IY)
 
@@ -1196,8 +1201,7 @@ quit_:
         JP ok                   ; display OK and exit interpreter
 
 space_:
-        LD A,' '
-        CALL putchar
+        CALL space
         JP (IY)        
         
 tab_:
