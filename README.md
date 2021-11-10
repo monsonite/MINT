@@ -17,11 +17,9 @@ When you hit return the result will be displayed thus
 
 OK
 
-<<<<<<< HEAD
-=======
 OK confirms that the code has been executed and control has been passed back to the User.
 
->>>>>>> 12c52446ddf074f76052f1762df56a0e9b132283
+
 ## Fundamentals
 
 An interpreter can be reduced to a switch-case structure contained within a loop. 
@@ -80,13 +78,7 @@ There are also a small group of primitives that perform operations on the stack,
 
 In total, MINT contains 33 primitives which are executed when the interpreter finds the relevant symbol. Some of these will be commonly used arithmetic symbols like "+" and "-" Others are allocated to punctuation symbols. The full-stop, or dot character is used to print out the number held on the top of the stack.   
 
-<<<<<<< HEAD
 
-
-
-
-=======
->>>>>>> 12c52446ddf074f76052f1762df56a0e9b132283
 ## Using MINT
 
 MINT was developed for the RC2014 Micro Z80 Single Board Computer.  This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
@@ -131,14 +123,12 @@ a@ b!                       ; copy the contents of a into b
 
 You can use the comparison operators < = and > to compare 2 values and conditionally execute the code between the brackets.
 
-<<<<<<< HEAD
-=======
 LIST OF PRIMITIVES
 
 Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ascii characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
 
 There are roughly 30 punctuation and arithmetical symbols available in the printable ascii codes. These are assigned to the primitive functions, from which more complex programs can be built.
->>>>>>> 12c52446ddf074f76052f1762df56a0e9b132283
+
 
 Maths Operators:
 
@@ -152,9 +142,6 @@ Maths Operators:
 
 
 /   16-bit by 8-bit division DIV
-
-
-%   16-bit by 8-bit modulo MOD
 
 
 <   16-bit comparison LT
@@ -172,7 +159,7 @@ Logical Operators:
 ~   16-bit bitwise inversion INV
 
 
-(#) 16-bit negation (2's complement) NEG
+_ 16-bit negation (2's complement) NEG
 
 
 &   16-bit bitwise AND
@@ -196,10 +183,15 @@ Stack Operations:
 $   Swap the top 2 members of the stack  SWAP
 
 
-`   Over - take the 2nd member of the stack and copy it onto the top of the stack
+%   Over - take the 2nd member of the stack and copy it onto the top of the stack
 
 
 .   Print the top member of the stack as a decimal number DOT, and remove the top element.
+
+,   Print number as a hexadecimal
+
+(#)    To enter a number in hexadecimal precede with a hash
+
 
 
 Memory Operations:
@@ -240,7 +232,7 @@ Loops and conditional execution:
 
 Miscellaneous:
 
-_   STRING  _Everything between underscores is printed as a string_
+`   STRING  `Everything between ticks is printed as a string`
 
 
 \   QUIT   Return to the monitor program
@@ -248,12 +240,6 @@ _   STRING  _Everything between underscores is printed as a string_
 
 ?   QUERY  
 
-,   Separate array members
-
-
-<<<<<<< HEAD
-`   TICK Execute the last conditional code
-=======
 
 
 
