@@ -3,7 +3,7 @@ A Minimal Interpreter in Z80 assembly language for the RC2014 Micro and other si
 
 ## What is MINT ?
 
-MINT is a tiny, stack based language based on Forth. On the Z80 it can be implemented in fewer than 1024 bytes of machine code - and it is relatively quick compared to other interpreted languages.
+MINT is a tiny, stack based language inspired by Forth. On the Z80 it can be implemented in fewer than 1024 bytes of machine code - and it is relatively quick compared to other interpreted languages.
 
 It uses reverse Polish notation (RPN) so you have to put the operands before the operator. It's just like the old HP calculators from 50 years ago.
 
