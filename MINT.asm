@@ -2,7 +2,7 @@
 ;
 ;        MINT1_13 Micro-Interpreter for the Z80
 ;
-;        Ken Boak November 5th 2021 
+;        Ken Boak and John Hardy November 10th 2021 
 ;
 ;	     Interim snapshot file to be merged later when confirmed 
 ;
@@ -10,23 +10,26 @@
 ;
 ;        Macros and new loop code
 ;
-;        Serial Routines pushed out to 2nd 1K
-;  
-;        provision for hardware specific system calls
-;   
-;        sys_call jump table  sdefs:
-;
-;        over added and linked to ` (grave)
-;  
-;        Mod operator returned to %
-;
-;        Division routine now working (but over-long)
-;
-;        Placeholder for hexadecimal number routine #ABCD
 ;
 ;		 Invert inv and Negate neg now use the Subtraction routine.
 ;
-;        Comparison operators tidied up to save 12 bytes
+;        Shift Left { and shift right } operations added
+;
+;        Over reverted to %
+;
+;        Additional commands available using backslash prefix \
+;  
+;        Mod operator removed, / is now /mod
+;
+;        Division routine now working
+;
+;        Hexadecimal number entry routine #ABCD
+;
+;        Comma , is used to output in hexadecimal format
+;
+;		 Invert inv is ~ and Negate neg is _ now use the Subtraction routine.
+;
+;        Grave is now used to enclose  `text strings`
 ;
 ;        
 ;
@@ -67,9 +70,11 @@
 ;        +     ADD
 ;		 -     SUB
 ;        *     MUL     (max product 65535)
-;        /     DIV
-;        %     MOD
-
+;        /     DIV     Returns quotient and remainder
+;        _     NEG
+;
+;        }     Shift Right (2/)
+;        {     Shift Left  (2*)
 ;
 ;        Comparison - compare the top two elements on the stack
 ;        Puts 1 on the stack if condition is true, 0 if false
@@ -90,8 +95,10 @@
 ;        "     DUP
 ;        '     DROP
 ;        $     SWAP
-;		 `     OVER
+;		 %     OVER
 ;        .     DOT     (Print the value of the top of stack as a decimal)
+;        ,     COMMA   (Print the value of the top of stack as a hexadecimal)
+;		 #     HEX     Accept a hexadecimal number 
 ;
 ;        Memory
 ;
@@ -154,15 +161,13 @@
 ;
 ; *****************************************************************************
 
-        ;TESTMODE    EQU 0
         ;ROMSTART    EQU $8000
-        ;RAMSTART    EQU $8400
+        ;RAMSTART    EQU $8800
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
         RSIZE       EQU $100
-        TBUFSIZE    EQU $100
-        TRUE        EQU -1
+        TRUE        EQU 1
         FALSE       EQU 0
 
 .macro _rpush,reghi,reglo
@@ -181,16 +186,6 @@
         INC IX                  
 .endm
 
-.macro _rpeek, reghi, reglo
-        LD reglo,(IX+0)         
-        LD reghi,(IX+1)
-.endm
-
-.macro _rdrop
-        INC IX
-        INC IX
-.endm
-
 .macro _isZero, reghi, reglo
         LD A,reglo
         OR reghi
@@ -199,44 +194,12 @@
         .ORG ROMSTART
         
 opcodes:
-        DB    lsb(exit_)   ;    NUL
-        DB    lsb(sys_)    ;    SOH
-        DB    lsb(sys_)    ;    STX
-        DB    lsb(sys_)    ;    ETX
-        DB    lsb(sys_)    ;    EOT
-        DB    lsb(sys_)    ;    ENQ
-        DB    lsb(sys_)    ;    ACK
-        DB    lsb(sys_)    ;    BEL
-        DB    lsb(sys_)    ;    BS
-        DB    lsb(sys_)    ;    TAB
-        DB    lsb(sys_)    ;    LF
-        DB    lsb(sys_)    ;    VT
-        DB    lsb(sys_)    ;    FF
-        DB    lsb(finish)  ;    CR   This jumps through finish to interp
-        DB    lsb(sys_)    ;    SO
-        DB    lsb(sys_)    ;    SI
-        DB    lsb(sys_)    ;    DLE
-        DB    lsb(sys_)    ;    DC1
-        DB    lsb(sys_)    ;    DC2
-        DB    lsb(sys_)    ;    DC3
-        DB    lsb(sys_)    ;    DC4
-        DB    lsb(sys_)    ;    NAK
-        DB    lsb(sys_)    ;    SYN
-        DB    lsb(sys_)    ;    ETB
-        DB    lsb(sys_)    ;    CAN
-        DB    lsb(sys_)    ;    EM
-        DB    lsb(sys_)    ;    SUB
-        DB    lsb(sys_)    ;    ESC
-        DB    lsb(sys_)    ;    FS
-        DB    lsb(sys_)    ;    GS
-        DB    lsb(sys_)    ;    RS
-        DB    lsb(sys_)    ;    US
-        DB    lsb(sys_)    ;    SP
+        DB    lsb(nop_)    ;    SP
         DB    lsb(store_)  ;    !            
         DB    lsb(dup_)    ;    "
         DB    lsb(hex_)    ;    #
         DB    lsb(swap_)   ;    $            
-        DB    lsb(mod_)    ;    %            
+        DB    lsb(over_)   ;    %            
         DB    lsb(and_)    ;    &
         DB    lsb(drop_)   ;    '
         DB    lsb(begin_)  ;    (        
@@ -291,11 +254,11 @@ opcodes:
         DB    lsb(call_)   ;    Y
         DB    lsb(call_)   ;    Z
         DB    lsb(open_)   ;    [
-        DB    lsb(quit_)   ;    \
+        DB    lsb(alt_)    ;    \
         DB    lsb(close_)  ;    ]
         DB    lsb(xor_)    ;    ^
-        DB    lsb(str_)    ;    _
-        DB    lsb(over_)   ;    `            
+        DB    lsb(neg_)    ;    _
+        DB    lsb(str_)    ;    `            
         DB    lsb(var_)    ;    a
         DB    lsb(var_)    ;    b
         DB    lsb(var_)    ;    c
@@ -322,27 +285,19 @@ opcodes:
         DB    lsb(var_)    ;    x
         DB    lsb(var_)    ;    y
         DB    lsb(var_)    ;    z
-        DB    lsb(save_)   ;    {
+        DB    lsb(shl_)    ;    {
         DB    lsb(or_)     ;    |            
-        DB    lsb(load_)   ;    }            
+        DB    lsb(shr_)    ;    }            
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
 
-sysdefs:  ; Addresses for sys_calls
+imacros:
+        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, backsp_  ; ABCDEFGH    
+        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; IJKLMNOP    
+        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; QRSTUVWX    
+        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; YZ[.....    
 
-		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;  
-        DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
-		DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ;    
-        DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; 
-        	
-		
-
-idefs:  DW  nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; ABCDEFGH    
-        DW  iterI_, iterJ_, nop_,   nop_,   nop_,   nop_,   nop_,   nop_    ; IJKLMNOP    
-        DW  nop_,   nop_,   nop_,   nop_,   util_,  nop_,   nop_,   exec_   ; QRSTUVWX    
-        DW  nop_,   nop_                                                    ; YZ    
-
-mint:
+initialize:
         LD IX,RSTACK
         LD IY,NEXT			; IY provides a faster jump to NEXT
         LD BC,HEAP
@@ -350,10 +305,24 @@ mint:
         LD (HERE1),BC
         LD A,FALSE
         LD (DEFINE),A
-        LD HL,idefs
-        LD DE,defs
-        LD BC,26 * 2
+        LD HL,getCharImpl
+        LD (VGETCHAR),HL
+        LD HL,defs
+        LD B,26
+init1:
+        LD (HL),lsb(empty_)
+        INC HL
+        LD (HL),msb(empty_)
+        INC HL
+        DJNZ init1
+        LD HL,imacros
+        LD DE,macros
+        LD BC,$20 * 2
         LDIR
+        RET
+
+mint:
+        CALL initialize
 interp:
         CALL crlf
         CALL ok             ; friendly prompt
@@ -376,41 +345,56 @@ interp1:
 
 waitchar:   
         CALL getchar        ; loop around waiting for character
-        CP $0A              ; Less than $0A
-        JR Z, endchar       ; Return char
         CP $7F              ; Greater or equal to $7F
         JR NC, endchar             
+        CP $20
+        JR NC, waitchar1
+        CP $0               ; is it end of string?
+        JR Z, endchar
+        CP '\n'              ; newline?
+        JR Z, waitchar2
+        CP '\r'              ; carriage return?
+        JR Z, waitchar3
+        
+        DEC A
+        ADD A,A
+        LD HL,MACROS
+        LD D,0
+        LD E,A
+        ADD HL,DE
+        LD (HERE1),BC
+        LD C,(HL)
+        INC HL
+        LD B,(HL)
+        DEC BC
+        JP  (IY)                
 
+waitchar1:
         LD (BC), A          ; store the character in textbuf
         INC BC
-        CP  $0              ; is it end of string?
-        JR Z, endchar
-        CP  $0D             ; is it a newline?
-        JR Z, endchar
-        
+
         CP ":"
-        JR NZ,waitchar1
+        JR NZ,waitchar2
         
         LD A,TRUE
         LD (DEFINE),A
         LD A,":"
         
-waitchar1:        
+waitchar2:        
         CALL putchar        ; echo character to screen
-        
         JR  waitchar        ; wait for next character
-        
+
+waitchar3:
+        LD (BC), A          ; store the character in textbuf
+        INC BC
+
 endchar:    
         LD (HERE1),BC
-        LD A, $0D           ; Send out a CRLF
-        CALL putchar
-        LD A, $0A
-        CALL putchar
-			
+        CALL crlf
 
-        LD BC,(HERE)            ; Instructions stored on heap at address HERE
+        LD BC,(HERE)        ; Instructions stored on heap at address HERE
         DEC BC
-                                ; Drop into the NEXT and dispatch routines
+                            ; Drop into the NEXT and dispatch routines
 
 ; ********************************************************************************
 ; Dispatch Routine.
@@ -433,20 +417,23 @@ endchar:
 ; *********************************************************************************
 
 NEXT:   
-        INC BC                   ; 6t    Increment the IP
-        LD A, (BC)               ; 7t    Get the next character and dispatch
+        INC BC                      ; 6t    Increment the IP
+        LD A, (BC)                  ; 7t    Get the next character and dispatch
 		
 dispatch:                        
-
-        LD DE, opcodes           ; 7t    Start address of jump table         
-        LD E,A                   ; 4t    Index into table
-        LD A,(DE)                ; 7t    get low jump address
-        LD L,A                   ; 4t    and put into L
-        LD H, msb(page1)         ; 7t    Load H with the 1st page address
-        JP  (HL)                 ; 4t    Jump to routine
+        sub ' '                     ; 7t    remove char offset
+        JR NC,dispatch1
+        CP 0 - ' '                  ;       expected values: 0 or '\r'
+        JP Z, exit_
+        JR interp                   ;       back to OK prompt
+dispatch1:
+        LD DE, opcodes              ; 7t    Start address of jump table         
+        LD E,A                      ; 4t    Index into table
+        LD A,(DE)                   ; 7t    get low jump address
+        LD L,A                      ; 4t    and put into L
+        LD H, msb(page1)            ; 7t    Load H with the 1st page address
+        JP  (HL)                    ; 4t    Jump to routine
         
-                                 ; 33t  (previously 64t)
-
 
 ; ********************************************************************************
 ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
@@ -525,14 +512,23 @@ Num2:
         ret 
         
 crlf:       
-        LD A, $0A           ; Send a CRLF
+        LD A, '\r'
         CALL putchar
-        LD A, $0D
+        LD A, '\n'           
         CALL putchar
         RET
         
-ok:    CALL enter
-        .cstr "_Ok_"
+space:       
+        LD A, ' '           
+        CALL putchar
+        RET
+
+ok:    
+        LD A, 'O'           
+        CALL putchar
+        LD A, 'K'
+        CALL putchar
+        CALL crlf
         RET
 
 enter:
@@ -543,36 +539,33 @@ enter:
         
 ; **********************************************************************
 ; 
-; routines that are written in Mint - placed here to fill up zeroth page
+; macros that are written in Mint 
+;
+; **********************************************************************
+
+backsp_:
+        DB 0
+        LD BC,(HERE1)
+        DEC BC
+        LD A,$08
+        call putchar
+        LD A,' '
+        call putchar
+        LD A,$08
+        call putchar
+        JP waitchar
+
+; **********************************************************************
+; 
+; defs that are written in Mint - placed here to fill up zeroth page
 ; Note: opcode zero can exit Mint and go into machine code
 ; Mint can be reentered from machine code by CALL enter
 ;
 ; **********************************************************************
 
-iterI_:
+empty_:
         DB 0
-        LD L,(IX+0)         
-        LD H,(IX+1)
-        PUSH HL
         JP (IY)
-
-iterJ_:
-        DB 0
-        LD L,(IX+4)         
-        LD H,(IX+5)
-        PUSH HL
-        JP (IY)
-
-util_:
-        DB 0                ; exit Mint
-        POP HL              ; get TOS
-        LD A,L
-        JP dispatch 
-
-exec_:
-        DB 0                ; exit Mint
-        POP HL              ; get TOS
-        JP (HL)        
 
         .align $100
 ; **********************************************************************			 
@@ -582,17 +575,14 @@ exec_:
 ; **********************************************************************
 page1:
 
-quit_:        
-        JR    ok                ; Print OK and return to monitor
-
+alt_:        
+        JP alt
 exit_:
         INC BC
         LD HL,BC
         _rpop B,C               ; Restore Instruction pointer
         JP (HL)
         
-sys_:   JP      (IY)            ; 8t Sys Call handler to be inserted    
-
 num_:   JP  number
 
 call_:
@@ -630,10 +620,8 @@ fetch_:                     ; Fetch the value from the address placed on the top
         
 nop_:                       ; Sneakily piggy back nop here
         JP      (IY)        ; 8t
-        
                             ; 49t 
-        
-         
+
 store_:                    ; Store the value at the address placed on the top of the stack
         POP    HL          ; 10t
         POP    DE          ; 10t
@@ -707,7 +695,10 @@ xor_:
         LD      H,A
         PUSH    HL
         JP      (IY)
-    
+
+shl_:   POP     HL             ; Duplicate the top member of the stack
+        PUSH    HL
+        PUSH    HL             ; shift left fallthrough into add_     
     
 add_:                          ; Add the top 2 members of the stack
         POP     DE             ; 10t
@@ -737,13 +728,6 @@ sub_2:  AND     A              ;  4t  Entry point for NEGate
         JP      (IY)           ; 8t
                                ; 58t
     
-begin_:                     ; Left parentesis begins a loop
-        JP begin
-again_:    
-        JP again
-
-finish:     
-        JP     interp         ; back to OK prompt
 
 
 ; **************************************************************************             
@@ -754,7 +738,7 @@ str_:
 nextchar:            
         LD A, (BC)
         INC BC
-        CP "_"              ; _ is the string terminator
+        CP "`"              ; ` is the string terminator
         JR Z,stringend
         CALL putchar
         JR   nextchar
@@ -764,7 +748,6 @@ nextchar:
 
 
 stringend:  
-        CALL crlf
         DEC BC
         JP   (IY) 
         
@@ -772,7 +755,7 @@ stringend:
 dot_:        
         POP     HL
         CALL    printdec
-        CALL    crlf
+        CALL    space
         JP      (IY)
         
 hexp_:                      ; Print HL as a hexadecimal
@@ -814,27 +797,24 @@ less:
 ;       Trampoline Jumps to Page 2 of primitives
 
 
-hex_:        JR hex
+hex_:   CALL     get_hex
+        JR       less      ; piggyback for ending
+        
 query_:      JR query
 open_:       JR open
 close_:      JR close
-save_:       JR save
-load_:       JR load
+shr_:        JR shr
 del_:        JR del
-def_:        JR def_1
 mul_:        JR mul
-div_:        JR div
-mod_:        JR mod        
+div_:        JR div      
+def_:        JP def
+begin_:      JR begin                   
+again_:      JP again
            
 ;*******************************************************************
 ; Page 2 Primitives
 ;*******************************************************************
            
-hex:
-        CALL     get_hex
-        PUSH     HL
-        JP       (IY)
-        
 
 query:
         JP       (IY) 
@@ -846,51 +826,11 @@ close:
         JP       (IY)
         
         
-        
-save:       
-        JP       (IY)
-        
-load:      
-        JP       (IY)
+
         
 del:      
         JP       (IY) 
         
-; **************************************************************************             
-; def is used to create a colon definition
-; When a colon is detected, the next character (usually uppercase alpha)
-; is looked up in the vector table to get its associated code field address
-; This CFA is updated to point to the character after uppercase alpha
-; The remainder of the characters are then skipped until after a semicolon  
-; is found.
-; ***************************************************************************
-
-def_1:      
-def:                       ; Create a colon definition
-        INC BC
-        LD  A,(BC)          ; Get the next character
-        INC BC
-                            ; Look up CFA in vector table
-        SUB "A"             ; Calc index
-        ADD A,A             ; Double A to index even addresses
-        PUSH HL             ; Save HL
-        LD HL, DEFS         ; Start address of jump table         
-        LD L,A              ; Index into table
-        LD (HL),C           ; Save low byte of IP in CFA
-        INC HL              
-        LD (HL),B           ; Save high byte of IP in CFA+1
-        POP HL              ; Restore HL
-nextbyte:                   ; Skip to end of definition   
-        LD A,(BC)           ; Get the next character
-        INC BC              ; Point to next character
-        CP ";"              ; Is it a semicolon 
-        JR z, end_def       ; end the definition
-        JR  nextbyte        ; get the next element
-end_def:    
-        DEC BC
-        JP (IY)       
-
-
 mul:                       ; 16-bit multiply  
 
         POP  DE             ; get first value
@@ -913,6 +853,12 @@ Mul_Loop_1:
         JR NZ,Mul_Loop_1
 		
 		JR   mul_end
+		
+;  Right shift } is a divide by 2		
+		
+shr:    POP     HL         ; Get the top member of the stack
+        LD      DE, 2	   ; divide by 2 	
+        JR      div1       ; jump into division		
         
 
 ; ********************************************************************
@@ -927,7 +873,7 @@ div:
 
         POP  DE             ; get first value
         POP  HL             ; get 2nd value
-        PUSH BC             ; Preserve the IP
+div1:   PUSH BC             ; Preserve the IP
         LD B,H              ; BC = 2nd value
         LD C,L
 
@@ -972,45 +918,16 @@ div_end:
         JP       (IY)
         	        
         
-; ***************************************************************
-; MOD is a 16 / 8 Division
-; ***************************************************************
 
-mod:        
-        POP  DE            ; get first value TOS
-        POP  HL            ; get 2nd value   NOS
-        PUSH BC            ; Preserve the IP
-        LD B,16            ; C = 1st  value
-        LD D,E
-        
-        LD B,16
-        XOR A
-        
-Div8_loop:            
-        ADD HL,HL
-        RLA 
-        CP D
-        JR C,Div8_next
-        INC L
-        SUB D
-        
-Div8_next:            
-        
-        DJNZ Div8_loop
-              
-        LD   D, 0
-        LD   E, A
 		
-		JR		div_end
-		
- 
-
-begin:
-        POP DE
-        _isZero D,E
+begin:                               ; Left parentesis begins a loop
+        POP HL
+        _isZero H,L
         JR Z,begin1
-        _rpush B,C
-        _rpush D,E
+        _rpush B,C                  ; push loop address
+        DEC HL
+        _rpush H,L                  ; push loop limit
+        _rpush 0,0                  ; push loop var=0
         JP (IY)
 begin1:
         LD E,1
@@ -1036,18 +953,237 @@ begin4:
         JP (IY)
 
 again:
-        _rpop D,E
-        DEC DE
-        _isZero D,E
+        LD E,(IX+0)                 ; peek loop var
+        LD D,(IX+1)                 
+        LD L,(IX+2)                 ; peek loop limit
+        LD H,(IX+3)                 
+        OR A
+        SBC HL,DE
         JR Z,again1
-        _rpeek B,C
-        _rpush D,E
+        INC DE
+        LD (IX+0),E                 ; poke loop var
+        LD (IX+1),D                 
+        LD C,(IX+4)                 ; peek loop address
+        LD B,(IX+5)                 
         JP (IY)
 again1:   
-        _rdrop
+        INC IX                      ; drop loop var
+        INC IX
+        INC IX                      ; drop loop limit
+        INC IX
+        INC IX                      ; drop loop address
+        INC IX
         JP (IY)
 
-        .ORG RAMSTART
+; **************************************************************************             
+; def is used to create a colon definition
+; When a colon is detected, the next character (usually uppercase alpha)
+; is looked up in the vector table to get its associated code field address
+; This CFA is updated to point to the character after uppercase alpha
+; The remainder of the characters are then skipped until after a semicolon  
+; is found.
+; ***************************************************************************
+
+def:                       ; Create a colon definition
+        PUSH HL             ; Save HL
+        LD HL, DEFS         ; Start address of jump table         
+        INC BC
+        LD  A,(BC)          ; Get the next character
+        INC BC
+        SUB "A"             ; Calc index
+        ADD A,A             ; Double A to index even addresses
+        LD L,A              ; Index into table
+        LD (HL),C           ; Save low byte of IP in CFA
+        INC HL              
+        LD (HL),B           ; Save high byte of IP in CFA+1
+        POP HL              ; Restore HL
+nextbyte:                   ; Skip to end of definition   
+        LD A,(BC)           ; Get the next character
+        INC BC              ; Point to next character
+        CP ";"              ; Is it a semicolon 
+        JR z, end_def       ; end the definition
+        JR  nextbyte        ; get the next element
+end_def:    
+        DEC BC
+        JP (IY)       
+
+alt:
+        INC BC
+        LD A,(BC)
+        SUB "!"                 ; Use lowercase letters for now
+        ADD A,A
+        LD HL,altcodes
+        LD L,A
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        EX DE,HL
+        JP (HL)                 ; Execute code from Alt
+
+      
+        .align $100             ; page boundary
+
+altcodes:
+        DW   anop_      ;    !            
+        DW   anop_      ;    "
+        DW   anop_      ;    #
+        DW   anop_      ;    $            
+        DW   anop_      ;    %            
+        DW   anop_      ;    &
+        DW   anop_      ;    '
+        DW   anop_      ;    (        
+        DW   anop_      ;    )
+        DW   anop_      ;    *            
+        DW   incr_      ;    +
+        DW   anop_      ;    ,            
+        DW   decr_      ;    -
+        DW   anop_      ;    .
+        DW   anop_      ;    /
+        DW   anop_      ;    0            
+        DW   anop_      ;    1        
+        DW   anop_      ;    2            
+        DW   anop_      ;    3
+        DW   anop_      ;    4            
+        DW   anop_      ;    5            
+        DW   anop_      ;    6            
+        DW   anop_      ;    7
+        DW   anop_      ;    8            
+        DW   anop_      ;    9        
+        DW   adef_      ;    :        
+        DW   anop_      ;    ;
+        DW   anop_      ;    <
+        DW   anop_      ;    =            
+        DW   anop_      ;    >            
+        DW   anop_      ;    ?
+        DW   anop_      ;    @    
+        DW   anop_      ;    A    
+        DW   anop_      ;    B
+        DW   anop_      ;    C
+        DW   anop_      ;    D    
+        DW   anop_      ;    E
+        DW   anop_      ;    F
+        DW   anop_      ;    G
+        DW   anop_      ;    H
+        DW   anop_      ;    I
+        DW   anop_      ;    J
+        DW   anop_      ;    K
+        DW   anop_      ;    L
+        DW   anop_      ;    M
+        DW   anop_      ;    N
+        DW   anop_      ;    O
+        DW   anop_      ;    P
+        DW   anop_      ;    Q
+        DW   anop_      ;    R
+        DW   anop_      ;    S
+        DW   anop_      ;    T
+        DW   anop_      ;    U
+        DW   anop_      ;    V
+        DW   anop_      ;    W
+        DW   exec_      ;    X
+        DW   anop_      ;    Y
+        DW   anop_      ;    Z
+        DW   anop_      ;    [
+        DW   comment_   ;    \
+        DW   anop_      ;    ]
+        DW   anop_      ;    ^
+        DW   anop_      ;    _
+        DW   anop_      ;    `            
+        DW   anop_      ;    a
+        DW   anop_      ;    b
+        DW   anop_      ;    c
+        DW   anop_      ;    d
+        DW   anop_      ;    e
+        DW   anop_      ;    f
+        DW   anop_      ;    g
+        DW   anop_      ;    h
+        DW   i_         ;    i            
+        DW   j_         ;    j
+        DW   anop_      ;    k
+        DW   anop_      ;    l
+        DW   anop_      ;    m
+        DW   newln_     ;    n
+        DW   anop_      ;    o
+        DW   anop_      ;    p
+        DW   quit_      ;    q            
+        DW   anop_      ;    r
+        DW   space_     ;    s    
+        DW   tab_       ;    t
+        DW   anop_      ;    u
+        DW   anop_      ;    v
+        DW   anop_      ;    w
+        DW   anop_      ;    x
+        DW   anop_      ;    y
+        DW   anop_      ;    z
+        DW   anop_      ;    {
+        DW   anop_      ;    |            
+        DW   anop_      ;    }            
+        DW   anop_      ;    ~            
+        DW   anop_      ;    backspace
+
+adef_:
+        JP (IY)
+
+anop_:
+        JP (IY)
+
+comment_:
+        JP (IY)
+
+decr_:
+        POP HL
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        DEC HL
+        DEC DE
+        LD (HL),E
+        INC HL
+        LD (HL),D
+        JP (IY)        
+
+exec_:
+        POP HL              ; get TOS
+        JP (HL)        
+
+i_:
+        PUSH IX
+        JP (IY)
+
+incr_:
+        POP HL
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        DEC HL
+        INC DE
+        LD (HL),E
+        INC HL
+        LD (HL),D
+        JP (IY)        
+
+j_:
+        PUSH IX
+        POP HL
+        LD DE,6
+        ADD HL,DE
+        PUSH HL
+        JP (IY)
+
+newln_:
+        call crlf
+        JP (IY)        
+
+quit_:
+        JP ok                   ; display OK and exit interpreter
+
+space_:
+        CALL space
+        JP (IY)        
+        
+tab_:
+        LD A,'\t'
+        CALL putchar
+        JP (IY)        
         
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
@@ -1188,22 +1324,18 @@ serial_init:
 ;   On entry: No parameters required
 ;   On exit:  A = Character input from the device
 ;             NZ flagged if character input
-;             BC DE HL IX IY I AF' BC' DE' HL' preserved
+;             BC DE IX IY I AF' BC' DE' HL' preserved
+;             HL destroyed
 ; This function does not return until a character is available
 getchar:
-.if TESTMODE=1
-        PUSH HL
-        LD HL,(tbPtr)
-        LD A,(HL)
-        INC HL
-        LD (tbPtr),HL
-        POP HL
-.else
+        LD HL,(VGETCHAR)
+        JP (HL)
+        
+getCharImpl:
         IN   A,(kACIA1Cont) ;Address of status register
         AND  $01            ;Receive byte available
         JR   Z, getchar     ;Return Z if no character
         IN   A,(kACIA1Data) ;Read data byte
-.endif
         RET                 ;NZ flagged if character input
 
 
@@ -1302,12 +1434,18 @@ conv:		AND	0x0F
             RET                
         
 
+        .ORG RAMSTART
+        
         DS DSIZE
 DSTACK:        
 
         DS RSIZE
 RSTACK:        
 
+tbPtr:
+        DW 0                    ; reserved for tests
+VGETCHAR:
+        DW 0                    ; vector with pointer to getchar implementation
 HERE:
         DW 0
 HERE1:
@@ -1315,13 +1453,13 @@ HERE1:
 DEFINE:
         DB 0
 
-.if TESTMODE=1
-
-tbPtr:
-        DW 0
-
-.endif
     
+; ****************************************************************
+; CDEFS Table - holds $20 ctrl key macros
+; ****************************************************************
+        .align $100
+MACROS:
+        DS 26 * 2
 
 ; ****************************************************************
 ; DEFS Table - holds 26 addresses of user routines
