@@ -1,5 +1,5 @@
 # MINT
-A Minimal INTerpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
+A Minimal Interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
 
 ## What is MINT ?
 
@@ -149,9 +149,11 @@ Maths Operators:
 
 =   16 bit comparison EQ
 
-
 >   16-bit comparison GT
 
+{   Shift the number to the left  (2*)
+
+}   Shift the number to the right (2/)
 
 
 Logical Operators:
@@ -188,13 +190,13 @@ $   Swap the top 2 members of the stack  SWAP
 
 .   Print the top member of the stack as a decimal number DOT, and remove the top element.
 
-,   Print number as a hexadecimal
+,   Print the number on the stack as a hexadecimal
 
 (#)    To enter a number in hexadecimal precede with a hash
 
 
 
-Memory Operations:
+Memory and Variable Operations:
 
 @   FETCH a value from memory
 
@@ -208,13 +210,6 @@ User Definitions:
 
 
 ;   End of user definition  END
-
-Variables:
-
-}   SAVE the top of stack to a variable
-
-
-{   LOAD the top of stack from a variable
 
 
 Loops and conditional execution:
