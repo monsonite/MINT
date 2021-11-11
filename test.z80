@@ -45,19 +45,19 @@ CALL mint
 setTbuf "2(6.)"
 CALL mint
 
-setTbuf "0(1(_H_))"
+setTbuf "0(1(`H`))"
 CALL mint
 
-setTbuf "1(1(_H_))"
+setTbuf "1(1(`H`))"
 CALL mint
 
-setTbuf "1(0(_H_))"
+setTbuf "1(0(`H`))"
 CALL mint
 
-setTbuf "0(_H_)"
+setTbuf "0(`H`)"
 CALL mint
 
-setTbuf "1(_H_)"
+setTbuf "1(`H`)"
 CALL mint
 
 setTbuf "1(I.)"

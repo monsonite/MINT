@@ -799,14 +799,14 @@ less:
 
 hex_:   CALL     get_hex
         JR       less      ; piggyback for ending
-        
+
 query_:      JR query
-open_:       JR open
-close_:      JR close
+open_:       JP open
+close_:      JP close
 shr_:        JR shr
 del_:        JR del
 mul_:        JR mul
-div_:        JR div      
+div_:        JR div
 def_:        JP def
 begin_:      JR begin                   
 again_:      JP again
@@ -818,16 +818,7 @@ again_:      JP again
 
 query:
         JP       (IY) 
-        
-open:      
-        JP       (IY)
-        
-close:      
-        JP       (IY)
-        
-        
-
-        
+                
 del:      
         JP       (IY) 
         
@@ -853,13 +844,14 @@ Mul_Loop_1:
         JR NZ,Mul_Loop_1
 		
 		JR   mul_end
-		
+
 ;  Right shift } is a divide by 2		
 		
 shr:    POP     HL         ; Get the top member of the stack
         LD      DE, 2	   ; divide by 2 	
         JR      div1       ; jump into division		
-        
+
+
 
 ; ********************************************************************
 ; 16-bit division subroutine.
@@ -908,7 +900,7 @@ Div16_NoAdd2:
         ld d,c
         ld e,a
 		
-		EX DE,HL
+	EX DE,HL
 
 mul_end:
 div_end:    
@@ -943,13 +935,19 @@ begin2:
         LD E,A
         JR begin2
 begin3:
+        CP '['
+        JR Z,begin4
         CP '('
-        JR NZ,begin4
+        JR NZ,begin5
+begin4:
         INC E
         JR begin2
-begin4:
+begin5:
+        CP ']'
+        JR Z,begin6
         CP ')'
         JR NZ,begin2
+begin6:
         DEC E
         JR NZ,begin2
         JP (IY)
@@ -1121,6 +1119,31 @@ altcodes:
         DW   anop_      ;    }            
         DW   anop_      ;    ~            
         DW   anop_      ;    backspace
+
+open:      
+        ; LD HL,0
+        ; ADD HL,SP       ; HL=SP
+        ; _rpush H,L      ; save 
+        JP (IY)
+        
+close:      
+        ; _rpeek D,E      ; get SP1
+        ; LD HL,0
+        ; ADD HL,SP       ; HL = SP2
+        ; EX DE,HL        ; HL=SP1 DE=SP2
+        ; LD SP,HL        ; SP = SP1
+        ; OR A
+        ; SBC HL,DE       ; HL=SP1-SP2 DE=SP2
+        ; LD BC,HL        ; BC = n
+        ; LD HL,(HERE)    ; HL = HERE
+        ; ADD HL,BC       ; HL = HERE + n
+        ; LD (HERE1),HL   ; save HERE + n
+        ; EX DE,HL        ; HL=SP2 DE=HERE1
+        ; LDDR            ; copy n bytes from SP2 to HERE1 decrementing
+        ; LD HL,(HERE)
+        ; PUSH HL
+        ; LD (HERE),DE
+        JP (IY)
 
 adef_:
         JP (IY)
