@@ -6,12 +6,12 @@ LD SP,DSTACK
 CALL initialize
 
 CALL enter
-.cstr "_Mint_"
+.cstr "`Mint`"
 
 CALL interp
 
 CALL enter
-.cstr "_quit_"
+.cstr "`quit`"
 
 HALT
 
