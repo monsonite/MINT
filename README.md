@@ -203,7 +203,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | Symbol | Description                      | Effect |
 | ------ | -------------------------------- | ------ |
 | [      | Begin array and array definition | --     |
-| ]      | create the array                 | -- adr |
+| ]      | CLOSE an array                   | -- adr |
 
 ### Alternative codes
 
@@ -211,8 +211,7 @@ This start with a \\ followed by an ASCII character. These provide Mint with ext
 
 | Symbol | Description                                         | Effect      |
 | ------ | --------------------------------------------------- | ----------- |
-| +      | - decrements variable at address                    | addr --     |
-| -      | - increments variable at address                    | addr --     |
+| +      | - decrements variable at address                    | addr inc -- |
 | :      | - TODO: starts defining a macro                     | --          |
 | E      | - emits a char to output                            | val --      |
 | I      | input from a I/O port                               | port -- val |

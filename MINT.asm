@@ -1026,7 +1026,7 @@ altcodes:
         DW   nop_       ;    *            
         DW   incr_      ;    +  ( addr -- ) decrements variable at address
         DW   nop_       ;    ,            
-        DW   decr_      ;    -  ( addr -- ) increments variable at address
+        DW   nop_      ;    -  ( addr -- ) increments variable at address
         DW   nop_       ;    .
         DW   nop_       ;    /
         DW   nop_       ;    0            
@@ -1157,18 +1157,6 @@ adef_:
 comment_:
         JP (IY)
 
-decr_:
-        POP HL
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        DEC HL
-        DEC DE
-        LD (HL),E
-        INC HL
-        LD (HL),D
-        JP (IY)        
-
 emit_:
         POP HL
         LD A,L
@@ -1197,15 +1185,15 @@ i_:
         JP (IY)
 
 incr_:
-        POP HL
-        LD E,(HL)
+        POP DE                  ; DE = incr
+        POP HL                  ; HL = addr, save BC
+        LD A,E                  ; A = lsb(addr@)
+        ADD A,(HL)              ; add lsb(incr) and A 
+        LD (HL),A               ; store A in lsb(addr@)
         INC HL
-        LD D,(HL)
-        DEC HL
-        INC DE
-        LD (HL),E
-        INC HL
-        LD (HL),D
+        LD A,D                  ; A = msb(addr@)
+        ADC A,(HL)              ; add with carry msb(addr@)
+        LD (HL),A               ; store A in msb(addr@)
         JP (IY)        
 
 j_:
