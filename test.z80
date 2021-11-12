@@ -36,14 +36,6 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
-; setTBuf "[1]."                    ; test for macros, 12 backspace leaves 1 to parse and print 
-; call interp                             ; NOTE: call to interp cannot leave items on stack
-
-; CALL enter
-; DB "[1]"
-; DB 0
-; expect 6,"expected 6000"
-
 CALL enter
 .cstr "0"
 expect 0,"expected 0"

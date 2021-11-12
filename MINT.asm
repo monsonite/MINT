@@ -303,9 +303,6 @@ initialize:
         LD IY,NEXT			; IY provides a faster jump to NEXT
         LD BC,HEAP
         LD (HERE),BC
-        ; LD (HERE1),BC
-        ; LD A,FALSE
-        ; LD (DEFINE),A
         LD HL,getCharImpl
         LD (VGETCHAR),HL
         LD HL,TIB
@@ -331,15 +328,6 @@ interp:
         CALL ok             ; friendly prompt
         CALL crlf           ; newline
         LD BC,TIB
-;         LD A,(DEFINE)
-;         OR A
-;         JR NZ,interp1
-;         LD BC,(HERE)
-;         LD (HERE1),BC
-;         JR waitchar
-; interp1:
-;         LD BC,(HERE1)             
-;         LD (HERE),BC
 
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
@@ -377,13 +365,6 @@ waitchar1:
         LD (BC), A          ; store the character in textbuf
         INC BC
 
-        ; CP ":"
-        ; JR NZ,waitchar2
-        
-        ; LD A,TRUE
-        ; LD (DEFINE),A
-        ; LD A,":"
-        
 waitchar2:        
         CALL putchar        ; echo character to screen
         JR  waitchar        ; wait for next character
@@ -1522,12 +1503,7 @@ VGETCHAR:
         DW 0                    ; vector with pointer to getchar implementation
 HERE:
         DW 0
-; HERE1:
-;         DW 0
-; DEFINE:
-;         DB 0
 
-    
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros
 ; ****************************************************************
