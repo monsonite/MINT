@@ -1,154 +1,145 @@
 .engine mycomputer
 
-    .include "constants.z80"
-    
-    DUP .set $22
-    
-    ; .macro setTBuf,s1
-    ;     ld HL,buf1%%M
-    ;     ld (tbPtr),HL
-    ;     jr buf2%%M
-    ; buf1%%M:
-    ;     db s1,$5C,"q",$0D
-    ; buf2%%M:
-    ; .endm
-    
-    .macro expect,val1,msg1
-        POP HL
-        PUSH HL
-        LD DE,val1
-        OR A
-        SBC HL,DE
-        LD A,L
-        OR H
-        JR Z,expect%%M
-        CALL crlf
-        CALL enter
-        .cstr ".`",msg1,"`"
-        HALT
-        .cstr
-    expect%%M:
-        POP HL
-    .endm
-    
-    LD SP,DSTACK
-    CALL initialize
-    ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
-    LD (VGETCHAR),HL
-    
-    ; setTBuf {"12",8,"."}                    ; test for macros, 12 backspace leaves 1 to parse and print 
-    ; call interp                             ; NOTE: call to interp cannot leave items on stack
-    
-    ; sum over array
+.include "constants.z80"
+
+DUP .set $22
+
+.macro setTBuf,s1
+    ld HL,buf1%%M
+    ld (tbPtr),HL
+    jr buf2%%M
+buf1%%M:
+    db s1,$5C,"q",$0D
+buf2%%M:
+.endm
+
+.macro expect,val1,msg1
+    POP HL
+    PUSH HL
+    LD DE,val1
+    OR A
+    SBC HL,DE
+    LD A,L
+    OR H
+    JR Z,expect%%M
+    CALL crlf
     CALL enter
-    DB "0 t!"                           ; total = 0
-    DB "[1 2 3 4 5] a!"                 ; declare array, store address
-    DB "a@ 1{-@ "                       ; get length of array for loop
-    DB "("                              ; loop
-    DB      "a@ \\i@ {+@"               ; access nth element
-    DB      "t@+ t!"                    ; add to total
-    DB ")"                              ; end loop
-    DB "t@"                             ; print total
-    DB 0
-    expect 15,"expected 15"
-    
-    CALL enter
-    .cstr "0"
-    expect 0,"expected 0"
-    
-    CALL enter
-    .cstr "1"
-    expect 1,"expected 1"
-    
-    CALL enter
-    .cstr "123 456+"
-    expect 579,"123 + 456 should equal 579"
-    
-    CALL enter
-    .cstr ":X1;X"
-    expect 1,"expected 1"
-    
-    CALL enter
-    .cstr "2x!x@"
-    expect 2,"expected 2"
-    
-    CALL enter
-    .cstr ":Aa!;3Aa@"
-    expect 3,"expected 3"
-    
-    CALL enter
-    .cstr ":Aa!;:Ba@;4AB"
-    expect 4,"expected 4"
-    
-    CALL enter
-    .cstr "100 0(6)"
-    expect 100,"expected 100"
-    
-    CALL enter
-    .cstr "100 1(6)"
-    expect 6,"expected 6"
-    
-    CALL enter
-    .cstr "2(6)+"
-    expect 12,"expected 12"
-    
-    CALL enter
-    .cstr "1(\\i@)"
-    expect 0,"expected 0"
-    
-    CALL enter
-    .cstr "1(1(\\i@ \\j@+))"
-    expect 0,"expected 0"
-    
-    CALL enter
-    .cstr "2(2(\\i@ \\j@))+++++++"
-    expect 4,"expected 4"
-    
-    CALL enter
-    .cstr "100a!a\\+a@"
-    expect 101,"expected 101"
-    
-    CALL enter
-    .cstr "[]2-@"
-    expect 0,"expected 0"
-    
-    CALL enter
-    .cstr "[10]",DUP,"2-@%@"
-    expect 10,"expected 10"
-    expect 1,"expected 1"
-    
-    ; sum over array
-    CALL enter
-    DB "0x! [1 2 3] a! a@ 1{-@ ( a@ \\i@ {+@ x@+ x! ) x@"
-    DB 0
-    expect 6,"expected 6"
-    
-    ; sum over array
-    CALL enter
-    DB "0 t!"                           ; total = 0
-    DB "[1 2 3 4 5] a!"                 ; declare array, store address
-    DB "a@ 1{-@ "                       ; get length of array for loop
-    DB "("                              ; loop
-    DB      "a@ \\i@ {+@"               ; access nth element
-    DB      "t@+ t!"                    ; add to total
-    DB ")"                              ; end loop
-    DB "t@"                             ; print total
-    DB 0
-    expect 15,"expected 15"
-    
-    CALL enter
-    .cstr "`Done!`"
-    
+    .cstr ".`",msg1,"`"
     HALT
-    
-    testGetCharImpl:
-            PUSH HL
-            LD HL,(tbPtr)
-            LD A,(HL)
-            INC HL
-            LD (tbPtr),HL
-            POP HL
-            RET                 ;NZ flagged if character input
-    
-    .include "MINT.asm"
-    
+    .cstr
+expect%%M:
+    POP HL
+.endm
+
+LD SP,DSTACK
+CALL initialize
+ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
+LD (VGETCHAR),HL
+
+; setTBuf "[1]."                    ; test for macros, 12 backspace leaves 1 to parse and print 
+; call interp                             ; NOTE: call to interp cannot leave items on stack
+
+; CALL enter
+; DB "[1]"
+; DB 0
+; expect 6,"expected 6000"
+
+CALL enter
+.cstr "0"
+expect 0,"expected 0"
+
+CALL enter
+.cstr "1"
+expect 1,"expected 1"
+
+CALL enter
+.cstr "123 456+"
+expect 579,"123 + 456 should equal 579"
+
+CALL enter
+.cstr ":X1;X"
+expect 1,"expected 1"
+
+CALL enter
+.cstr "2x!x@"
+expect 2,"expected 2"
+
+CALL enter
+.cstr ":Aa!;3Aa@"
+expect 3,"expected 3"
+
+CALL enter
+.cstr ":Aa!;:Ba@;4AB"
+expect 4,"expected 4"
+
+CALL enter
+.cstr "100 0(6)"
+expect 100,"expected 100"
+
+CALL enter
+.cstr "100 1(6)"
+expect 6,"expected 6"
+
+CALL enter
+.cstr "2(6)+"
+expect 12,"expected 12"
+
+CALL enter
+.cstr "1(\\i@)"
+expect 0,"expected 0"
+
+CALL enter
+.cstr "1(1(\\i@ \\j@+))"
+expect 0,"expected 0"
+
+CALL enter
+.cstr "2(2(\\i@ \\j@))+++++++"
+expect 4,"expected 4"
+
+CALL enter
+.cstr "100a!a\\+a@"
+expect 101,"expected 101"
+
+CALL enter
+.cstr "[]2-@"
+expect 0,"expected 0"
+
+CALL enter
+.cstr "[10]",DUP,"2-@%@"
+expect 10,"expected 10"
+expect 1,"expected 1"
+
+; sum over array
+CALL enter
+DB "0x! [1 2 3] a! a@ 1{-@ ( a@ \\i@ {+@ x@+ x! ) x@"
+DB 0
+expect 6,"expected 6"
+
+; sum over array
+CALL enter
+DB "0 t!"                           ; total = 0
+DB "[1 2 3 4 5] a!"                 ; declare array, store address
+DB "a@ 1{-@ "                       ; get length of array for loop
+DB "("                              ; loop
+DB      "a@ \\i@ {+@"               ; access nth element
+DB      "t@+ t!"                    ; add to total
+DB ")"                              ; end loop
+DB "t@"                             ; print total
+DB 0
+expect 15,"expected 15"
+
+CALL enter
+.cstr "`Done!`"
+
+HALT
+
+testGetCharImpl:
+        PUSH HL
+        LD HL,(tbPtr)
+        LD A,(HL)
+        INC HL
+        LD (tbPtr),HL
+        POP HL
+        RET                 ;NZ flagged if character input
+
+.include "MINT.asm"

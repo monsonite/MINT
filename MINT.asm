@@ -50,7 +50,7 @@
 ;
 ;        All commands accessed via a byte wide look up table
 ;
-;        Heap used for command storage (HERE and HERE1)
+;        Heap used for command storage (HERE)
 ;
 ;        Primitives are on two consecutive pages using a trampoline jump to the 2nd page.
 ;        
@@ -167,6 +167,7 @@
         ROMSIZE     EQU $800
         DSIZE       EQU $100
         RSIZE       EQU $100
+        TIBSIZE     EQU $100
         TRUE        EQU 1
         FALSE       EQU 0
 
@@ -302,11 +303,13 @@ initialize:
         LD IY,NEXT			; IY provides a faster jump to NEXT
         LD BC,HEAP
         LD (HERE),BC
-        LD (HERE1),BC
-        LD A,FALSE
-        LD (DEFINE),A
+        ; LD (HERE1),BC
+        ; LD A,FALSE
+        ; LD (DEFINE),A
         LD HL,getCharImpl
         LD (VGETCHAR),HL
+        LD HL,TIB
+        ld (TIBPTR),HL
         LD HL,defs
         LD B,26
 init1:
@@ -327,15 +330,16 @@ interp:
         CALL crlf
         CALL ok             ; friendly prompt
         CALL crlf           ; newline
-        LD A,(DEFINE)
-        OR A
-        JR NZ,interp1
-        LD BC,(HERE)
-        LD (HERE1),BC
-        JR waitchar
-interp1:
-        LD BC,(HERE1)             
-        LD (HERE),BC
+        LD BC,TIB
+;         LD A,(DEFINE)
+;         OR A
+;         JR NZ,interp1
+;         LD BC,(HERE)
+;         LD (HERE1),BC
+;         JR waitchar
+; interp1:
+;         LD BC,(HERE1)             
+;         LD (HERE),BC
 
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
@@ -362,7 +366,7 @@ waitchar:
         LD D,0
         LD E,A
         ADD HL,DE
-        LD (HERE1),BC
+        LD (TIBPTR),BC
         LD C,(HL)
         INC HL
         LD B,(HL)
@@ -373,12 +377,12 @@ waitchar1:
         LD (BC), A          ; store the character in textbuf
         INC BC
 
-        CP ":"
-        JR NZ,waitchar2
+        ; CP ":"
+        ; JR NZ,waitchar2
         
-        LD A,TRUE
-        LD (DEFINE),A
-        LD A,":"
+        ; LD A,TRUE
+        ; LD (DEFINE),A
+        ; LD A,":"
         
 waitchar2:        
         CALL putchar        ; echo character to screen
@@ -389,10 +393,10 @@ waitchar3:
         INC BC
 
 endchar:    
-        LD (HERE1),BC
+        LD (TIBPTR),BC
         CALL crlf
 
-        LD BC,(HERE)        ; Instructions stored on heap at address HERE
+        LD BC,TIB           ; Instructions stored on heap at address HERE
         DEC BC
                             ; Drop into the NEXT and dispatch routines
 
@@ -545,7 +549,7 @@ enter:
 
 backsp_:
         DB 0
-        LD BC,(HERE1)
+        LD BC,(TIBPTR)
         DEC BC
         LD A,$08
         call putchar
@@ -994,15 +998,19 @@ def:                       ; Create a colon definition
         SUB "A"             ; Calc index
         ADD A,A             ; Double A to index even addresses
         LD L,A              ; Index into table
-        LD (HL),C           ; Save low byte of IP in CFA
+        LD DE,(HERE)        ; start of defintion
+        LD (HL),E           ; Save low byte of address in CFA
         INC HL              
-        LD (HL),B           ; Save high byte of IP in CFA+1
+        LD (HL),D           ; Save high byte of address in CFA+1
         POP HL              ; Restore HL
 nextbyte:                   ; Skip to end of definition   
         LD A,(BC)           ; Get the next character
         INC BC              ; Point to next character
+        LD (DE),A
+        INC DE
         CP ";"              ; Is it a semicolon 
         JR z, end_def       ; end the definition
+        LD (HERE),DE        ; bump heap ptr to after definiton
         JR  nextbyte        ; get the next element
 end_def:    
         DEC BC
@@ -1504,17 +1512,20 @@ DSTACK:
 
         DS RSIZE
 RSTACK:        
-
+TIB:
+        DS TIBSIZE
+TIBPTR:
+        DW 0
 tbPtr:
         DW 0                    ; reserved for tests
 VGETCHAR:
         DW 0                    ; vector with pointer to getchar implementation
 HERE:
         DW 0
-HERE1:
-        DW 0
-DEFINE:
-        DB 0
+; HERE1:
+;         DW 0
+; DEFINE:
+;         DB 0
 
     
 ; ****************************************************************
