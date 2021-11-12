@@ -1145,7 +1145,7 @@ arrEnd:
         INC HL          ; HL = start of array
         ADD HL,DE       ; HL = (HERE + n bytes) after array
         LD (HERE),HL    ; ALLOT n bytes on heap
-        JR arrEnd2:     ; jump to zero test in case there is nothing to do
+        JR arrEnd2      ; jump to zero test in case there is nothing to do
 arrEnd1:
         POP DE          ; get top of stack
         DEC HL          ; dec to msb position on heap 
