@@ -6,7 +6,7 @@ LD SP,DSTACK
 CALL initialize
 
 CALL enter
-.cstr "`Mint`"
+.cstr "`MINT Version 1 by Ken Boak and John Hardy`\\n"
 
 CALL interp
 
