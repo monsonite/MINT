@@ -20,7 +20,7 @@ buf2%%M:
     OR H
     JR Z,expect%%M
     CALL enter
-    .cstr "_",msg1,"_"
+    .cstr "`",msg1,"`"
     HALT
     .cstr
 expect%%M:
@@ -91,7 +91,7 @@ CALL enter
 expect 101,"expected 101"
 
 CALL enter
-.cstr "_Done!_"
+.cstr "`Done!`"
 
 HALT
 
