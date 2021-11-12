@@ -1034,9 +1034,9 @@ altcodes:
         DW   anop_      ;    (        
         DW   anop_      ;    )
         DW   anop_      ;    *            
-        DW   incr_      ;    +
+        DW   incr_      ;    +  ( addr -- ) decrements variable at address
         DW   anop_      ;    ,            
-        DW   decr_      ;    -
+        DW   decr_      ;    -  ( addr -- ) increments variable at address
         DW   anop_      ;    .
         DW   anop_      ;    /
         DW   anop_      ;    0            
@@ -1049,28 +1049,28 @@ altcodes:
         DW   anop_      ;    7
         DW   anop_      ;    8            
         DW   anop_      ;    9        
-        DW   adef_      ;    :        
+        DW   adef_      ;    :  TODO: starts defining a macro        
         DW   anop_      ;    ;
         DW   anop_      ;    <
         DW   anop_      ;    =            
         DW   anop_      ;    >            
         DW   anop_      ;    ?
-        DW   anop_      ;    @    
+        DW   anop_      ;    @      
         DW   anop_      ;    A    
         DW   anop_      ;    B
         DW   anop_      ;    C
         DW   anop_      ;    D    
-        DW   anop_      ;    E
+        DW   emit_      ;    E  ( val -- ) emits a char to output
         DW   anop_      ;    F
         DW   anop_      ;    G
-        DW   anop_      ;    H
-        DW   anop_      ;    I
+        DW   anop_      ;    H  
+        DW   inPort_    ;    I  ( port -- val )   
         DW   anop_      ;    J
-        DW   anop_      ;    K
+        DW   key_       ;    K  ( -- val )  read a char from input
         DW   anop_      ;    L
         DW   anop_      ;    M
         DW   anop_      ;    N
-        DW   anop_      ;    O
+        DW   outPort_   ;    O ( val port -- )
         DW   anop_      ;    P
         DW   anop_      ;    Q
         DW   anop_      ;    R
@@ -1083,7 +1083,7 @@ altcodes:
         DW   anop_      ;    Y
         DW   anop_      ;    Z
         DW   anop_      ;    [
-        DW   comment_   ;    \
+        DW   comment_   ;    \  TODO: comment text, skips reading until end of line
         DW   anop_      ;    ]
         DW   anop_      ;    ^
         DW   anop_      ;    _
@@ -1095,19 +1095,19 @@ altcodes:
         DW   anop_      ;    e
         DW   anop_      ;    f
         DW   anop_      ;    g
-        DW   anop_      ;    h
-        DW   i_         ;    i            
-        DW   j_         ;    j
+        DW   here_      ;    h  ; returns HERE variable
+        DW   i_         ;    i  ; returns index variable of current loop          
+        DW   j_         ;    j  ; returns index variable of outer loop
         DW   anop_      ;    k
         DW   anop_      ;    l
         DW   anop_      ;    m
-        DW   newln_     ;    n
+        DW   newln_     ;    n  ; prints a newline to output
         DW   anop_      ;    o
         DW   anop_      ;    p
-        DW   quit_      ;    q            
+        DW   quit_      ;    q  ; quits from Mint REPL         
         DW   anop_      ;    r
-        DW   space_     ;    s    
-        DW   tab_       ;    t
+        DW   anop_      ;    s    
+        DW   anop_      ;    t
         DW   anop_      ;    u
         DW   anop_      ;    v
         DW   anop_      ;    w
@@ -1118,7 +1118,7 @@ altcodes:
         DW   anop_      ;    |            
         DW   anop_      ;    }            
         DW   anop_      ;    ~            
-        DW   anop_      ;    backspace
+        DW   anop_      ;    BS
 
 arrDef:      
         LD HL,0
@@ -1181,9 +1181,28 @@ decr_:
         LD (HL),D
         JP (IY)        
 
+key_:
+        POP HL
+        LD A,L
+        CALL putchar
+        JP (IY)
+
 exec_:
-        POP HL              ; get TOS
+        POP HL              
         JP (HL)        
+
+here_:
+        LD HL,(HERE)
+        PUSH HL
+        JP (IY)
+
+inPort_:
+        POP HL
+        LD C,L
+        IN L,(C)
+        LD H,0
+        PUSH HL
+        JP (IY)        
 
 i_:
         PUSH IX
@@ -1209,22 +1228,27 @@ j_:
         PUSH HL
         JP (IY)
 
+key_:
+        CALL getchar
+        LD L,A
+        LD H,0
+        PUSH HL
+        JP (IY)
+
 newln_:
         call crlf
+        JP (IY)        
+
+outPort_:
+        POP HL
+        LD C,L
+        POP HL
+        OUT (C),L
         JP (IY)        
 
 quit_:
         JP ok                   ; display OK and exit interpreter
 
-space_:
-        CALL space
-        JP (IY)        
-        
-tab_:
-        LD A,'\t'
-        CALL putchar
-        JP (IY)        
-        
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
 ;        Includes drivers for 68B50 ACIA 
