@@ -2,6 +2,8 @@
 
 .include "constants.z80"
 
+DUP .set $22
+
 ; .macro setTBuf,s1
 ;     ld HL,buf1%%M
 ;     ld (tbPtr),HL
@@ -19,6 +21,7 @@
     LD A,L
     OR H
     JR Z,expect%%M
+    CALL crlf
     CALL enter
     .cstr "`",msg1,"`"
     HALT
@@ -30,6 +33,11 @@ LD SP,DSTACK
 CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
+
+CALL enter
+.cstr "[1 2 3]",DUP,"1{-@(",DUP,"\\i@{+@.)"
+; expect 0,"expected 0"
+; HALT
 
 ; setTBuf {"12",8,"."}                    ; test for macros, 12 backspace leaves 1 to parse and print 
 ; call interp                             ; NOTE: call to interp cannot leave items on stack
@@ -89,6 +97,15 @@ expect 4,"expected 4"
 CALL enter
 .cstr "100a!a\\+a@"
 expect 101,"expected 101"
+
+CALL enter
+.cstr "[]2-@"
+expect 0,"expected 0"
+
+CALL enter
+.cstr "[10]",DUP,"2-@%@"
+expect 10,"expected 10"
+expect 1,"expected 1"
 
 CALL enter
 .cstr "`Done!`"

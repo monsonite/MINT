@@ -761,6 +761,7 @@ dot_:
 hexp_:                      ; Print HL as a hexadecimal
         POP     HL
         CALL    printhex
+        CALL    space
         JP      (IY)
 
             
@@ -1024,101 +1025,101 @@ alt:
         .align $100             ; page boundary
 
 altcodes:
-        DW   nop_      ;    !            
-        DW   nop_      ;    "
-        DW   nop_      ;    #
-        DW   nop_      ;    $            
-        DW   nop_      ;    %            
-        DW   nop_      ;    &
-        DW   nop_      ;    '
-        DW   nop_      ;    (        
-        DW   nop_      ;    )
-        DW   nop_      ;    *            
+        DW   nop_       ;    !            
+        DW   nop_       ;    "
+        DW   nop_       ;    #
+        DW   nop_       ;    $            
+        DW   nop_       ;    %            
+        DW   nop_       ;    &
+        DW   nop_       ;    '
+        DW   nop_       ;    (        
+        DW   nop_       ;    )
+        DW   nop_       ;    *            
         DW   incr_      ;    +  ( addr -- ) decrements variable at address
-        DW   nop_      ;    ,            
+        DW   nop_       ;    ,            
         DW   decr_      ;    -  ( addr -- ) increments variable at address
-        DW   nop_      ;    .
-        DW   nop_      ;    /
-        DW   nop_      ;    0            
-        DW   nop_      ;    1        
-        DW   nop_      ;    2            
-        DW   nop_      ;    3
-        DW   nop_      ;    4            
-        DW   nop_      ;    5            
-        DW   nop_      ;    6            
-        DW   nop_      ;    7
-        DW   nop_      ;    8            
-        DW   nop_      ;    9        
+        DW   nop_       ;    .
+        DW   nop_       ;    /
+        DW   nop_       ;    0            
+        DW   nop_       ;    1        
+        DW   nop_       ;    2            
+        DW   nop_       ;    3
+        DW   nop_       ;    4            
+        DW   nop_       ;    5            
+        DW   nop_       ;    6            
+        DW   nop_       ;    7
+        DW   nop_       ;    8            
+        DW   nop_       ;    9        
         DW   adef_      ;    :  TODO: starts defining a macro        
-        DW   nop_      ;    ;
-        DW   nop_      ;    <
-        DW   nop_      ;    =            
-        DW   nop_      ;    >            
-        DW   nop_      ;    ?
-        DW   nop_      ;    @      
-        DW   nop_      ;    A    
-        DW   nop_      ;    B
-        DW   nop_      ;    C
-        DW   nop_      ;    D    
+        DW   nop_       ;    ;
+        DW   nop_       ;    <
+        DW   nop_       ;    =            
+        DW   nop_       ;    >            
+        DW   nop_       ;    ?
+        DW   nop_       ;    @      
+        DW   nop_       ;    A    
+        DW   nop_       ;    B
+        DW   nop_       ;    C
+        DW   nop_       ;    D    
         DW   emit_      ;    E  ( val -- ) emits a char to output
-        DW   nop_      ;    F
-        DW   nop_      ;    G
-        DW   nop_      ;    H  
+        DW   nop_       ;    F
+        DW   nop_       ;    G
+        DW   nop_       ;    H  
         DW   inPort_    ;    I  ( port -- val )   
-        DW   nop_      ;    J
+        DW   nop_       ;    J
         DW   key_       ;    K  ( -- val )  read a char from input
-        DW   nop_      ;    L
-        DW   nop_      ;    M
-        DW   nop_      ;    N
+        DW   nop_       ;    L
+        DW   nop_       ;    M
+        DW   nop_       ;    N
         DW   outPort_   ;    O ( val port -- )
-        DW   nop_      ;    P
-        DW   nop_      ;    Q
-        DW   nop_      ;    R
-        DW   nop_      ;    S
-        DW   nop_      ;    T
-        DW   nop_      ;    U
-        DW   nop_      ;    V
-        DW   nop_      ;    W
+        DW   nop_       ;    P
+        DW   nop_       ;    Q
+        DW   nop_       ;    R
+        DW   nop_       ;    S
+        DW   nop_       ;    T
+        DW   nop_       ;    U
+        DW   nop_       ;    V
+        DW   nop_       ;    W
         DW   exec_      ;    X
-        DW   nop_      ;    Y
-        DW   nop_      ;    Z
-        DW   nop_      ;    [
+        DW   nop_       ;    Y
+        DW   nop_       ;    Z
+        DW   nop_       ;    [
         DW   comment_   ;    \  TODO: comment text, skips reading until end of line
-        DW   nop_      ;    ]
-        DW   nop_      ;    ^
-        DW   nop_      ;    _
-        DW   nop_      ;    `            
-        DW   nop_      ;    a
-        DW   nop_      ;    b
-        DW   nop_      ;    c
-        DW   nop_      ;    d
-        DW   nop_      ;    e
-        DW   nop_      ;    f
-        DW   nop_      ;    g
+        DW   nop_       ;    ]
+        DW   nop_       ;    ^
+        DW   nop_       ;    _
+        DW   nop_       ;    `            
+        DW   nop_       ;    a
+        DW   nop_       ;    b
+        DW   nop_       ;    c
+        DW   nop_       ;    d
+        DW   nop_       ;    e
+        DW   nop_       ;    f
+        DW   nop_       ;    g
         DW   here_      ;    h  ; returns HERE variable
         DW   i_         ;    i  ; returns index variable of current loop          
         DW   j_         ;    j  ; returns index variable of outer loop
-        DW   nop_      ;    k
-        DW   nop_      ;    l
-        DW   nop_      ;    m
+        DW   nop_       ;    k
+        DW   nop_       ;    l
+        DW   nop_       ;    m
         DW   newln_     ;    n  ; prints a newline to output
-        DW   nop_      ;    o
-        DW   nop_      ;    p
+        DW   nop_       ;    o
+        DW   nop_       ;    p
         DW   quit_      ;    q  ; quits from Mint REPL         
-        DW   nop_      ;    r
-        DW   nop_      ;    s    
-        DW   nop_      ;    t
-        DW   nop_      ;    u
-        DW   nop_      ;    v
-        DW   nop_      ;    w
-        DW   nop_      ;    x
-        DW   nop_      ;    y
-        DW   nop_      ;    z
-        DW   nop_      ;    {
-        DW   nop_      ;    |            
-        DW   nop_      ;    }            
-        DW   nop_      ;    ~            
-        DW   nop_      ;    BS
+        DW   nop_       ;    r
+        DW   nop_       ;    s    
+        DW   nop_       ;    t
+        DW   nop_       ;    u
+        DW   nop_       ;    v
+        DW   nop_       ;    w
+        DW   nop_       ;    x
+        DW   nop_       ;    y
+        DW   nop_       ;    z
+        DW   nop_       ;    {
+        DW   nop_       ;    |            
+        DW   nop_       ;    }            
+        DW   nop_       ;    ~            
+        DW   nop_       ;    BS
 
 arrDef:      
         LD HL,0
@@ -1128,10 +1129,10 @@ arrDef:
         
 arrEnd:      
         _rpop D,E       ; DE = old SP (SP1)
+        _rpush B,C
         LD HL,0
         ADD HL,SP       ; HL = current SP (SP2)
         EX DE,HL        ; HL=SP1 DE=SP2 
-        LD SP,HL        ; SP = SP1
         OR A
         SBC HL,DE       ; HL=SP1 - SP2 (num bytes)
         LD BC,HL        ; HL = BC = n bytes
@@ -1158,6 +1159,7 @@ arrEnd2:
         OR B
         JR NZ,arrEnd1   ; loop not done 
         PUSH HL         ; SP = SP1, HL = start of array, push on data stack
+        _rpop B,C
         JP (IY)
 
 adef_:
@@ -1189,7 +1191,7 @@ exec_:
         JP (HL)        
 
 here_:
-        LD HL,(HERE)
+        LD HL,HERE
         PUSH HL
         JP (IY)
 
