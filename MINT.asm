@@ -1185,8 +1185,8 @@ i_:
         JP (IY)
 
 incr_:
-        POP DE                  ; DE = incr
         POP HL                  ; HL = addr, save BC
+        POP DE                  ; DE = incr
         LD A,E                  ; A = lsb(addr@)
         ADD A,(HL)              ; add lsb(incr) and A 
         LD (HL),A               ; store A in lsb(addr@)

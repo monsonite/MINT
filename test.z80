@@ -8,7 +8,7 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
-test "3x! x 1\\+ x@",4
+test "3x! 1 x\\+ x@",4
 test "0",0
 test "1",1
 test "123 456+", 579
@@ -29,7 +29,7 @@ test "2(6)+",12
 test "1(\\i@)",0
 test "1(1(\\i@ \\j@+))",0
 test "2(2(\\i@ \\j@))+++++++",4
-test "100a! a 1\\+ a@",101
+test "100a! 1 a\\+ a@",101
 test "[]2-@",0
 test "[10]@",10
 test "0x! [1 2 3] a! a@ 1{-@ ( a@ \\i@ {+@ x@+ x! ) x@",6

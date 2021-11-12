@@ -211,7 +211,7 @@ This start with a \\ followed by an ASCII character. These provide Mint with ext
 
 | Symbol | Description                                         | Effect      |
 | ------ | --------------------------------------------------- | ----------- |
-| +      | - decrements variable at address                    | addr inc -- |
+| +      | - increments variable at address by an amount       | val addr -- |
 | :      | - TODO: starts defining a macro                     | --          |
 | E      | - emits a char to output                            | val --      |
 | I      | input from a I/O port                               | port -- val |
@@ -221,6 +221,6 @@ This start with a \\ followed by an ASCII character. These provide Mint with ext
 | \\     | TODO: comment text, skips reading until end of line | --          |
 | h      | returns heap pointer variable                       | -- val      |
 | i      | returns index variable of current loop              | -- val      |
-| j      | returns index variable of outer loop                | --val       |
+| j      | returns index variable of outer loop                | -- val      |
 | n      | prints a newline to output                          | --          |
 | q      | quits from Mint REPL                                | --          |
