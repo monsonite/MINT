@@ -1024,101 +1024,101 @@ alt:
         .align $100             ; page boundary
 
 altcodes:
-        DW   anop_      ;    !            
-        DW   anop_      ;    "
-        DW   anop_      ;    #
-        DW   anop_      ;    $            
-        DW   anop_      ;    %            
-        DW   anop_      ;    &
-        DW   anop_      ;    '
-        DW   anop_      ;    (        
-        DW   anop_      ;    )
-        DW   anop_      ;    *            
+        DW   nop_      ;    !            
+        DW   nop_      ;    "
+        DW   nop_      ;    #
+        DW   nop_      ;    $            
+        DW   nop_      ;    %            
+        DW   nop_      ;    &
+        DW   nop_      ;    '
+        DW   nop_      ;    (        
+        DW   nop_      ;    )
+        DW   nop_      ;    *            
         DW   incr_      ;    +  ( addr -- ) decrements variable at address
-        DW   anop_      ;    ,            
+        DW   nop_      ;    ,            
         DW   decr_      ;    -  ( addr -- ) increments variable at address
-        DW   anop_      ;    .
-        DW   anop_      ;    /
-        DW   anop_      ;    0            
-        DW   anop_      ;    1        
-        DW   anop_      ;    2            
-        DW   anop_      ;    3
-        DW   anop_      ;    4            
-        DW   anop_      ;    5            
-        DW   anop_      ;    6            
-        DW   anop_      ;    7
-        DW   anop_      ;    8            
-        DW   anop_      ;    9        
+        DW   nop_      ;    .
+        DW   nop_      ;    /
+        DW   nop_      ;    0            
+        DW   nop_      ;    1        
+        DW   nop_      ;    2            
+        DW   nop_      ;    3
+        DW   nop_      ;    4            
+        DW   nop_      ;    5            
+        DW   nop_      ;    6            
+        DW   nop_      ;    7
+        DW   nop_      ;    8            
+        DW   nop_      ;    9        
         DW   adef_      ;    :  TODO: starts defining a macro        
-        DW   anop_      ;    ;
-        DW   anop_      ;    <
-        DW   anop_      ;    =            
-        DW   anop_      ;    >            
-        DW   anop_      ;    ?
-        DW   anop_      ;    @      
-        DW   anop_      ;    A    
-        DW   anop_      ;    B
-        DW   anop_      ;    C
-        DW   anop_      ;    D    
+        DW   nop_      ;    ;
+        DW   nop_      ;    <
+        DW   nop_      ;    =            
+        DW   nop_      ;    >            
+        DW   nop_      ;    ?
+        DW   nop_      ;    @      
+        DW   nop_      ;    A    
+        DW   nop_      ;    B
+        DW   nop_      ;    C
+        DW   nop_      ;    D    
         DW   emit_      ;    E  ( val -- ) emits a char to output
-        DW   anop_      ;    F
-        DW   anop_      ;    G
-        DW   anop_      ;    H  
+        DW   nop_      ;    F
+        DW   nop_      ;    G
+        DW   nop_      ;    H  
         DW   inPort_    ;    I  ( port -- val )   
-        DW   anop_      ;    J
+        DW   nop_      ;    J
         DW   key_       ;    K  ( -- val )  read a char from input
-        DW   anop_      ;    L
-        DW   anop_      ;    M
-        DW   anop_      ;    N
+        DW   nop_      ;    L
+        DW   nop_      ;    M
+        DW   nop_      ;    N
         DW   outPort_   ;    O ( val port -- )
-        DW   anop_      ;    P
-        DW   anop_      ;    Q
-        DW   anop_      ;    R
-        DW   anop_      ;    S
-        DW   anop_      ;    T
-        DW   anop_      ;    U
-        DW   anop_      ;    V
-        DW   anop_      ;    W
+        DW   nop_      ;    P
+        DW   nop_      ;    Q
+        DW   nop_      ;    R
+        DW   nop_      ;    S
+        DW   nop_      ;    T
+        DW   nop_      ;    U
+        DW   nop_      ;    V
+        DW   nop_      ;    W
         DW   exec_      ;    X
-        DW   anop_      ;    Y
-        DW   anop_      ;    Z
-        DW   anop_      ;    [
+        DW   nop_      ;    Y
+        DW   nop_      ;    Z
+        DW   nop_      ;    [
         DW   comment_   ;    \  TODO: comment text, skips reading until end of line
-        DW   anop_      ;    ]
-        DW   anop_      ;    ^
-        DW   anop_      ;    _
-        DW   anop_      ;    `            
-        DW   anop_      ;    a
-        DW   anop_      ;    b
-        DW   anop_      ;    c
-        DW   anop_      ;    d
-        DW   anop_      ;    e
-        DW   anop_      ;    f
-        DW   anop_      ;    g
+        DW   nop_      ;    ]
+        DW   nop_      ;    ^
+        DW   nop_      ;    _
+        DW   nop_      ;    `            
+        DW   nop_      ;    a
+        DW   nop_      ;    b
+        DW   nop_      ;    c
+        DW   nop_      ;    d
+        DW   nop_      ;    e
+        DW   nop_      ;    f
+        DW   nop_      ;    g
         DW   here_      ;    h  ; returns HERE variable
         DW   i_         ;    i  ; returns index variable of current loop          
         DW   j_         ;    j  ; returns index variable of outer loop
-        DW   anop_      ;    k
-        DW   anop_      ;    l
-        DW   anop_      ;    m
+        DW   nop_      ;    k
+        DW   nop_      ;    l
+        DW   nop_      ;    m
         DW   newln_     ;    n  ; prints a newline to output
-        DW   anop_      ;    o
-        DW   anop_      ;    p
+        DW   nop_      ;    o
+        DW   nop_      ;    p
         DW   quit_      ;    q  ; quits from Mint REPL         
-        DW   anop_      ;    r
-        DW   anop_      ;    s    
-        DW   anop_      ;    t
-        DW   anop_      ;    u
-        DW   anop_      ;    v
-        DW   anop_      ;    w
-        DW   anop_      ;    x
-        DW   anop_      ;    y
-        DW   anop_      ;    z
-        DW   anop_      ;    {
-        DW   anop_      ;    |            
-        DW   anop_      ;    }            
-        DW   anop_      ;    ~            
-        DW   anop_      ;    BS
+        DW   nop_      ;    r
+        DW   nop_      ;    s    
+        DW   nop_      ;    t
+        DW   nop_      ;    u
+        DW   nop_      ;    v
+        DW   nop_      ;    w
+        DW   nop_      ;    x
+        DW   nop_      ;    y
+        DW   nop_      ;    z
+        DW   nop_      ;    {
+        DW   nop_      ;    |            
+        DW   nop_      ;    }            
+        DW   nop_      ;    ~            
+        DW   nop_      ;    BS
 
 arrDef:      
         LD HL,0
@@ -1163,9 +1163,6 @@ arrEnd2:
 adef_:
         JP (IY)
 
-anop_:
-        JP (IY)
-
 comment_:
         JP (IY)
 
@@ -1181,7 +1178,7 @@ decr_:
         LD (HL),D
         JP (IY)        
 
-key_:
+emit_:
         POP HL
         LD A,L
         CALL putchar
