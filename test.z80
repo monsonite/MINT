@@ -2,8 +2,6 @@
 
 .include "constants.z80"
 
-DUP .set $22
-
 .macro setTBuf,s1
     ld HL,buf1%%M
     ld (tbPtr),HL
