@@ -253,9 +253,9 @@ opcodes:
         DB    lsb(call_)   ;    X
         DB    lsb(call_)   ;    Y
         DB    lsb(call_)   ;    Z
-        DB    lsb(open_)   ;    [
+        DB    lsb(arrDef_) ;    [
         DB    lsb(alt_)    ;    \
-        DB    lsb(close_)  ;    ]
+        DB    lsb(arrEnd_) ;    ]
         DB    lsb(xor_)    ;    ^
         DB    lsb(neg_)    ;    _
         DB    lsb(str_)    ;    `            
@@ -801,8 +801,6 @@ hex_:   CALL     get_hex
         JR       less      ; piggyback for ending
 
 query_:      JR query
-open_:       JP open
-close_:      JP close
 shr_:        JR shr
 del_:        JR del
 mul_:        JR mul
@@ -810,6 +808,8 @@ div_:        JR div
 def_:        JP def
 begin_:      JR begin                   
 again_:      JP again
+arrDef_:     JP arrDef
+arrEnd_:     JP arrEnd
            
 ;*******************************************************************
 ; Page 2 Primitives
@@ -1120,29 +1120,44 @@ altcodes:
         DW   anop_      ;    ~            
         DW   anop_      ;    backspace
 
-open:      
-        ; LD HL,0
-        ; ADD HL,SP       ; HL=SP
-        ; _rpush H,L      ; save 
+arrDef:      
+        LD HL,0
+        ADD HL,SP       ; HL=SP save current SP
+        _rpush H,L      ; save 
         JP (IY)
         
-close:      
-        ; _rpeek D,E      ; get SP1
-        ; LD HL,0
-        ; ADD HL,SP       ; HL = SP2
-        ; EX DE,HL        ; HL=SP1 DE=SP2
-        ; LD SP,HL        ; SP = SP1
-        ; OR A
-        ; SBC HL,DE       ; HL=SP1-SP2 DE=SP2
-        ; LD BC,HL        ; BC = n
-        ; LD HL,(HERE)    ; HL = HERE
-        ; ADD HL,BC       ; HL = HERE + n
-        ; LD (HERE1),HL   ; save HERE + n
-        ; EX DE,HL        ; HL=SP2 DE=HERE1
-        ; LDDR            ; copy n bytes from SP2 to HERE1 decrementing
-        ; LD HL,(HERE)
-        ; PUSH HL
-        ; LD (HERE),DE
+arrEnd:      
+        _rpop D,E       ; DE = old SP (SP1)
+        LD HL,0
+        ADD HL,SP       ; HL = current SP (SP2)
+        EX DE,HL        ; HL=SP1 DE=SP2 
+        LD SP,HL        ; SP = SP1
+        OR A
+        SBC HL,DE       ; HL=SP1 - SP2 (num bytes)
+        LD BC,HL        ; HL = BC = n bytes
+        SRL B           ; BC = m words
+        RR C
+        LD DE,(HERE)    ; DE = HERE
+        EX DE,HL        ; HL = HERE DE = n bytes
+        LD (HL),C       ; write array length (words) just before start of array
+        INC HL
+        LD (HL),B
+        INC HL          ; HL = start of array
+        ADD HL,DE       ; HL = (HERE + n bytes) after array
+        LD (HERE),HL    ; ALLOT n bytes on heap
+        JR arrEnd2:     ; jump to zero test in case there is nothing to do
+arrEnd1:
+        POP DE          ; get top of stack
+        DEC HL          ; dec to msb position on heap 
+        LD (HL),D       ; store msb of stack item on heap
+        DEC HL          ; dec to lsb position
+        LD (HL),E       ; store lsb of stack item on heap
+        DEC BC          ; dec word count
+arrEnd2:        
+        LD A,C          ; word compare with zero
+        OR B
+        JR NZ,arrEnd1   ; loop not done 
+        PUSH HL         ; SP = SP1, HL = start of array, push on data stack
         JP (IY)
 
 adef_:
