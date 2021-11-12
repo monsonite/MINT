@@ -203,7 +203,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | Symbol | Description                      | Effect |
 | ------ | -------------------------------- | ------ |
 | [      | Begin array and array definition | --     |
-| ]      | CLOSE an array                   | -- adr |
+| ]      | create the array                 | -- adr |
 
 ### Alternative codes
 
