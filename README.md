@@ -173,6 +173,8 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | #      | The following number is in hexadecimal                    | a --   |
 | .      | Print the top member of the stack as a decimal number DOT | a --   |
 | ,      | Print the number on the stack as a hexadecimal            | a --   |
+| \`     | \`Everything between ticks is printed as a string\`       | --     |
+| \\E    | emits a char to output                                    | val -- |
 
 ### User Definitions
 
@@ -199,8 +201,8 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | !      | STORE a value to memory                     |
 | [      | Begin array and array definition            | --          |
 | ]      | End end an array                            | -- adr      |
-| \\@    | FETCH a byte from memory TODO               |
-| \\!    | STORE a byte to memory TODO                 |
+| \\@    | TODO: FETCH a byte from memory              |
+| \\!    | TODO: STORE a byte to memory                |
 | \\+    | increments variable at address by an amount | val addr -- |
 | \\I    | input from a I/O port                       | port -- val |
 | \\K    | read a char from input                      | -- val      |
@@ -210,17 +212,8 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 ### Miscellaneous
 
-| Symbol | Description                                         | Effect |
-| ------ | --------------------------------------------------- | ------ |
-| \`     | \`Everything between ticks is printed as a string\` | --     |
-
-### Alternative codes
-
-This start with a \\ followed by an ASCII character. These provide Mint with extended functionalty
-
 | Symbol | Description                                         | Effect    |
 | ------ | --------------------------------------------------- | --------- |
-| \\E    | emits a char to output                              | val --    |
 | \\X    | execute                                             | addr -- ? |
 | \\\\   | TODO: comment text, skips reading until end of line | --        |
 | \\q    | quits from Mint REPL                                | --        |
