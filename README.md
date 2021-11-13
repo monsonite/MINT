@@ -165,24 +165,22 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | '      | Drop the top member of the stack DROP                                         | a a -- a     |
 | $      | Swap the top 2 members of the stack SWAP                                      | a b -- b a   |
 | %      | Over - take the 2nd member of the stack and copy it onto the top of the stack | a b -- a b a |
-| .      | Print the top member of the stack as a decimal number DOT                     | a --         |
-| ,      | Print the number on the stack as a hexadecimal                                | a --         |
 
-(#) To enter a number in hexadecimal precede with a hash
+### Input & Output Operations
 
-### Memory and Variable Operations
-
-| Symbol | Description               | Effect |
-| ------ | ------------------------- | ------ |
-| @      | FETCH a value from memory |
-| !      | STORE a value to memory   |
+| Symbol | Description                                               | Effect |
+| ------ | --------------------------------------------------------- | ------ |
+| #      | The following number is in hexadecimal                    | a --   |
+| .      | Print the top member of the stack as a decimal number DOT | a --   |
+| ,      | Print the number on the stack as a hexadecimal            | a --   |
 
 ### User Definitions
 
-| Symbol | Description                | Effect |
-| ------ | -------------------------- | ------ |
-| :      | Define a new word DEF      |
-| ;      | End of user definition END |
+| Symbol | Description                   | Effect |
+| ------ | ----------------------------- | ------ |
+| :      | Define a new word DEF         |
+| ;      | End of user definition END    |
+| \\:    | TODO: starts defining a macro | --     |
 
 ### Loops and conditional execution
 
@@ -190,37 +188,39 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | ------ | ------------------------------------------------- | ------ |
 | (      | BEGIN a loop or conditionally executed code block | --     |
 | )      | END a loop or conditionally executed code block   | --     |
+| \\i    | returns index variable of current loop            | -- val |
+| \\j    | returns index variable of outer loop              | -- val |
+
+### Memory and Variable Operations
+
+| Symbol | Description                                 | Effect      |
+| ------ | ------------------------------------------- | ----------- |
+| @      | FETCH a value from memory                   |
+| !      | STORE a value to memory                     |
+| [      | Begin array and array definition            | --          |
+| ]      | End end an array                            | -- adr      |
+| \\@    | FETCH a byte from memory TODO               |
+| \\!    | STORE a byte to memory TODO                 |
+| \\+    | increments variable at address by an amount | val addr -- |
+| \\I    | input from a I/O port                       | port -- val |
+| \\K    | read a char from input                      | -- val      |
+| \\O    | output to an I/O port                       | val port -- |
+| \\n    | prints a newline to output                  | --          |
+| \\h    | returns heap pointer variable               | -- val      |
 
 ### Miscellaneous
 
 | Symbol | Description                                         | Effect |
 | ------ | --------------------------------------------------- | ------ |
 | \`     | \`Everything between ticks is printed as a string\` | --     |
-| ?      | QUERY Wait for keyboard input                       | -- a   |
-
-### Arrays
-
-| Symbol | Description                      | Effect |
-| ------ | -------------------------------- | ------ |
-| [      | Begin array and array definition | --     |
-| ]      | CLOSE an array                   | -- adr |
 
 ### Alternative codes
 
 This start with a \\ followed by an ASCII character. These provide Mint with extended functionalty
 
-| Symbol | Description                                         | Effect      |
-| ------ | --------------------------------------------------- | ----------- |
-| +      | - increments variable at address by an amount       | val addr -- |
-| :      | - TODO: starts defining a macro                     | --          |
-| E      | - emits a char to output                            | val --      |
-| I      | input from a I/O port                               | port -- val |
-| K      | - read a char from input                            | -- val      |
-| O      | output to an I/O port                               | val port -- |
-| X      | execute                                             | addr -- ?   |
-| \\     | TODO: comment text, skips reading until end of line | --          |
-| h      | returns heap pointer variable                       | -- val      |
-| i      | returns index variable of current loop              | -- val      |
-| j      | returns index variable of outer loop                | -- val      |
-| n      | prints a newline to output                          | --          |
-| q      | quits from Mint REPL                                | --          |
+| Symbol | Description                                         | Effect    |
+| ------ | --------------------------------------------------- | --------- |
+| \\E    | emits a char to output                              | val --    |
+| \\X    | execute                                             | addr -- ? |
+| \\\\   | TODO: comment text, skips reading until end of line | --        |
+| \\q    | quits from Mint REPL                                | --        |
