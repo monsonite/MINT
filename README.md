@@ -174,7 +174,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | .      | Print the top member of the stack as a decimal number DOT | a --   |
 | ,      | Print the number on the stack as a hexadecimal            | a --   |
 | \`     | \`Everything between ticks is printed as a string\`       | --     |
-| \\E    | emits a char to output                                    | val -- |
+| \\e    | emits a char to output                                    | val -- |
 
 ### User Definitions
 
@@ -205,8 +205,8 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | \\!    | TODO: STORE a byte to memory                |
 | \\+    | increments variable at address by an amount | val addr -- |
 | \\I    | input from a I/O port                       | port -- val |
-| \\K    | read a char from input                      | -- val      |
 | \\O    | output to an I/O port                       | val port -- |
+| \\k    | read a char from input                      | -- val      |
 | \\n    | prints a newline to output                  | --          |
 | \\h    | returns heap pointer variable               | -- val      |
 
@@ -214,6 +214,6 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 | Symbol | Description                                         | Effect    |
 | ------ | --------------------------------------------------- | --------- |
-| \\X    | execute                                             | addr -- ? |
 | \\\\   | TODO: comment text, skips reading until end of line | --        |
 | \\q    | quits from Mint REPL                                | --        |
+| \\x    | execute                                             | addr -- ? |

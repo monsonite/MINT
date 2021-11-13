@@ -1026,7 +1026,7 @@ altcodes:
         DW   nop_       ;    *            
         DW   incr_      ;    +  ( addr -- ) decrements variable at address
         DW   nop_       ;    ,            
-        DW   nop_      ;    -  ( addr -- ) increments variable at address
+        DW   nop_       ;    -  ( addr -- ) increments variable at address
         DW   nop_       ;    .
         DW   nop_       ;    /
         DW   nop_       ;    0            
@@ -1050,17 +1050,17 @@ altcodes:
         DW   nop_       ;    B
         DW   nop_       ;    C
         DW   nop_       ;    D    
-        DW   emit_      ;    E  ( val -- ) emits a char to output
+        DW   nop_       ;    E  
         DW   nop_       ;    F
         DW   nop_       ;    G
         DW   nop_       ;    H  
         DW   inPort_    ;    I  ( port -- val )   
         DW   nop_       ;    J
-        DW   key_       ;    K  ( -- val )  read a char from input
+        DW   nop_       ;    K  
         DW   nop_       ;    L
         DW   nop_       ;    M
         DW   nop_       ;    N
-        DW   outPort_   ;    O ( val port -- )
+        DW   outPort_   ;    O  ( val port -- )
         DW   nop_       ;    P
         DW   nop_       ;    Q
         DW   nop_       ;    R
@@ -1082,13 +1082,13 @@ altcodes:
         DW   nop_       ;    b
         DW   nop_       ;    c
         DW   nop_       ;    d
-        DW   nop_       ;    e
+        DW   emit_      ;    e  ( val -- ) emits a char to output
         DW   nop_       ;    f
         DW   nop_       ;    g
         DW   here_      ;    h  ; returns HERE variable
         DW   i_         ;    i  ; returns index variable of current loop          
         DW   j_         ;    j  ; returns index variable of outer loop
-        DW   nop_       ;    k
+        DW   key_       ;    k  ( -- val )  read a char from input
         DW   nop_       ;    l
         DW   nop_       ;    m
         DW   newln_     ;    n  ; prints a newline to output
@@ -1101,7 +1101,7 @@ altcodes:
         DW   nop_       ;    u
         DW   nop_       ;    v
         DW   nop_       ;    w
-        DW   nop_       ;    x
+        DW   exec_      ;    x
         DW   nop_       ;    y
         DW   nop_       ;    z
         DW   nop_       ;    {
