@@ -8,6 +8,10 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
+CALL enter
+.cstr "`Done!`"
+HALT
+
 test "3x! 1 x\\+ x@", 4
 test "0", 0
 test "1", 1
@@ -23,22 +27,25 @@ test "1(\\i@)", 0
 test "1(1(\\i@ \\j@+))", 0
 test "2(2(\\i@ \\j@))+++++++", 4
 test "100a! 1 a\\+ a@", 101
-test "[] 2-@", 0
-test "[10] @", 10
-test "0x! [1 2 3] a! a@ 1{-@ ( a@ \\i@ {+@ x@+ x! ) x@", 6
-
-; sum over array
+test "[3] '@", 3
+test "[3]", 1
+test "[1 2 3] $ @ ", 1
+test "[]", 0
+test "[10] '@", 10
+test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t\\+ ) t@", 6
 CALL enter
 DB "0 t!"                           ; total = 0
-DB "[1 2 3 4 5] a!"                 ; declare array, store address
-DB "a@ 1{-@ "                       ; get length of array for loop
+DB "[1 2 3 4 5]"                    ; declare array, returns address length
+DB "$ a!"                           ; store address in a, leave length
 DB "("                              ; loop
-DB      "a@ \\i@ {+@"               ; access nth element
-DB      "t\\+"                      ; add to total
+DB      "a@ \\i@ {+ @"              ; access nth element
+DB      "t\\+"                         ; add to total
 DB ")"                              ; end loop
 DB "t@"                             ; print total
 DB 0
 expect "sum over array",15
+test "\\h@ [1 2 3]'' \\h@ $ - ", 6
+test "\\h@ \\[1 2 3 \\]'' \\h@ $ - ", 3
 
 CALL enter
 .cstr "`Done!`"

@@ -323,6 +323,9 @@ init1:
 
 mint:
         CALL initialize
+        CALL enter
+        .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
+
 interp:
         CALL crlf
         CALL ok             ; friendly prompt
@@ -463,9 +466,9 @@ times10:                        ; Multiply digit(s) in HL by 10
         JP  number1
                 
 endnum:
-        PUSH HL                ; 11t   Put the number on the stack
-        
-        JR dispatch            ; and process the next character
+        PUSH HL                 ; 11t   Put the number on the stack
+        DEC BC
+        JP (IY)                 ; and process the next character
         
 
         
@@ -602,29 +605,26 @@ fetch_:                     ; Fetch the value from the address placed on the top
         INC     HL          ; 6t
         LD      D,(HL)      ; 7t
         PUSH    DE          ; 11t
-        
-nop_:                       ; Sneakily piggy back nop here
         JP      (IY)        ; 8t
                             ; 49t 
-
-store_:                    ; Store the value at the address placed on the top of the stack
-        POP    HL          ; 10t
-        POP    DE          ; 10t
-        LD     (HL),E      ; 7t
-        INC    HL          ; 6t
-        LD     (HL),D      ; 7t
-        JP     (IY)        ; 8t
         
-                        ; 48t
+store_:                     ; Store the value at the address placed on the top of the stack
+        POP    HL           ; 10t
+        POP    DE           ; 10t
+        LD     (HL),E       ; 7t
+        INC    HL           ; 6t
+        LD     (HL),D       ; 7t
+        JP     (IY)         ; 8t
+                            ; 48t
     
 dup_:        
-        POP     HL         ; Duplicate the top member of the stack
+        POP     HL          ; Duplicate the top member of the stack
         PUSH    HL
         PUSH    HL
         JP (IY)
 
 swap_:        
-        POP     HL         ; Swap the top 2 elements of the stack
+        POP     HL          ; Swap the top 2 elements of the stack
         POP     DE
         PUSH    HL
         PUSH    DE
@@ -740,17 +740,16 @@ stringend:
 dot_:        
         POP     HL
         CALL    printdec
+dot2:
         CALL    space
         JP      (IY)
         
 hexp_:                      ; Print HL as a hexadecimal
         POP     HL
         CALL    printhex
-        CALL    space
-        JP      (IY)
+        JR      dot2
 
             
-        
 ; **************************************************************************
 ;  Comparison Operations
 ;  Put 1 on stack if condition is true and 0 if it is false
@@ -786,16 +785,18 @@ less:
 hex_:   CALL     get_hex
         JR       less      ; piggyback for ending
 
-query_:      JR query
-shr_:        JR shr
-del_:        JR del
-mul_:        JR mul
-div_:        JR div
-def_:        JP def
-begin_:      JR begin                   
-again_:      JP again
-arrDef_:     JP arrDef
-arrEnd_:     JP arrEnd
+query_:     JR query
+shr_:       JR shr
+del_:       JR del
+mul_:       JR mul
+div_:       JR div
+def_:       JP def
+begin_:     JR begin                   
+again_:     JP again
+arrDef_:    JP arrDef
+arrEnd_:    JP arrEnd
+nop_:       JP NEXT             ; hardwire white space to always go to NEXT (important for arrays)
+
            
 ;*******************************************************************
 ; Page 2 Primitives
@@ -1014,7 +1015,7 @@ alt:
         .align $100             ; page boundary
 
 altcodes:
-        DW   nop_       ;    !            
+        DW   cStore_    ;    !            
         DW   nop_       ;    "
         DW   nop_       ;    #
         DW   nop_       ;    $            
@@ -1045,7 +1046,7 @@ altcodes:
         DW   nop_       ;    =            
         DW   nop_       ;    >            
         DW   nop_       ;    ?
-        DW   nop_       ;    @      
+        DW   cFetch_    ;    @      
         DW   nop_       ;    A    
         DW   nop_       ;    B
         DW   nop_       ;    C
@@ -1072,9 +1073,9 @@ altcodes:
         DW   exec_      ;    X
         DW   nop_       ;    Y
         DW   nop_       ;    Z
-        DW   nop_       ;    [
+        DW   cArrDef_   ;    [
         DW   comment_   ;    \  TODO: comment text, skips reading until end of line
-        DW   nop_       ;    ]
+        DW   cArrEnd_   ;    ]
         DW   nop_       ;    ^
         DW   nop_       ;    _
         DW   nop_       ;    `            
@@ -1110,46 +1111,74 @@ altcodes:
         DW   nop_       ;    ~            
         DW   nop_       ;    BS
 
-arrDef:      
-        LD HL,0
-        ADD HL,SP       ; HL=SP save current SP
-        _rpush H,L      ; save 
-        JP (IY)
-        
-arrEnd:      
-        _rpop D,E       ; DE = old SP (SP1)
-        _rpush B,C
-        LD HL,0
-        ADD HL,SP       ; HL = current SP (SP2)
-        EX DE,HL        ; HL=SP1 DE=SP2 
-        OR A
-        SBC HL,DE       ; HL=SP1 - SP2 (num bytes)
-        LD BC,HL        ; HL = BC = n bytes
-        SRL B           ; BC = m words
-        RR C
-        LD DE,(HERE)    ; DE = HERE
-        EX DE,HL        ; HL = HERE DE = n bytes
-        LD (HL),C       ; write array length (words) just before start of array
+compNEXT:
+        POP DE          ; DE = return address
+        LD HL,(HERE)    ; load heap ptr
+        LD (HL),E       ; store lsb
+        INC HL          
+        LD (HL),D
         INC HL
-        LD (HL),B
-        INC HL          ; HL = start of array
-        ADD HL,DE       ; HL = (HERE + n bytes) after array
-        LD (HERE),HL    ; ALLOT n bytes on heap
-        JR arrEnd2      ; jump to zero test in case there is nothing to do
-arrEnd1:
-        POP DE          ; get top of stack
-        DEC HL          ; dec to msb position on heap 
-        LD (HL),D       ; store msb of stack item on heap
-        DEC HL          ; dec to lsb position
-        LD (HL),E       ; store lsb of stack item on heap
-        DEC BC          ; dec word count
-arrEnd2:        
-        LD A,C          ; word compare with zero
-        OR B
-        JR NZ,arrEnd1   ; loop not done 
-        PUSH HL         ; SP = SP1, HL = start of array, push on data stack
-        _rpop B,C
-        JP (IY)
+        LD (HERE),HL    ; save heap ptr
+        JP NEXT
+
+ccompNEXT:
+        POP DE          ; DE = return address
+        LD HL,(HERE)    ; load heap ptr
+        LD (HL),E       ; store lsb
+        INC HL          
+        LD (HERE),HL    ; save heap ptr
+        JP NEXT
+
+; define a word array
+arrDef:      
+        LD IY,compNEXT  
+        JR arrDef1
+
+; define a character array
+cArrDef_:
+        LD IY,ccompNEXT 
+arrDef1:      
+        LD HL,(HERE)    ; HL = heap ptr
+        _rpush H,L      ; save start of array \[  \]
+        JP NEXT         ; hardwired to NEXT
+
+; end a word array
+arrEnd:
+        _rpop D,E       ; DE = start of array
+        PUSH DE         
+        LD HL,(HERE)    ; HL = heap ptr
+        OR A
+        SBC HL,DE       ; bytes on heap 
+        SRL H           ; BC = m words
+        RR L
+        JR arrEnd2
+
+; end a character array
+cArrEnd_:
+        _rpop D,E       ; DE = start of array
+        PUSH DE         
+        LD HL,(HERE)    ; HL = heap ptr
+        OR A
+        SBC HL,DE       ; bytes on heap 
+arrEnd2:
+        PUSH HL 
+        LD IY,NEXT
+        JP (IY)         ; hardwired to NEXT
+
+cFetch_:                    ; Fetch the value from the address placed on the top of the stack      
+        POP     HL          ; 10t
+        LD      E,(HL)      ; 7t
+        LD      D,0         ; 7t
+        PUSH    DE          ; 11t
+        JP      (IY)        ; 8t
+                            ; 49t 
+        
+cStore_:                    ; Store the value at the address placed on the top of the stack
+        POP    HL           ; 10t
+        POP    DE           ; 10t
+        LD     (HL),E       ; 7t
+        JP     (IY)         ; 8t
+                            ; 48t
 
 adef_:
         JP (IY)
@@ -1223,7 +1252,9 @@ outPort_:
         JP (IY)        
 
 quit_:
-        JP ok                   ; display OK and exit interpreter
+        CALL enter
+        .cstr "`quit`"
+        RET                     ; display OK and exit interpreter
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;

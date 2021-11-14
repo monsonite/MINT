@@ -3,12 +3,7 @@
 .include "constants.z80"
 
 LD SP,DSTACK
-CALL initialize
-
-CALL enter
-.cstr "`MINT Version 1 by Ken Boak and John Hardy`\\n"
-
-CALL interp
+CALL mint
 
 CALL enter
 .cstr "`quit`"

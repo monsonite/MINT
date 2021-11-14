@@ -199,8 +199,10 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | ------ | ------------------------------------------- | ----------- |
 | @      | FETCH a value from memory                   |
 | !      | STORE a value to memory                     |
-| [      | Begin array and array definition            | --          |
-| ]      | End end an array                            | -- adr      |
+| [      | Begin an array definition                   | --          |
+| ]      | End of array definition                     | -- adr      |
+| \\[    | Begin a byte array definition               | --          |
+| \\]    | End of byte array definition                | -- adr      |
 | \\@    | TODO: FETCH a byte from memory              |
 | \\!    | TODO: STORE a byte to memory                |
 | \\+    | increments variable at address by an amount | val addr -- |
