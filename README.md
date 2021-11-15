@@ -168,13 +168,17 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 ### Input & Output Operations
 
-| Symbol | Description                                               | Effect |
-| ------ | --------------------------------------------------------- | ------ |
-| #      | The following number is in hexadecimal                    | a --   |
-| .      | Print the top member of the stack as a decimal number DOT | a --   |
-| ,      | Print the number on the stack as a hexadecimal            | a --   |
-| \`     | \`Everything between ticks is printed as a string\`       | --     |
-| \\e    | emits a char to output                                    | val -- |
+| Symbol | Description                                               | Effect      |
+| ------ | --------------------------------------------------------- | ----------- |
+| #      | The following number is in hexadecimal                    | a --        |
+| .      | Print the top member of the stack as a decimal number DOT | a --        |
+| ,      | Print the number on the stack as a hexadecimal            | a --        |
+| \`     | \`Everything between ticks is printed as a string\`       | --          |
+| \\e    | emits a char to output                                    | val --      |
+| \\I    | input from a I/O port                                     | port -- val |
+| \\k    | read a char from input                                    | -- val      |
+| \\n    | prints a newline to output                                | --          |
+| \\O    | output to an I/O port                                     | val port -- |
 
 ### User Definitions
 
@@ -195,25 +199,24 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 ### Memory and Variable Operations
 
-| Symbol | Description                                 | Effect      |
-| ------ | ------------------------------------------- | ----------- |
-| @      | FETCH a value from memory                   |
-| !      | STORE a value to memory                     |
-| [      | Begin array and array definition            | --          |
-| ]      | End end an array                            | -- adr      |
-| \\@    | TODO: FETCH a byte from memory              |
-| \\!    | TODO: STORE a byte to memory                |
-| \\+    | increments variable at address by an amount | val addr -- |
-| \\I    | input from a I/O port                       | port -- val |
-| \\O    | output to an I/O port                       | val port -- |
-| \\k    | read a char from input                      | -- val      |
-| \\n    | prints a newline to output                  | --          |
-| \\h    | returns heap pointer variable               | -- val      |
+| Symbol | Description                                 | Effect        |
+| ------ | ------------------------------------------- | ------------- |
+| @      | FETCH a value from memory                   |               |
+| !      | STORE a value to memory                     |               |
+| [      | Begin an array definition                   | --            |
+| ]      | End an array definition                     | -- adr nwords |
+| \\[    | Begin a byte array definition               | --            |
+| \\]    | End a byte array definition                 | -- adr nbytes |
+| \\\`   | define a string                             | -- adr nchars |
+| \\@    | FETCH a byte from memory                    |               |
+| \\!    | STORE a byte to memory                      |               |
+| \\+    | increments variable at address by an amount | val addr --   |
+| \\h    | returns heap pointer variable               | -- val        |
 
 ### Miscellaneous
 
 | Symbol | Description                                         | Effect    |
 | ------ | --------------------------------------------------- | --------- |
 | \\\\   | TODO: comment text, skips reading until end of line | --        |
-| \\q    | quits from Mint REPL                                | --        |
+| \\q    | quits from Mint interpreter                         | --        |
 | \\x    | execute                                             | addr -- ? |
