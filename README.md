@@ -211,7 +211,6 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | \\@    | FETCH a byte from memory                    |               |
 | \\!    | STORE a byte to memory                      |               |
 | \\+    | increments variable at address by an amount | val addr --   |
-| \\h    | returns heap pointer variable               | -- val        |
 
 ### Miscellaneous
 
@@ -220,3 +219,8 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | \\\\   | TODO: comment text, skips reading until end of line | --        |
 | \\q    | quits from Mint interpreter                         | --        |
 | \\x    | execute                                             | addr -- ? |
+| \\0    | start address of data stack               | -- val        |
+| \\1    | heap pointer variable               | -- val        |
+
+
+

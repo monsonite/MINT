@@ -8,6 +8,9 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
+CALL enter
+.cstr "1 2 3 4 5 \\."
+
 test "3x! 1 x\\+ x@", 4
 test "0", 0
 test "1", 1

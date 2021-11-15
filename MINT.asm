@@ -330,7 +330,7 @@ mint:
         .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
         CALL interp
         JP mint
-        
+
 interp:
         CALL crlf
         CALL ok             ; friendly prompt
@@ -1003,10 +1003,10 @@ altcodes:
         DW   incr_      ;    +  ( addr -- ) decrements variable at address
         DW   nop_       ;    ,            
         DW   nop_       ;    -  ( addr -- ) increments variable at address
-        DW   nop_       ;    .
+        DW   dots_      ;    .  ( -- ) non-destructively prints stack
         DW   nop_       ;    /
-        DW   nop_       ;    0            
-        DW   nop_       ;    1        
+        DW   s0_        ;    0  ( -- val )  start of data stack          
+        DW   nop_       ;    1  
         DW   nop_       ;    2            
         DW   nop_       ;    3
         DW   nop_       ;    4            
@@ -1057,7 +1057,7 @@ altcodes:
         DW   nop_       ;    a
         DW   nop_       ;    b
         DW   nop_       ;    c
-        DW   nop_       ;    d
+        DW   depth_     ;    d  ( -- val ) depth of data stack
         DW   emit_      ;    e  ( val -- ) emits a char to output
         DW   nop_       ;    f
         DW   nop_       ;    g
@@ -1152,6 +1152,12 @@ arrEnd:
         JR arrEnd2
 
 ; end a character array
+
+s0_:
+        LD HL,DSTACK
+        PUSH HL
+        JP (IY)
+
 cArrEnd_:
         _rpop D,E       ; DE = start of array
         PUSH DE         
@@ -1183,6 +1189,25 @@ adef_:
 
 comment_:
         JP (IY)
+
+depth_:
+        LD HL,0
+        ADD HL,SP
+        EX DE,HL
+        LD HL,DSTACK
+        OR A
+        SBC HL,DE
+        SRL H
+        RR L
+        DEC HL
+        PUSH HL
+        JP (IY)
+
+dots_:
+        CALL enter
+        DB "\\n \\0 2- \\d ( "                           
+        DB $22                      ; " i.e. DUP                    
+        DB " @ , 2- ) \\n ;"                           
 
 emit_:
         POP HL
