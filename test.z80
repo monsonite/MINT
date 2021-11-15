@@ -8,10 +8,6 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
-CALL enter
-.cstr "`Done!`"
-HALT
-
 test "3x! 1 x\\+ x@", 4
 test "0", 0
 test "1", 1
@@ -46,6 +42,8 @@ DB 0
 expect "sum over array",15
 test "\\h@ [1 2 3]'' \\h@ $ - ", 6
 test "\\h@ \\[1 2 3 \\]'' \\h@ $ - ", 3
+test "\\`abc` $ ' ",3
+test "\\`abc` ' \\@ ",$61
 
 CALL enter
 .cstr "`Done!`"

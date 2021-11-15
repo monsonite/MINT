@@ -322,10 +322,13 @@ init1:
         RET
 
 mint:
+        LD SP,DSTACK
         CALL initialize
         CALL enter
         .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
-
+        CALL interp
+        JP mint
+        
 interp:
         CALL crlf
         CALL ok             ; friendly prompt
@@ -728,10 +731,6 @@ nextchar:
         CALL putchar
         JR   nextchar
 
-
-
-
-
 stringend:  
         DEC BC
         JP   (IY) 
@@ -1078,7 +1077,7 @@ altcodes:
         DW   cArrEnd_   ;    ]
         DW   nop_       ;    ^
         DW   nop_       ;    _
-        DW   nop_       ;    `            
+        DW   strDef_    ;    `            
         DW   nop_       ;    a
         DW   nop_       ;    b
         DW   nop_       ;    c
@@ -1252,9 +1251,23 @@ outPort_:
         JP (IY)        
 
 quit_:
-        CALL enter
-        .cstr "`quit`"
         RET                     ; display OK and exit interpreter
+
+strDef_:
+        INC BC                  ; point to next char
+        PUSH BC                 ; push string address
+        LD DE,0                 ; count = 0
+        JR strDef2
+strDef1:
+        INC BC                  ; point to next char
+        INC DE                  ; increase count
+strDef2:
+        LD A,(BC)
+        CP "`"                  ; ` is the string terminator
+        JR NZ,strDef1
+        PUSH DE                 ; push count
+        JP   (IY) 
+        
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;

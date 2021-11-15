@@ -2,12 +2,6 @@
 
 .include "constants.z80"
 
-LD SP,DSTACK
-CALL mint
-
-CALL enter
-.cstr "`quit`"
-
-HALT
+JP mint
 
 .include "MINT.asm"
