@@ -292,12 +292,6 @@ opcodes:
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
 
-imacros:
-        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, backsp_  ; ABCDEFGH    
-        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; IJKLMNOP    
-        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; QRSTUVWX    
-        DW  empty_, empty_, empty_, empty_, empty_, empty_, empty_, empty_   ; YZ[.....    
-
 initialize:
         LD IX,RSTACK
         LD IY,NEXT			; IY provides a faster jump to NEXT
@@ -315,10 +309,18 @@ init1:
         LD (HL),msb(empty_)
         INC HL
         DJNZ init1
-        LD HL,imacros
-        LD DE,macros
-        LD BC,$20 * 2
-        LDIR
+        LD HL,macros
+        LD B,$20
+init2:
+        LD (HL),lsb(empty_)
+        INC HL
+        LD (HL),msb(empty_)
+        INC HL
+        DJNZ init2
+        LD HL,macros + 8 * 2
+        LD (HL),lsb(backsp_)
+        INC HL
+        LD (HL),msb(backsp_)
         RET
 
 mint:
@@ -540,8 +542,7 @@ backsp_:
         DEC BC
         LD A,$08
         call putchar
-        LD A,' '
-        call putchar
+        call space
         LD A,$08
         call putchar
         JP waitchar
@@ -716,39 +717,6 @@ sub_2:  AND     A              ;  4t  Entry point for NEGate
         JP      (IY)           ; 8t
                                ; 58t
     
-
-
-; **************************************************************************             
-; Print the string between underscores
-str_:                       
-        INC BC
-        
-nextchar:            
-        LD A, (BC)
-        INC BC
-        CP "`"              ; ` is the string terminator
-        JR Z,stringend
-        CALL putchar
-        JR   nextchar
-
-stringend:  
-        DEC BC
-        JP   (IY) 
-        
-        
-dot_:        
-        POP     HL
-        CALL    printdec
-dot2:
-        CALL    space
-        JP      (IY)
-        
-hexp_:                      ; Print HL as a hexadecimal
-        POP     HL
-        CALL    printhex
-        JR      dot2
-
-            
 ; **************************************************************************
 ;  Comparison Operations
 ;  Put 1 on stack if condition is true and 0 if it is false
@@ -784,6 +752,9 @@ less:
 hex_:   CALL     get_hex
         JR       less      ; piggyback for ending
 
+str_:       JP str
+dot_:       JP dot
+hexp_:      JP hexp ; Print HL as a hexadecimal
 query_:     JR query
 shr_:       JR shr
 del_:       JR del
@@ -1010,7 +981,12 @@ alt:
         EX DE,HL
         JP (HL)                 ; Execute code from Alt
 
-      
+dot:        
+        POP     HL
+        CALL    printdec
+        CALL    space
+        JP      (IY)
+        
         .align $100             ; page boundary
 
 altcodes:
@@ -1109,6 +1085,29 @@ altcodes:
         DW   nop_       ;    }            
         DW   nop_       ;    ~            
         DW   nop_       ;    BS
+
+; **************************************************************************             
+; Print the string between underscores
+str:                       
+        INC BC
+        
+nextchar:            
+        LD A, (BC)
+        INC BC
+        CP "`"              ; ` is the string terminator
+        JR Z,stringend
+        CALL putchar
+        JR   nextchar
+
+stringend:  
+        DEC BC
+        JP   (IY) 
+        
+hexp:                      ; Print HL as a hexadecimal
+        POP     HL
+        CALL    printhex
+        CALL    space
+        JP      (IY)
 
 compNEXT:
         POP DE          ; DE = return address
