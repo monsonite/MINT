@@ -696,20 +696,19 @@ inv_:						   ; Bitwise INVert the top member of the stack
         LD DE, $FFFF           ; by subtracting from $FFFF
         JR      SUB_1        
    
-neg_:   LD HL, 0    		   ; NEGate the value on top of stack (2's complement)
-        POP     DE             ; 10t
-        EX DE,HL
-        JR     SUB_2           ; use the SUBtract routine
+neg_:   LD HL, 0    		    ; NEGate the value on top of stack (2's complement)
+        POP DE                  ; 10t
+        JR SUB_2                ; use the SUBtract routine
     
-sub_:       				   ; Subtract the value 2nd on stack from top of stack 
+sub_:       				    ; Subtract the value 2nd on stack from top of stack 
         
-        POP     DE             ; 10t
-sub_1:  POP     HL             ; 10t  Entry point for INVert
-sub_2:  AND     A              ;  4t  Entry point for NEGate
-        SBC     HL,DE          ; 15t
-        PUSH    HL             ; 11t
-        JP      (IY)           ; 8t
-                               ; 58t
+        POP     DE              ; 10t
+sub_1:  POP     HL              ; 10t  Entry point for INVert
+sub_2:  AND     A               ;  4t  Entry point for NEGate
+        SBC     HL,DE           ; 15t
+        PUSH    HL              ; 11t
+        JP      (IY)            ; 8t
+                                ; 58t
     
 ; **************************************************************************
 ;  Comparison Operations
