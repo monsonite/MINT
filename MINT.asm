@@ -312,12 +312,12 @@ init1:
         LD HL,macros
         LD B,$20
 init2:
-        LD (HL),lsb(empty_)
+        LD (HL),lsb(mempty_)
         INC HL
-        LD (HL),msb(empty_)
+        LD (HL),msb(mempty_)
         INC HL
         DJNZ init2
-        LD HL,macros + 8 * 2
+        LD HL,macros + 7 * 2
         LD (HL),lsb(backsp_)
         INC HL
         LD (HL),msb(backsp_)
@@ -328,13 +328,10 @@ mint:
         CALL initialize
         CALL enter
         .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
-        CALL interp
-        JP mint
-
-interp:
-        CALL crlf
-        CALL ok             ; friendly prompt
-        CALL crlf           ; newline
+interpret:
+        CALL enter
+        .cstr "\\n\\.`>`\\n"
+interpret1:
         LD BC,TIB
 
 ; *******************************************************************         
@@ -418,7 +415,7 @@ dispatch:
         JR NC,dispatch1
         CP 0 - ' '                  ;       expected values: 0 or '\r'
         JP Z, exit_
-        JR interp                   ;       back to OK prompt
+        JR interpret                ;       back to OK prompt
 dispatch1:
         LD DE, opcodes              ; 7t    Start address of jump table         
         LD E,A                      ; 4t    Index into table
@@ -516,14 +513,6 @@ space:
         CALL putchar
         RET
 
-ok:    
-        LD A, 'O'           
-        CALL putchar
-        LD A, 'K'
-        CALL putchar
-        CALL crlf
-        RET
-
 enter:
         _rpush B,C              ; save Instruction Pointer
         POP BC
@@ -535,6 +524,11 @@ enter:
 ; macros that are written in Mint 
 ;
 ; **********************************************************************
+
+mempty_:
+        DB 0
+        LD   BC,(TIBPTR)
+        JP waitchar
 
 backsp_:
         DB 0
@@ -1205,9 +1199,8 @@ depth_:
 
 dots_:
         CALL enter
-        DB "\\n \\0 2- \\d ( "                           
-        DB $22                      ; " i.e. DUP                    
-        DB " @ , 2- ) \\n ;"                           
+        DB "\\0 2-\\d(",$22,"@.2-)'",0
+        JP (IY)
 
 emit_:
         POP HL
@@ -1218,6 +1211,12 @@ emit_:
 exec_:
         POP HL              
         JP (HL)        
+
+go_:
+        _rpush B,C              ; save Instruction Pointer
+        POP BC
+        DEC BC
+        JP  (IY)                ; Execute code from User def
 
 here_:
         LD HL,HERE

@@ -1,12 +1,3 @@
-.macro setTBuf,s1
-    ld HL,buf1%%M
-    ld (tbPtr),HL
-    jr buf2%%M
-buf1%%M:
-    db s1,$5C,"q",$0D
-buf2%%M:
-.endm
-
 .macro expect,msg1,val1
     POP HL
     PUSH HL

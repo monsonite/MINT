@@ -5,11 +5,13 @@
 
 LD SP,DSTACK
 CALL initialize
-ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
-LD (VGETCHAR),HL
 
 CALL enter
 .cstr "1 2 3 4 5 \\."
+
+CALL enter
+.cstr "`Done!!`"
+HALT
 
 test "3x! 1 x\\+ x@", 4
 test "0", 0
@@ -50,16 +52,6 @@ test "\\`abc` ' \\@ ",$61
 
 CALL enter
 .cstr "`Done!`"
-
 HALT
-
-testGetCharImpl:
-        PUSH HL
-        LD HL,(tbPtr)
-        LD A,(HL)
-        INC HL
-        LD (tbPtr),HL
-        POP HL
-        RET                 ;NZ flagged if character input
 
 .include "MINT.asm"
