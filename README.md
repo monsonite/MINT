@@ -174,6 +174,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | .      | Print the top member of the stack as a decimal number DOT | a --        |
 | ,      | Print the number on the stack as a hexadecimal            | a --        |
 | \`     | \`Everything between ticks is printed as a string\`       | --          |
+| \\.    | non-destructively prints stack                            | --          |
 | \\e    | emits a char to output                                    | val --      |
 | \\I    | input from a I/O port                                     | port -- val |
 | \\k    | read a char from input                                    | -- val      |
@@ -217,10 +218,10 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | Symbol | Description                                         | Effect    |
 | ------ | --------------------------------------------------- | --------- |
 | \\\\   | TODO: comment text, skips reading until end of line | --        |
+| \\h    | heap pointer variable                               | -- val    |
 | \\q    | quits from Mint interpreter                         | --        |
 | \\x    | execute                                             | addr -- ? |
-| \\0    | start address of data stack               | -- val        |
-| \\1    | heap pointer variable               | -- val        |
+| \\0    | start address of data stack                         | -- val    |
 
 
 

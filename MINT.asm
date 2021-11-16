@@ -330,7 +330,7 @@ mint:
         .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
 interpret:
         CALL enter
-        .cstr "\\n\\.`>`\\n"
+        .cstr "\\n`=> `\\.\\n\\n`>`"
 interpret1:
         LD BC,TIB
 
@@ -1291,6 +1291,7 @@ strDef2:
         PUSH DE                 ; push count
         JP   (IY) 
         
+
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
