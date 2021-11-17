@@ -215,15 +215,20 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 ### Miscellaneous
 
-| Symbol | Description                                         | Effect    |
-| ------ | --------------------------------------------------- | --------- |
-| \\\\   | comment text, skips reading until end of line       | --        |
-| \\g    | execute mint code at address                        | addr -- ? |
-| \\q    | quits from Mint interpreter                         | --        |
-| \\x    | execute machine code at address                     | addr -- ? |
-| \\0    | start address of data stack                         | -- adr    |
-| \\1    | heap pointer variable                               | -- adr    |
-| \\2    | text input buffer pointer variable                  | -- adr    |
+| Symbol | Description                                   | Effect    |
+| ------ | --------------------------------------------- | --------- |
+| \\\\   | comment text, skips reading until end of line | --        |
+| \\g    | execute mint code at address                  | addr -- ? |
+| \\q    | quits from Mint interpreter                   | --        |
+| \\x    | execute machine code at address               | addr -- ? |
+| \\0    | start address of data stack                   | -- adr    |
+| \\1    | heap pointer variable                         | -- adr    |
+| \\2    | text input buffer pointer variable            | -- adr    |
+| \\2    | show stack                                    | -- adr    |
+| \\4    | is hex variable                               | -- adr    |
 
+### Macros
 
-
+| Symbol | Description  |
+| ------ | ------------ |
+| ^U     | toggle stack |

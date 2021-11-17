@@ -295,12 +295,16 @@ opcodes:
 initialize:
         LD IX,RSTACK
         LD IY,NEXT			; IY provides a faster jump to NEXT
-        LD BC,HEAP
-        LD (HERE),BC
         LD HL,getCharImpl
         LD (VGETCHAR),HL
+        LD HL,DSTACK
+        LD (S0),HL
+        LD HL,HEAP
+        LD (HERE),HL
         LD HL,TIB
         ld (TIBPTR),HL
+        LD HL,TRUE
+        LD (showStk),HL
         LD HL,FALSE
         LD (isHex),HL
         LD HL,defs
@@ -323,10 +327,10 @@ init2:
         LD (HL),lsb(backsp_)
         INC HL
         LD (HL),msb(backsp_)
-        LD HL,macros + ('N' - 'A') * 2
-        LD (HL),lsb(togIsHex_)
+        LD HL,macros + ('U' - 'A') * 2
+        LD (HL),lsb(toggleStk_)
         INC HL
-        LD (HL),msb(togIsHex_)
+        LD (HL),msb(toggleStk_)
         RET
 
 mint:
@@ -336,7 +340,7 @@ mint:
         .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
 interpret:
         CALL enter
-        .cstr "\\n`=> `\\.\\n\\n`>`"
+        .cstr "\\3@(\\n`=> `\\.\\n)\\n`>`"
 interpret1:
         LD BC,TIB
 
@@ -540,8 +544,8 @@ mempty_:
 backsp_:
         .cstr "1_\\2\\+8\\e` `8\\e;"
 
-togIsHex_:
-        .cstr "\\1@1^\\1!;"
+toggleStk_:
+        .cstr "\\3@1^\\3!\\3@(\\4@1^\\4!);"
 
 ; **********************************************************************
 ; 
@@ -681,10 +685,6 @@ xor_:
         PUSH    HL
         JP      (IY)
 
-shl_:   POP     HL             ; Duplicate the top member of the stack
-        PUSH    HL
-        PUSH    HL             ; shift left fallthrough into add_     
-    
 add_:                          ; Add the top 2 members of the stack
         POP     DE             ; 10t
         POP     HL             ; 10t
@@ -692,10 +692,26 @@ add_:                          ; Add the top 2 members of the stack
         PUSH    HL             ; 11t
         JP      (IY)           ; 8t
                                ; 50t
-                               
-                               
-inv_:						   ; Bitwise INVert the top member of the stack
-        LD DE, $FFFF           ; by subtracting from $FFFF
+
+;  Left shift { is multply by 2		
+shl_:   
+        POP HL                  ; Duplicate the top member of the stack
+        ADD HL,HL
+        PUSH HL                 ; shift left fallthrough into add_     
+        JP (IY)                 ; 8t
+    
+
+;  Right shift } is a divide by 2		
+		
+shr:    
+        POP HL                  ; Get the top member of the stack
+        SRL H
+        RR L
+        PUSH HL
+        JP (IY)                 ; 8t
+
+inv_:						    ; Bitwise INVert the top member of the stack
+        LD DE, $FFFF            ; by subtracting from $FFFF
         JR      SUB_1        
    
 neg_:   LD HL, 0    		    ; NEGate the value on top of stack (2's complement)
@@ -796,14 +812,6 @@ Mul_Loop_1:
         JR NZ,Mul_Loop_1
 		
 		JR   mul_end
-
-;  Right shift } is a divide by 2		
-		
-shr:    POP     HL         ; Get the top member of the stack
-        LD      DE, 2	   ; divide by 2 	
-        JR      div1       ; jump into division		
-
-
 
 ; ********************************************************************
 ; 16-bit division subroutine.
@@ -1007,16 +1015,16 @@ altcodes:
         DW   nop_       ;    -  ( adr -- ) increments variable at address
         DW   dots_      ;    .  ( -- ) non-destructively prints stack
         DW   nop_       ;    /
-        DW   s0_        ;    0  ( -- adr ) start of data stack constant         
-        DW   isHex_     ;    1  ( -- adr ) isHex variable
-        DW   tibPtr_    ;    2  ( -- adr ) tibPtr variable          
-        DW   nop_       ;    3
-        DW   nop_       ;    4            
-        DW   nop_       ;    5            
-        DW   nop_       ;    6            
-        DW   nop_       ;    7
-        DW   nop_       ;    8            
-        DW   nop_       ;    9        
+        DW   sysvar_    ;    0  ( -- adr ) start of data stack constant         
+        DW   sysvar_    ;    1  ; returns HERE variable
+        DW   sysvar_    ;    2  ( -- adr ) tibPtr variable          
+        DW   sysvar_    ;    3  ( -- adr ) isHex variable
+        DW   sysvar_    ;    4            
+        DW   sysvar_    ;    5            
+        DW   sysvar_    ;    6            
+        DW   sysvar_    ;    7
+        DW   sysvar_    ;    8            
+        DW   sysvar_    ;    9        
         DW   adef_      ;    :  TODO: starts defining a macro        
         DW   nop_       ;    ;
         DW   nop_       ;    <
@@ -1063,7 +1071,7 @@ altcodes:
         DW   emit_      ;    e  ( val -- ) emits a char to output
         DW   nop_       ;    f
         DW   go_        ;    g  ( -- ? ) execute mint definition
-        DW   here_      ;    h  ; returns HERE variable
+        DW   nop_       ;    h  ; returns HERE variable
         DW   i_         ;    i  ; returns index variable of current loop          
         DW   j_         ;    j  ; returns index variable of outer loop
         DW   key_       ;    k  ( -- val )  read a char from input
@@ -1155,21 +1163,6 @@ arrEnd:
 
 ; end a character array
 
-s0_:
-        LD HL,DSTACK
-        PUSH HL
-        JP (IY)
-
-isHex_:
-        LD HL,isHex
-        PUSH HL
-        JP (IY)
-
-tibPtr_:
-        LD HL,TIBPTR
-        PUSH HL
-        JP (IY)
-
 cArrEnd_:
         _rpop D,E       ; DE = start of array
         PUSH DE         
@@ -1222,7 +1215,7 @@ depth_:
 
 dots_:
         CALL enter
-        DB "\\0 2-\\d(",$22,"@.2-)'",0
+        DB "\\0@ 2-\\d(",$22,"@.2-)'",0
         JP (IY)
 
 emit_:
@@ -1314,6 +1307,17 @@ strDef2:
         PUSH DE                 ; push count
         JP   (IY) 
         
+sysvar_:
+        LD A,(BC)
+        SUB "0"                 ; Calc index
+        ADD A,A
+        LD HL,SYSVARS
+        LD E,A
+        LD D,0
+        ADD HL,DE
+        PUSH HL
+        JP (IY)
+
 
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
@@ -1574,16 +1578,10 @@ DSTACK:
 RSTACK:        
 TIB:
         DS TIBSIZE
-TIBPTR:
-        DW 0
 tbPtr:
         DW 0                    ; reserved for tests
 VGETCHAR:
         DW 0                    ; vector with pointer to getchar implementation
-HERE:
-        DW 0
-isHex:
-        DW 0
 
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros
@@ -1605,6 +1603,13 @@ DEFS:
         .align $100
 VARS:
         DS 26 * 2
+
+SYSVARS:
+S0:         DW 0                ; \0                   
+HERE:       DW 0                ; \1
+TIBPTR:     DW 0                ; \2
+showStk:    DW 0                ; \3
+isHex:      DW 0                ; \4
         
         .align $100
 HEAP:         
