@@ -301,6 +301,8 @@ initialize:
         LD (VGETCHAR),HL
         LD HL,TIB
         ld (TIBPTR),HL
+        LD HL,FALSE
+        LD (isHex),HL
         LD HL,defs
         LD B,26
 init1:
@@ -317,10 +319,14 @@ init2:
         LD (HL),msb(mempty_)
         INC HL
         DJNZ init2
-        LD HL,macros + 7 * 2
+        LD HL,macros + ('H' - 'A') * 2
         LD (HL),lsb(backsp_)
         INC HL
         LD (HL),msb(backsp_)
+        LD HL,macros + ('N' - 'A') * 2
+        LD (HL),lsb(togIsHex_)
+        INC HL
+        LD (HL),msb(togIsHex_)
         RET
 
 mint:
@@ -360,11 +366,14 @@ waitchar:
         LD E,A
         ADD HL,DE
         LD (TIBPTR),BC
-        LD C,(HL)
+        LD E,(HL)
         INC HL
-        LD B,(HL)
-        DEC BC
-        JP  (IY)                
+        LD D,(HL)
+        PUSH DE
+        CALL enter
+        .cstr "\\g"
+        LD BC,(TIBPTR)
+        JP waitchar
 
 waitchar1:
         LD (BC), A          ; store the character in textbuf
@@ -521,25 +530,18 @@ enter:
         
 ; **********************************************************************
 ; 
-; macros that are written in Mint 
+; macros  
 ;
 ; **********************************************************************
 
 mempty_:
-        DB 0
-        LD   BC,(TIBPTR)
-        JP waitchar
+        .cstr ";"
 
 backsp_:
-        DB 0
-        LD BC,(TIBPTR)
-        DEC BC
-        LD A,$08
-        call putchar
-        call space
-        LD A,$08
-        call putchar
-        JP waitchar
+        .cstr "1_\\2\\+8\\e` `8\\e;"
+
+togIsHex_:
+        .cstr "\\1@1^\\1!;"
 
 ; **********************************************************************
 ; 
@@ -975,10 +977,17 @@ alt:
         JP (HL)                 ; Execute code from Alt
 
 dot:        
-        POP     HL
-        CALL    printdec
-        CALL    space
-        JP      (IY)
+        POP HL
+        LD A,(isHex)
+        OR A
+        JR Z,dot1
+        CALL printhex
+        JR dot2
+dot1:
+        CALL printdec
+dot2:
+        CALL space
+        JP (IY)
         
         .align $100             ; page boundary
 
@@ -993,14 +1002,14 @@ altcodes:
         DW   nop_       ;    (        
         DW   nop_       ;    )
         DW   nop_       ;    *            
-        DW   incr_      ;    +  ( addr -- ) decrements variable at address
+        DW   incr_      ;    +  ( adr -- ) decrements variable at address
         DW   nop_       ;    ,            
-        DW   nop_       ;    -  ( addr -- ) increments variable at address
+        DW   nop_       ;    -  ( adr -- ) increments variable at address
         DW   dots_      ;    .  ( -- ) non-destructively prints stack
         DW   nop_       ;    /
-        DW   s0_        ;    0  ( -- val )  start of data stack          
-        DW   nop_       ;    1  
-        DW   nop_       ;    2            
+        DW   s0_        ;    0  ( -- adr ) start of data stack constant         
+        DW   isHex_     ;    1  ( -- adr ) isHex variable
+        DW   tibPtr_    ;    2  ( -- adr ) tibPtr variable          
         DW   nop_       ;    3
         DW   nop_       ;    4            
         DW   nop_       ;    5            
@@ -1053,7 +1062,7 @@ altcodes:
         DW   depth_     ;    d  ( -- val ) depth of data stack
         DW   emit_      ;    e  ( val -- ) emits a char to output
         DW   nop_       ;    f
-        DW   nop_       ;    g
+        DW   go_        ;    g  ( -- ? ) execute mint definition
         DW   here_      ;    h  ; returns HERE variable
         DW   i_         ;    i  ; returns index variable of current loop          
         DW   j_         ;    j  ; returns index variable of outer loop
@@ -1151,6 +1160,16 @@ s0_:
         PUSH HL
         JP (IY)
 
+isHex_:
+        LD HL,isHex
+        PUSH HL
+        JP (IY)
+
+tibPtr_:
+        LD HL,TIBPTR
+        PUSH HL
+        JP (IY)
+
 cArrEnd_:
         _rpop D,E       ; DE = start of array
         PUSH DE         
@@ -1181,7 +1200,12 @@ adef_:
         JP (IY)
 
 comment_:
-        JP (IY)
+        INC BC                  ; point to next char
+        LD A,(BC)
+        CP "\r"                 ; terminate at newline 
+        JR NZ,comment_
+        DEC BC
+        JP   (IY) 
 
 depth_:
         LD HL,0
@@ -1558,6 +1582,8 @@ VGETCHAR:
         DW 0                    ; vector with pointer to getchar implementation
 HERE:
         DW 0
+isHex:
+        DW 0
 
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros
@@ -1582,3 +1608,4 @@ VARS:
         
         .align $100
 HEAP:         
+

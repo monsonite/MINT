@@ -17,8 +17,8 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
-; testInput {"1","\r"}
-testInput {"1",27,"\r"}
+; testInput {"12","\r"}
+testInput {"1",8}
 JP interpret1
 
 testGetCharImpl:

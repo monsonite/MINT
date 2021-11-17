@@ -217,11 +217,13 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 | Symbol | Description                                         | Effect    |
 | ------ | --------------------------------------------------- | --------- |
-| \\\\   | TODO: comment text, skips reading until end of line | --        |
-| \\h    | heap pointer variable                               | -- val    |
+| \\\\   | comment text, skips reading until end of line       | --        |
+| \\g    | execute mint code at address                        | addr -- ? |
 | \\q    | quits from Mint interpreter                         | --        |
-| \\x    | execute                                             | addr -- ? |
-| \\0    | start address of data stack                         | -- val    |
+| \\x    | execute machine code at address                     | addr -- ? |
+| \\0    | start address of data stack                         | -- adr    |
+| \\1    | heap pointer variable                               | -- adr    |
+| \\2    | text input buffer pointer variable                  | -- adr    |
 
 
 
