@@ -711,7 +711,9 @@ var_:
         SUB "a"                 ; Calc index
         ADD A,A
         LD HL,VARS
-        LD L,A
+        LD E,A
+        LD D,0
+        ADD HL,DE
         PUSH HL
         JP (IY)
         
@@ -1065,7 +1067,9 @@ def:                       ; Create a colon definition
         SUB "A"             ; Calc index
 def1:
         ADD A,A             ; Double A to index even addresses
-        LD L,A              ; Index into table
+        LD E,A              ; Index into table
+        LD D,0
+        ADD HL,DE
         LD DE,(HERE)        ; start of defintion
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
@@ -1078,9 +1082,9 @@ nextbyte:                   ; Skip to end of definition
         INC DE
         CP ";"              ; Is it a semicolon 
         JR z, end_def       ; end the definition
-        LD (HERE),DE        ; bump heap ptr to after definiton
         JR  nextbyte        ; get the next element
 end_def:    
+        LD (HERE),DE        ; bump heap ptr to after definiton
         DEC BC
         JP (IY)       
 
@@ -1204,7 +1208,7 @@ cStore_:                    ; Store the value at the address placed on the top o
 
 adef_:
         PUSH HL             ; Save HL
-        LD HL, MACROS + 2   ; Start address of jump table         
+        LD HL, MACROS       ; Start address of jump table         
         INC BC
         LD  A,(BC)          ; Get the next character
         INC BC
@@ -1602,24 +1606,22 @@ DSTACK:
 RSTACK:        
 TIB:
         DS TIBSIZE
+
 ; ****************************************************************
 ; VARS Table - holds 26 16-bit user variables
 ; ****************************************************************
-        .align $100
 VARS:
         DS 26 * 2
 
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros
 ; ****************************************************************
-        .align $100
 MACROS:
-        DS 26 * 2
+        DS $20 * 2
 
 ; ****************************************************************
 ; DEFS Table - holds 26 addresses of user routines
 ; ****************************************************************
-        .align $100
 DEFS:
         DS 26 * 2
 
@@ -1631,7 +1633,6 @@ VGETCHAR:   DW 0                ; \3 vector with pointer to getchar implementati
 isHex:      DW 0                ; \4
 tbPtr:      DW 0                ; reserved for tests
         
-        .align $100
 HEAP:         
 
 
