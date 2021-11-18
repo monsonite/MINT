@@ -18,7 +18,7 @@ ld HL,testGetCharImpl                       ; change getchar implmentation to us
 LD (VGETCHAR),HL
 
 ; testInput {"12","\r"}
-testInput {"1",8}
+testInput {"",'P'-'@'}
 JP interpret1
 
 testGetCharImpl:

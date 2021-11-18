@@ -310,7 +310,7 @@ toggleBase_:
         .cstr "\\4@1^\\4!;"
 
 printStack_:
-        .cstr "`=> `\\.\\n\\n`> `;"
+        .cstr "`=> `\\p\\n\\n`> `;"
 
 initialize:
         LD IX,RSTACK
@@ -333,26 +333,10 @@ init1:
         LD (HL),msb(empty_)
         INC HL
         DJNZ init1
-        LD HL,macros
-        LD B,$20
-init2:
-        LD (HL),lsb(empty_)
-        INC HL
-        LD (HL),msb(empty_)
-        INC HL
-        DJNZ init2
-        LD HL,macros + ('H' - 'A') * 2
-        LD (HL),lsb(backsp_)
-        INC HL
-        LD (HL),msb(backsp_)
-        LD HL,macros + ('B' - 'A') * 2
-        LD (HL),lsb(toggleBase_)
-        INC HL
-        LD (HL),msb(toggleBase_)
-        LD HL,macros + ('P' - 'A') * 2
-        LD (HL),lsb(printStack_)
-        INC HL
-        LD (HL),msb(printStack_)
+        LD BC,$20 * 2
+        LD DE,macros
+        LD HL,ctrlcodes
+        LDIR
         RET
 
 mint:
@@ -385,7 +369,6 @@ waitchar:
         CP '\r'              ; carriage return?
         JR Z, waitchar3
         
-        DEC A
         ADD A,A
         LD HL,MACROS
         LD D,0
@@ -972,7 +955,6 @@ end_def:
 alt:
         INC BC
         LD A,(BC)
-        SUB "!"                 ; Use lowercase letters for now
         ADD A,A
         LD HL,altcodes
         LD L,A
@@ -997,7 +979,41 @@ dot2:
         
         .align $100             ; page boundary
 
+ctrlcodes:
 altcodes:
+        DW empty_       ; NUL ^@
+        DW empty_       ; SOH ^A
+        DW toggleBase_  ; STX ^B
+        DW empty_       ; ETX ^C
+        DW empty_       ; EOT ^D
+        DW empty_       ; ENQ ^E
+        DW empty_       ; ACK ^F
+        DW empty_       ; BEL ^G
+        DW backsp_      ; BS  ^H
+        DW empty_       ; TAB ^I
+        DW empty_       ; LF  ^J
+        DW empty_       ; VT  ^K
+        DW empty_       ; FF  ^L
+        DW empty_       ; CR  ^M
+        DW empty_       ; SO  ^N
+        DW empty_       ; SI  ^O
+        DW printStack_  ; DLE ^P
+        DW empty_       ; DC1 ^Q
+        DW empty_       ; DC2 ^R
+        DW empty_       ; DC3 ^S
+        DW empty_       ; DC4 ^T
+        DW empty_       ; NAK ^U
+        DW empty_       ; SYN ^V
+        DW empty_       ; ETB ^W
+        DW empty_       ; CAN ^X
+        DW empty_       ; EM  ^Y
+        DW empty_       ; SUB ^Z
+        DW empty_       ; ESC ^[
+        DW empty_       ; FS  ^\
+        DW empty_       ; GS  ^]
+        DW empty_       ; RS  ^^
+        DW empty_       ; US  ^_
+        DW empty_       ; SP  ^`
         DW   cStore_    ;    !            
         DW   nop_       ;    "
         DW   nop_       ;    #
@@ -1011,7 +1027,7 @@ altcodes:
         DW   incr_      ;    +  ( adr -- ) decrements variable at address
         DW   nop_       ;    ,            
         DW   nop_       ;    -  ( adr -- ) increments variable at address
-        DW   dots_      ;    .  ( -- ) non-destructively prints stack
+        DW   nop_       ;    .  
         DW   nop_       ;    /
         DW   sysvar_    ;    0  ( -- adr ) start of data stack constant         
         DW   sysvar_    ;    1  ; returns HERE variable
@@ -1077,7 +1093,7 @@ altcodes:
         DW   nop_       ;    m
         DW   newln_     ;    n  ; prints a newline to output
         DW   nop_       ;    o
-        DW   nop_       ;    p
+        DW   dots_      ;    p  ( -- ) non-destructively prints stack
         DW   quit_      ;    q  ; quits from Mint REPL         
         DW   nop_       ;    r
         DW   nop_       ;    s    

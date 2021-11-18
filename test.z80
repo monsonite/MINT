@@ -1,58 +1,2234 @@
-.engine mycomputer
-
-.include "constants.z80"
-.include "test.mac.asm"
-
-LD SP,DSTACK
-CALL initialize
-
-; CALL enter
-; .cstr "`Done!!`"
-; HALT
-
-test "1\\~",0
-test "\\0@",DSTACK
-test "1_ 2+",1
-test "3x! 1 x\\+ x@", 4
-test "0", 0
-test "1", 1
-test "123 456+", 579
-test ":X1; X", 1
-test "2x! x@", 2
-test ":Aa!; 3A a@", 3
-test ":Aa!; :Ba@; 4AB", 4
-test "100 0(6)", 100
-test "100 1(6)", 6
-test "2(6)+", 12
-test "1(\\i@)", 0
-test "1(1(\\i@ \\j@+))", 0
-test "2(2(\\i@ \\j@))+++++++", 4
-test "100a! 1 a\\+ a@", 101
-test "[3] '@", 3
-test "[3]", 1
-test "[1 2 3] $ @ ", 1
-test "[]", 0
-test "[10] '@", 10
-test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t\\+ ) t@", 6
-CALL enter
-
-DB "0 t!"                           ; total = 0
-DB "[1 2 3 4 5]"                    ; declare array, returns address length
-DB "$ a!"                           ; store address in a, leave length
-DB "("                              ; loop
-DB      "a@ \\i@ {+ @"              ; access nth element
-DB      "t\\+"                         ; add to total
-DB ")"                              ; end loop
-DB "t@"                             ; print total
-DB 0
-expect "sum over array",15
-test "\\1@ [1 2 3]'' \\1@ $ - ", 6
-test "\\1@ \\[1 2 3 \\]'' \\1@ $ - ", 3
-test "\\`abc` $ ' ",3
-test "\\`abc` ' \\@ ",$61
-
-CALL enter
-.cstr "`Done!`"
-HALT
-
-.include "MINT.asm"
+0000                             ; .engine mycomputer
+0000                             ; 
+0000                             ; Configuration for RC2014
+0000                ROMSTART:   EQU   $8000   
+0000                RAMSTART:   EQU   $8800   
+0000                             ; Configuration for TEC-1
+0000                             ; ROMSTART    EQU $100
+0000                             ; RAMSTART    EQU $800
+0000                .macro EXPECT,msg1,val1
+0000                             ; 
+0000                 POP HL
+0000                 PUSH HL
+0000                 LD DE,val1
+0000                 OR A
+0000                 SBC HL,DE
+0000                 LD A,L
+0000                 OR H
+0000                 JR Z,expect%%M
+0000                 CALL enter
+0000                 .cstr "`",msg1,"`\\n"
+0000                 LD HL,val1
+0000                 PUSH HL
+0000                 CALL crlf
+0000                 CALL enter
+0000                 .cstr "`Expected `.` Actual `."
+0000                 HALT
+0000                 .cstr
+0000                expect%%M:
+0000                 POP HL
+0000                .endm
+0000                 
+0000                             ; 
+0000                .macro TEST,code1,val1
+0000                             ; 
+0000                 CALL enter
+0000                 .cstr code1
+0000                 expect code1,val1
+0000                .endm
+0000                 
+0000                             ; 
+0000                             ; 
+0000   31 00 89               LD   SP,DSTACK   
+0003   CD 8E 80               CALL   initialize   
+0006                             ; 
+0006                             ; CALL enter
+0006                             ; .cstr "`Done!!`"
+0006                             ; HALT
+0006                             ; 
+0006                          ;*Macro unroll: test "1\\~",0
+0006   CD C2 81               CALL   enter   
+0009   31 5C 7E 00            .CSTR   "1\\~"   
+000D                          ;*Macro unroll:  expect "1\\~",0
+000D   E1                     POP   HL   
+000E   E5                     PUSH   HL   
+000F   11 00 00               LD   DE,0   
+0012   B7                     OR   A   
+0013   ED 52                  SBC   HL,DE   
+0015   7D                     LD   A,L   
+0016   B4                     OR   H   
+0017   28 2F                  JR   Z,expectM_0_48S26   
+0019   CD C2 81               CALL   enter   
+001C   60 31 5C 7E 60 5C 6E 00 .CSTR   "`","1\\~","`\\n"   
+0024   21 00 00               LD   HL,0   
+0027   E5                     PUSH   HL   
+0028   CD B1 81               CALL   crlf   
+002B   CD C2 81               CALL   enter   
+002E   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0046   76                     HALT      
+0047   00                     .CSTR      
+0048                EXPECTM_0_48S26:      
+0048   E1                     POP   HL   
+0049                          ;*Macro unroll: test "\\0@",DSTACK
+0049   CD C2 81               CALL   enter   
+004C   5C 30 40 00            .CSTR   "\\0@"   
+0050                          ;*Macro unroll:  expect "\\0@",DSTACK
+0050   E1                     POP   HL   
+0051   E5                     PUSH   HL   
+0052   11 00 89               LD   DE,DSTACK   
+0055   B7                     OR   A   
+0056   ED 52                  SBC   HL,DE   
+0058   7D                     LD   A,L   
+0059   B4                     OR   H   
+005A   28 2F                  JR   Z,expectM_0_49S26   
+005C   CD C2 81               CALL   enter   
+005F   60 5C 30 40 60 5C 6E 00 .CSTR   "`","\\0@","`\\n"   
+0067   21 00 89               LD   HL,DSTACK   
+006A   E5                     PUSH   HL   
+006B   CD B1 81               CALL   crlf   
+006E   CD C2 81               CALL   enter   
+0071   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0089   76                     HALT      
+008A   00                     .CSTR      
+008B                EXPECTM_0_49S26:      
+008B   E1                     POP   HL   
+008C                          ;*Macro unroll: test "1_ 2+",1
+008C   CD C2 81               CALL   enter   
+008F   31 5F 20 32 2B 00      .CSTR   "1_ 2+"   
+0095                          ;*Macro unroll:  expect "1_ 2+",1
+0095   E1                     POP   HL   
+0096   E5                     PUSH   HL   
+0097   11 01 00               LD   DE,1   
+009A   B7                     OR   A   
+009B   ED 52                  SBC   HL,DE   
+009D   7D                     LD   A,L   
+009E   B4                     OR   H   
+009F   28 31                  JR   Z,expectM_0_50S26   
+00A1   CD C2 81               CALL   enter   
+00A4   60 31 5F 20 32 2B 60 5C 6E 00 .CSTR   "`","1_ 2+","`\\n"   
+00AE   21 01 00               LD   HL,1   
+00B1   E5                     PUSH   HL   
+00B2   CD B1 81               CALL   crlf   
+00B5   CD C2 81               CALL   enter   
+00B8   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+00D0   76                     HALT      
+00D1   00                     .CSTR      
+00D2                EXPECTM_0_50S26:      
+00D2   E1                     POP   HL   
+00D3                          ;*Macro unroll: test "3x! 1 x\\+ x@", 4
+00D3   CD C2 81               CALL   enter   
+00D6   33 78 21 20 31 20 78 5C 2B 20 78 40 00 .CSTR   "3x! 1 x\\+ x@"   
+00E3                          ;*Macro unroll:  expect "3x! 1 x\\+ x@",4
+00E3   E1                     POP   HL   
+00E4   E5                     PUSH   HL   
+00E5   11 04 00               LD   DE,4   
+00E8   B7                     OR   A   
+00E9   ED 52                  SBC   HL,DE   
+00EB   7D                     LD   A,L   
+00EC   B4                     OR   H   
+00ED   28 38                  JR   Z,expectM_0_51S26   
+00EF   CD C2 81               CALL   enter   
+00F2   60 33 78 21 20 31 20 78 5C 2B 20 78 40 60 5C 6E 00 .CSTR   "`","3x! 1 x\\+ x@","`\\n"   
+0103   21 04 00               LD   HL,4   
+0106   E5                     PUSH   HL   
+0107   CD B1 81               CALL   crlf   
+010A   CD C2 81               CALL   enter   
+010D   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0125   76                     HALT      
+0126   00                     .CSTR      
+0127                EXPECTM_0_51S26:      
+0127   E1                     POP   HL   
+0128                          ;*Macro unroll: test "0", 0
+0128   CD C2 81               CALL   enter   
+012B   30 00                  .CSTR   "0"   
+012D                          ;*Macro unroll:  expect "0",0
+012D   E1                     POP   HL   
+012E   E5                     PUSH   HL   
+012F   11 00 00               LD   DE,0   
+0132   B7                     OR   A   
+0133   ED 52                  SBC   HL,DE   
+0135   7D                     LD   A,L   
+0136   B4                     OR   H   
+0137   28 2D                  JR   Z,expectM_0_52S26   
+0139   CD C2 81               CALL   enter   
+013C   60 30 60 5C 6E 00      .CSTR   "`","0","`\\n"   
+0142   21 00 00               LD   HL,0   
+0145   E5                     PUSH   HL   
+0146   CD B1 81               CALL   crlf   
+0149   CD C2 81               CALL   enter   
+014C   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0164   76                     HALT      
+0165   00                     .CSTR      
+0166                EXPECTM_0_52S26:      
+0166   E1                     POP   HL   
+0167                          ;*Macro unroll: test "1", 1
+0167   CD C2 81               CALL   enter   
+016A   31 00                  .CSTR   "1"   
+016C                          ;*Macro unroll:  expect "1",1
+016C   E1                     POP   HL   
+016D   E5                     PUSH   HL   
+016E   11 01 00               LD   DE,1   
+0171   B7                     OR   A   
+0172   ED 52                  SBC   HL,DE   
+0174   7D                     LD   A,L   
+0175   B4                     OR   H   
+0176   28 2D                  JR   Z,expectM_0_53S26   
+0178   CD C2 81               CALL   enter   
+017B   60 31 60 5C 6E 00      .CSTR   "`","1","`\\n"   
+0181   21 01 00               LD   HL,1   
+0184   E5                     PUSH   HL   
+0185   CD B1 81               CALL   crlf   
+0188   CD C2 81               CALL   enter   
+018B   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+01A3   76                     HALT      
+01A4   00                     .CSTR      
+01A5                EXPECTM_0_53S26:      
+01A5   E1                     POP   HL   
+01A6                          ;*Macro unroll: test "123 456+", 579
+01A6   CD C2 81               CALL   enter   
+01A9   31 32 33 20 34 35 36 2B 00 .CSTR   "123 456+"   
+01B2                          ;*Macro unroll:  expect "123 456+",579
+01B2   E1                     POP   HL   
+01B3   E5                     PUSH   HL   
+01B4   11 43 02               LD   DE,579   
+01B7   B7                     OR   A   
+01B8   ED 52                  SBC   HL,DE   
+01BA   7D                     LD   A,L   
+01BB   B4                     OR   H   
+01BC   28 34                  JR   Z,expectM_0_54S26   
+01BE   CD C2 81               CALL   enter   
+01C1   60 31 32 33 20 34 35 36 2B 60 5C 6E 00 .CSTR   "`","123 456+","`\\n"   
+01CE   21 43 02               LD   HL,579   
+01D1   E5                     PUSH   HL   
+01D2   CD B1 81               CALL   crlf   
+01D5   CD C2 81               CALL   enter   
+01D8   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+01F0   76                     HALT      
+01F1   00                     .CSTR      
+01F2                EXPECTM_0_54S26:      
+01F2   E1                     POP   HL   
+01F3                          ;*Macro unroll: test ":X1; X", 1
+01F3   CD C2 81               CALL   enter   
+01F6   3A 58 31 3B 20 58 00   .CSTR   ":X1; X"   
+01FD                          ;*Macro unroll:  expect ":X1; X",1
+01FD   E1                     POP   HL   
+01FE   E5                     PUSH   HL   
+01FF   11 01 00               LD   DE,1   
+0202   B7                     OR   A   
+0203   ED 52                  SBC   HL,DE   
+0205   7D                     LD   A,L   
+0206   B4                     OR   H   
+0207   28 32                  JR   Z,expectM_0_55S26   
+0209   CD C2 81               CALL   enter   
+020C   60 3A 58 31 3B 20 58 60 5C 6E 00 .CSTR   "`",":X1; X","`\\n"   
+0217   21 01 00               LD   HL,1   
+021A   E5                     PUSH   HL   
+021B   CD B1 81               CALL   crlf   
+021E   CD C2 81               CALL   enter   
+0221   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0239   76                     HALT      
+023A   00                     .CSTR      
+023B                EXPECTM_0_55S26:      
+023B   E1                     POP   HL   
+023C                          ;*Macro unroll: test "2x! x@", 2
+023C   CD C2 81               CALL   enter   
+023F   32 78 21 20 78 40 00   .CSTR   "2x! x@"   
+0246                          ;*Macro unroll:  expect "2x! x@",2
+0246   E1                     POP   HL   
+0247   E5                     PUSH   HL   
+0248   11 02 00               LD   DE,2   
+024B   B7                     OR   A   
+024C   ED 52                  SBC   HL,DE   
+024E   7D                     LD   A,L   
+024F   B4                     OR   H   
+0250   28 32                  JR   Z,expectM_0_56S26   
+0252   CD C2 81               CALL   enter   
+0255   60 32 78 21 20 78 40 60 5C 6E 00 .CSTR   "`","2x! x@","`\\n"   
+0260   21 02 00               LD   HL,2   
+0263   E5                     PUSH   HL   
+0264   CD B1 81               CALL   crlf   
+0267   CD C2 81               CALL   enter   
+026A   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0282   76                     HALT      
+0283   00                     .CSTR      
+0284                EXPECTM_0_56S26:      
+0284   E1                     POP   HL   
+0285                          ;*Macro unroll: test ":Aa!; 3A a@", 3
+0285   CD C2 81               CALL   enter   
+0288   3A 41 61 21 3B 20 33 41 20 61 40 00 .CSTR   ":Aa!; 3A a@"   
+0294                          ;*Macro unroll:  expect ":Aa!; 3A a@",3
+0294   E1                     POP   HL   
+0295   E5                     PUSH   HL   
+0296   11 03 00               LD   DE,3   
+0299   B7                     OR   A   
+029A   ED 52                  SBC   HL,DE   
+029C   7D                     LD   A,L   
+029D   B4                     OR   H   
+029E   28 37                  JR   Z,expectM_0_57S26   
+02A0   CD C2 81               CALL   enter   
+02A3   60 3A 41 61 21 3B 20 33 41 20 61 40 60 5C 6E 00 .CSTR   "`",":Aa!; 3A a@","`\\n"   
+02B3   21 03 00               LD   HL,3   
+02B6   E5                     PUSH   HL   
+02B7   CD B1 81               CALL   crlf   
+02BA   CD C2 81               CALL   enter   
+02BD   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+02D5   76                     HALT      
+02D6   00                     .CSTR      
+02D7                EXPECTM_0_57S26:      
+02D7   E1                     POP   HL   
+02D8                          ;*Macro unroll: test ":Aa!; :Ba@; 4AB", 4
+02D8   CD C2 81               CALL   enter   
+02DB   3A 41 61 21 3B 20 3A 42 61 40 3B 20 34 41 42 00 .CSTR   ":Aa!; :Ba@; 4AB"   
+02EB                          ;*Macro unroll:  expect ":Aa!; :Ba@; 4AB",4
+02EB   E1                     POP   HL   
+02EC   E5                     PUSH   HL   
+02ED   11 04 00               LD   DE,4   
+02F0   B7                     OR   A   
+02F1   ED 52                  SBC   HL,DE   
+02F3   7D                     LD   A,L   
+02F4   B4                     OR   H   
+02F5   28 3B                  JR   Z,expectM_0_58S26   
+02F7   CD C2 81               CALL   enter   
+02FA   60 3A 41 61 21 3B 20 3A 42 61 40 3B 20 34 41 42 60 5C 6E 00 .CSTR   "`",":Aa!; :Ba@; 4AB","`\\n"   
+030E   21 04 00               LD   HL,4   
+0311   E5                     PUSH   HL   
+0312   CD B1 81               CALL   crlf   
+0315   CD C2 81               CALL   enter   
+0318   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0330   76                     HALT      
+0331   00                     .CSTR      
+0332                EXPECTM_0_58S26:      
+0332   E1                     POP   HL   
+0333                          ;*Macro unroll: test "100 0(6)", 100
+0333   CD C2 81               CALL   enter   
+0336   31 30 30 20 30 28 36 29 00 .CSTR   "100 0(6)"   
+033F                          ;*Macro unroll:  expect "100 0(6)",100
+033F   E1                     POP   HL   
+0340   E5                     PUSH   HL   
+0341   11 64 00               LD   DE,100   
+0344   B7                     OR   A   
+0345   ED 52                  SBC   HL,DE   
+0347   7D                     LD   A,L   
+0348   B4                     OR   H   
+0349   28 34                  JR   Z,expectM_0_59S26   
+034B   CD C2 81               CALL   enter   
+034E   60 31 30 30 20 30 28 36 29 60 5C 6E 00 .CSTR   "`","100 0(6)","`\\n"   
+035B   21 64 00               LD   HL,100   
+035E   E5                     PUSH   HL   
+035F   CD B1 81               CALL   crlf   
+0362   CD C2 81               CALL   enter   
+0365   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+037D   76                     HALT      
+037E   00                     .CSTR      
+037F                EXPECTM_0_59S26:      
+037F   E1                     POP   HL   
+0380                          ;*Macro unroll: test "100 1(6)", 6
+0380   CD C2 81               CALL   enter   
+0383   31 30 30 20 31 28 36 29 00 .CSTR   "100 1(6)"   
+038C                          ;*Macro unroll:  expect "100 1(6)",6
+038C   E1                     POP   HL   
+038D   E5                     PUSH   HL   
+038E   11 06 00               LD   DE,6   
+0391   B7                     OR   A   
+0392   ED 52                  SBC   HL,DE   
+0394   7D                     LD   A,L   
+0395   B4                     OR   H   
+0396   28 34                  JR   Z,expectM_0_60S26   
+0398   CD C2 81               CALL   enter   
+039B   60 31 30 30 20 31 28 36 29 60 5C 6E 00 .CSTR   "`","100 1(6)","`\\n"   
+03A8   21 06 00               LD   HL,6   
+03AB   E5                     PUSH   HL   
+03AC   CD B1 81               CALL   crlf   
+03AF   CD C2 81               CALL   enter   
+03B2   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+03CA   76                     HALT      
+03CB   00                     .CSTR      
+03CC                EXPECTM_0_60S26:      
+03CC   E1                     POP   HL   
+03CD                          ;*Macro unroll: test "2(6)+", 12
+03CD   CD C2 81               CALL   enter   
+03D0   32 28 36 29 2B 00      .CSTR   "2(6)+"   
+03D6                          ;*Macro unroll:  expect "2(6)+",12
+03D6   E1                     POP   HL   
+03D7   E5                     PUSH   HL   
+03D8   11 0C 00               LD   DE,12   
+03DB   B7                     OR   A   
+03DC   ED 52                  SBC   HL,DE   
+03DE   7D                     LD   A,L   
+03DF   B4                     OR   H   
+03E0   28 31                  JR   Z,expectM_0_61S26   
+03E2   CD C2 81               CALL   enter   
+03E5   60 32 28 36 29 2B 60 5C 6E 00 .CSTR   "`","2(6)+","`\\n"   
+03EF   21 0C 00               LD   HL,12   
+03F2   E5                     PUSH   HL   
+03F3   CD B1 81               CALL   crlf   
+03F6   CD C2 81               CALL   enter   
+03F9   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0411   76                     HALT      
+0412   00                     .CSTR      
+0413                EXPECTM_0_61S26:      
+0413   E1                     POP   HL   
+0414                          ;*Macro unroll: test "1(\\i@)", 0
+0414   CD C2 81               CALL   enter   
+0417   31 28 5C 69 40 29 00   .CSTR   "1(\\i@)"   
+041E                          ;*Macro unroll:  expect "1(\\i@)",0
+041E   E1                     POP   HL   
+041F   E5                     PUSH   HL   
+0420   11 00 00               LD   DE,0   
+0423   B7                     OR   A   
+0424   ED 52                  SBC   HL,DE   
+0426   7D                     LD   A,L   
+0427   B4                     OR   H   
+0428   28 32                  JR   Z,expectM_0_62S26   
+042A   CD C2 81               CALL   enter   
+042D   60 31 28 5C 69 40 29 60 5C 6E 00 .CSTR   "`","1(\\i@)","`\\n"   
+0438   21 00 00               LD   HL,0   
+043B   E5                     PUSH   HL   
+043C   CD B1 81               CALL   crlf   
+043F   CD C2 81               CALL   enter   
+0442   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+045A   76                     HALT      
+045B   00                     .CSTR      
+045C                EXPECTM_0_62S26:      
+045C   E1                     POP   HL   
+045D                          ;*Macro unroll: test "1(1(\\i@ \\j@+))", 0
+045D   CD C2 81               CALL   enter   
+0460   31 28 31 28 5C 69 40 20 5C 6A 40 2B 29 29 00 .CSTR   "1(1(\\i@ \\j@+))"   
+046F                          ;*Macro unroll:  expect "1(1(\\i@ \\j@+))",0
+046F   E1                     POP   HL   
+0470   E5                     PUSH   HL   
+0471   11 00 00               LD   DE,0   
+0474   B7                     OR   A   
+0475   ED 52                  SBC   HL,DE   
+0477   7D                     LD   A,L   
+0478   B4                     OR   H   
+0479   28 3A                  JR   Z,expectM_0_63S26   
+047B   CD C2 81               CALL   enter   
+047E   60 31 28 31 28 5C 69 40 20 5C 6A 40 2B 29 29 60 5C 6E 00 .CSTR   "`","1(1(\\i@ \\j@+))","`\\n"   
+0491   21 00 00               LD   HL,0   
+0494   E5                     PUSH   HL   
+0495   CD B1 81               CALL   crlf   
+0498   CD C2 81               CALL   enter   
+049B   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+04B3   76                     HALT      
+04B4   00                     .CSTR      
+04B5                EXPECTM_0_63S26:      
+04B5   E1                     POP   HL   
+04B6                          ;*Macro unroll: test "2(2(\\i@ \\j@))+++++++", 4
+04B6   CD C2 81               CALL   enter   
+04B9   32 28 32 28 5C 69 40 20 5C 6A 40 29 29 2B 2B 2B 2B 2B 2B 2B 00 .CSTR   "2(2(\\i@ \\j@))+++++++"   
+04CE                          ;*Macro unroll:  expect "2(2(\\i@ \\j@))+++++++",4
+04CE   E1                     POP   HL   
+04CF   E5                     PUSH   HL   
+04D0   11 04 00               LD   DE,4   
+04D3   B7                     OR   A   
+04D4   ED 52                  SBC   HL,DE   
+04D6   7D                     LD   A,L   
+04D7   B4                     OR   H   
+04D8   28 40                  JR   Z,expectM_0_64S26   
+04DA   CD C2 81               CALL   enter   
+04DD   60 32 28 32 28 5C 69 40 20 5C 6A 40 29 29 2B 2B 2B 2B 2B 2B 2B 60 5C 6E 00 .CSTR   "`","2(2(\\i@ \\j@))+++++++","`\\n"   
+04F6   21 04 00               LD   HL,4   
+04F9   E5                     PUSH   HL   
+04FA   CD B1 81               CALL   crlf   
+04FD   CD C2 81               CALL   enter   
+0500   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0518   76                     HALT      
+0519   00                     .CSTR      
+051A                EXPECTM_0_64S26:      
+051A   E1                     POP   HL   
+051B                          ;*Macro unroll: test "100a! 1 a\\+ a@", 101
+051B   CD C2 81               CALL   enter   
+051E   31 30 30 61 21 20 31 20 61 5C 2B 20 61 40 00 .CSTR   "100a! 1 a\\+ a@"   
+052D                          ;*Macro unroll:  expect "100a! 1 a\\+ a@",101
+052D   E1                     POP   HL   
+052E   E5                     PUSH   HL   
+052F   11 65 00               LD   DE,101   
+0532   B7                     OR   A   
+0533   ED 52                  SBC   HL,DE   
+0535   7D                     LD   A,L   
+0536   B4                     OR   H   
+0537   28 3A                  JR   Z,expectM_0_65S26   
+0539   CD C2 81               CALL   enter   
+053C   60 31 30 30 61 21 20 31 20 61 5C 2B 20 61 40 60 5C 6E 00 .CSTR   "`","100a! 1 a\\+ a@","`\\n"   
+054F   21 65 00               LD   HL,101   
+0552   E5                     PUSH   HL   
+0553   CD B1 81               CALL   crlf   
+0556   CD C2 81               CALL   enter   
+0559   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0571   76                     HALT      
+0572   00                     .CSTR      
+0573                EXPECTM_0_65S26:      
+0573   E1                     POP   HL   
+0574                          ;*Macro unroll: test "[3] '@", 3
+0574   CD C2 81               CALL   enter   
+0577   5B 33 5D 20 27 40 00   .CSTR   "[3] '@"   
+057E                          ;*Macro unroll:  expect "[3] '@",3
+057E   E1                     POP   HL   
+057F   E5                     PUSH   HL   
+0580   11 03 00               LD   DE,3   
+0583   B7                     OR   A   
+0584   ED 52                  SBC   HL,DE   
+0586   7D                     LD   A,L   
+0587   B4                     OR   H   
+0588   28 32                  JR   Z,expectM_0_66S26   
+058A   CD C2 81               CALL   enter   
+058D   60 5B 33 5D 20 27 40 60 5C 6E 00 .CSTR   "`","[3] '@","`\\n"   
+0598   21 03 00               LD   HL,3   
+059B   E5                     PUSH   HL   
+059C   CD B1 81               CALL   crlf   
+059F   CD C2 81               CALL   enter   
+05A2   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+05BA   76                     HALT      
+05BB   00                     .CSTR      
+05BC                EXPECTM_0_66S26:      
+05BC   E1                     POP   HL   
+05BD                          ;*Macro unroll: test "[3]", 1
+05BD   CD C2 81               CALL   enter   
+05C0   5B 33 5D 00            .CSTR   "[3]"   
+05C4                          ;*Macro unroll:  expect "[3]",1
+05C4   E1                     POP   HL   
+05C5   E5                     PUSH   HL   
+05C6   11 01 00               LD   DE,1   
+05C9   B7                     OR   A   
+05CA   ED 52                  SBC   HL,DE   
+05CC   7D                     LD   A,L   
+05CD   B4                     OR   H   
+05CE   28 2F                  JR   Z,expectM_0_67S26   
+05D0   CD C2 81               CALL   enter   
+05D3   60 5B 33 5D 60 5C 6E 00 .CSTR   "`","[3]","`\\n"   
+05DB   21 01 00               LD   HL,1   
+05DE   E5                     PUSH   HL   
+05DF   CD B1 81               CALL   crlf   
+05E2   CD C2 81               CALL   enter   
+05E5   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+05FD   76                     HALT      
+05FE   00                     .CSTR      
+05FF                EXPECTM_0_67S26:      
+05FF   E1                     POP   HL   
+0600                          ;*Macro unroll: test "[1 2 3] $ @ ", 1
+0600   CD C2 81               CALL   enter   
+0603   5B 31 20 32 20 33 5D 20 24 20 40 20 00 .CSTR   "[1 2 3] $ @ "   
+0610                          ;*Macro unroll:  expect "[1 2 3] $ @ ",1
+0610   E1                     POP   HL   
+0611   E5                     PUSH   HL   
+0612   11 01 00               LD   DE,1   
+0615   B7                     OR   A   
+0616   ED 52                  SBC   HL,DE   
+0618   7D                     LD   A,L   
+0619   B4                     OR   H   
+061A   28 38                  JR   Z,expectM_0_68S26   
+061C   CD C2 81               CALL   enter   
+061F   60 5B 31 20 32 20 33 5D 20 24 20 40 20 60 5C 6E 00 .CSTR   "`","[1 2 3] $ @ ","`\\n"   
+0630   21 01 00               LD   HL,1   
+0633   E5                     PUSH   HL   
+0634   CD B1 81               CALL   crlf   
+0637   CD C2 81               CALL   enter   
+063A   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0652   76                     HALT      
+0653   00                     .CSTR      
+0654                EXPECTM_0_68S26:      
+0654   E1                     POP   HL   
+0655                          ;*Macro unroll: test "[]", 0
+0655   CD C2 81               CALL   enter   
+0658   5B 5D 00               .CSTR   "[]"   
+065B                          ;*Macro unroll:  expect "[]",0
+065B   E1                     POP   HL   
+065C   E5                     PUSH   HL   
+065D   11 00 00               LD   DE,0   
+0660   B7                     OR   A   
+0661   ED 52                  SBC   HL,DE   
+0663   7D                     LD   A,L   
+0664   B4                     OR   H   
+0665   28 2E                  JR   Z,expectM_0_69S26   
+0667   CD C2 81               CALL   enter   
+066A   60 5B 5D 60 5C 6E 00   .CSTR   "`","[]","`\\n"   
+0671   21 00 00               LD   HL,0   
+0674   E5                     PUSH   HL   
+0675   CD B1 81               CALL   crlf   
+0678   CD C2 81               CALL   enter   
+067B   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0693   76                     HALT      
+0694   00                     .CSTR      
+0695                EXPECTM_0_69S26:      
+0695   E1                     POP   HL   
+0696                          ;*Macro unroll: test "[10] '@", 10
+0696   CD C2 81               CALL   enter   
+0699   5B 31 30 5D 20 27 40 00 .CSTR   "[10] '@"   
+06A1                          ;*Macro unroll:  expect "[10] '@",10
+06A1   E1                     POP   HL   
+06A2   E5                     PUSH   HL   
+06A3   11 0A 00               LD   DE,10   
+06A6   B7                     OR   A   
+06A7   ED 52                  SBC   HL,DE   
+06A9   7D                     LD   A,L   
+06AA   B4                     OR   H   
+06AB   28 33                  JR   Z,expectM_0_70S26   
+06AD   CD C2 81               CALL   enter   
+06B0   60 5B 31 30 5D 20 27 40 60 5C 6E 00 .CSTR   "`","[10] '@","`\\n"   
+06BC   21 0A 00               LD   HL,10   
+06BF   E5                     PUSH   HL   
+06C0   CD B1 81               CALL   crlf   
+06C3   CD C2 81               CALL   enter   
+06C6   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+06DE   76                     HALT      
+06DF   00                     .CSTR      
+06E0                EXPECTM_0_70S26:      
+06E0   E1                     POP   HL   
+06E1                          ;*Macro unroll: test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t\\+ ) t@", 6
+06E1   CD C2 81               CALL   enter   
+06E4   30 74 21 20 5B 31 20 32 20 33 5D 20 24 20 61 21 20 28 20 61 40 20 5C 69 40 20 7B 2B 20 40 20 74 5C 2B 20 29 20 74 40 00 .CSTR   "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t\\+ ) t@"   
+070C                          ;*Macro unroll:  expect "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t\\+ ) t@",6
+070C   E1                     POP   HL   
+070D   E5                     PUSH   HL   
+070E   11 06 00               LD   DE,6   
+0711   B7                     OR   A   
+0712   ED 52                  SBC   HL,DE   
+0714   7D                     LD   A,L   
+0715   B4                     OR   H   
+0716   28 53                  JR   Z,expectM_0_71S26   
+0718   CD C2 81               CALL   enter   
+071B   60 30 74 21 20 5B 31 20 32 20 33 5D 20 24 20 61 21 20 28 20 61 40 20 5C 69 40 20 7B 2B 20 40 20 74 5C 2B 20 29 20 74 40 60 5C 6E 00 .CSTR   "`","0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t\\+ ) t@","`\\n"   
+0747   21 06 00               LD   HL,6   
+074A   E5                     PUSH   HL   
+074B   CD B1 81               CALL   crlf   
+074E   CD C2 81               CALL   enter   
+0751   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0769   76                     HALT      
+076A   00                     .CSTR      
+076B                EXPECTM_0_71S26:      
+076B   E1                     POP   HL   
+076C   CD C2 81               CALL   enter   
+076F                             ; 
+076F   30 20 74 21            DB   "0 t!"   ; total = 0
+0773   5B 31 20 32 20 33 20 34 20 35 5D DB   "[1 2 3 4 5]"   ; declare array, returns address length
+077E   24 20 61 21            DB   "$ a!"   ; store address in a, leave length
+0782   28                     DB   "("   ; loop
+0783   61 40 20 5C 69 40 20 7B 2B 20 40 DB   "a@ \\i@ {+ @"   ; access nth element
+078E   74 5C 2B               DB   "t\\+"   ; add to total
+0791   29                     DB   ")"   ; end loop
+0792   74 40                  DB   "t@"   ; print total
+0794   00                     DB   0   
+0795                          ;*Macro unroll: expect "sum over array",15
+0795   E1                     POP   HL   
+0796   E5                     PUSH   HL   
+0797   11 0F 00               LD   DE,15   
+079A   B7                     OR   A   
+079B   ED 52                  SBC   HL,DE   
+079D   7D                     LD   A,L   
+079E   B4                     OR   H   
+079F   28 3A                  JR   Z,expectM_83S48   
+07A1   CD C2 81               CALL   enter   
+07A4   60 73 75 6D 20 6F 76 65 72 20 61 72 72 61 79 60 5C 6E 00 .CSTR   "`","sum over array","`\\n"   
+07B7   21 0F 00               LD   HL,15   
+07BA   E5                     PUSH   HL   
+07BB   CD B1 81               CALL   crlf   
+07BE   CD C2 81               CALL   enter   
+07C1   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+07D9   76                     HALT      
+07DA   00                     .CSTR      
+07DB                EXPECTM_83S48:      
+07DB   E1                     POP   HL   
+07DC                          ;*Macro unroll: test "\\1@ [1 2 3]'' \\1@ $ - ", 6
+07DC   CD C2 81               CALL   enter   
+07DF   5C 31 40 20 5B 31 20 32 20 33 5D 27 27 20 5C 31 40 20 24 20 2D 20 00 .CSTR   "\\1@ [1 2 3]'' \\1@ $ - "   
+07F6                          ;*Macro unroll:  expect "\\1@ [1 2 3]'' \\1@ $ - ",6
+07F6   E1                     POP   HL   
+07F7   E5                     PUSH   HL   
+07F8   11 06 00               LD   DE,6   
+07FB   B7                     OR   A   
+07FC   ED 52                  SBC   HL,DE   
+07FE   7D                     LD   A,L   
+07FF   B4                     OR   H   
+0800   28 42                  JR   Z,expectM_0_84S26   
+0802   CD C2 81               CALL   enter   
+0805   60 5C 31 40 20 5B 31 20 32 20 33 5D 27 27 20 5C 31 40 20 24 20 2D 20 60 5C 6E 00 .CSTR   "`","\\1@ [1 2 3]'' \\1@ $ - ","`\\n"   
+0820   21 06 00               LD   HL,6   
+0823   E5                     PUSH   HL   
+0824   CD B1 81               CALL   crlf   
+0827   CD C2 81               CALL   enter   
+082A   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0842   76                     HALT      
+0843   00                     .CSTR      
+0844                EXPECTM_0_84S26:      
+0844   E1                     POP   HL   
+0845                          ;*Macro unroll: test "\\1@ \\[1 2 3 \\]'' \\1@ $ - ", 3
+0845   CD C2 81               CALL   enter   
+0848   5C 31 40 20 5C 5B 31 20 32 20 33 20 5C 5D 27 27 20 5C 31 40 20 24 20 2D 20 00 .CSTR   "\\1@ \\[1 2 3 \\]'' \\1@ $ - "   
+0862                          ;*Macro unroll:  expect "\\1@ \\[1 2 3 \\]'' \\1@ $ - ",3
+0862   E1                     POP   HL   
+0863   E5                     PUSH   HL   
+0864   11 03 00               LD   DE,3   
+0867   B7                     OR   A   
+0868   ED 52                  SBC   HL,DE   
+086A   7D                     LD   A,L   
+086B   B4                     OR   H   
+086C   28 45                  JR   Z,expectM_0_85S26   
+086E   CD C2 81               CALL   enter   
+0871   60 5C 31 40 20 5C 5B 31 20 32 20 33 20 5C 5D 27 27 20 5C 31 40 20 24 20 2D 20 60 5C 6E 00 .CSTR   "`","\\1@ \\[1 2 3 \\]'' \\1@ $ - ","`\\n"   
+088F   21 03 00               LD   HL,3   
+0892   E5                     PUSH   HL   
+0893   CD B1 81               CALL   crlf   
+0896   CD C2 81               CALL   enter   
+0899   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+08B1   76                     HALT      
+08B2   00                     .CSTR      
+08B3                EXPECTM_0_85S26:      
+08B3   E1                     POP   HL   
+08B4                          ;*Macro unroll: test "\\`abc` $ ' ",3
+08B4   CD C2 81               CALL   enter   
+08B7   5C 60 61 62 63 60 20 24 20 27 20 00 .CSTR   "\\`abc` $ ' "   
+08C3                          ;*Macro unroll:  expect "\\`abc` $ ' ",3
+08C3   E1                     POP   HL   
+08C4   E5                     PUSH   HL   
+08C5   11 03 00               LD   DE,3   
+08C8   B7                     OR   A   
+08C9   ED 52                  SBC   HL,DE   
+08CB   7D                     LD   A,L   
+08CC   B4                     OR   H   
+08CD   28 37                  JR   Z,expectM_0_86S26   
+08CF   CD C2 81               CALL   enter   
+08D2   60 5C 60 61 62 63 60 20 24 20 27 20 60 5C 6E 00 .CSTR   "`","\\`abc` $ ' ","`\\n"   
+08E2   21 03 00               LD   HL,3   
+08E5   E5                     PUSH   HL   
+08E6   CD B1 81               CALL   crlf   
+08E9   CD C2 81               CALL   enter   
+08EC   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0904   76                     HALT      
+0905   00                     .CSTR      
+0906                EXPECTM_0_86S26:      
+0906   E1                     POP   HL   
+0907                          ;*Macro unroll: test "\\`abc` ' \\@ ",$61
+0907   CD C2 81               CALL   enter   
+090A   5C 60 61 62 63 60 20 27 20 5C 40 20 00 .CSTR   "\\`abc` ' \\@ "   
+0917                          ;*Macro unroll:  expect "\\`abc` ' \\@ ",$61
+0917   E1                     POP   HL   
+0918   E5                     PUSH   HL   
+0919   11 61 00               LD   DE,$61   
+091C   B7                     OR   A   
+091D   ED 52                  SBC   HL,DE   
+091F   7D                     LD   A,L   
+0920   B4                     OR   H   
+0921   28 38                  JR   Z,expectM_0_87S26   
+0923   CD C2 81               CALL   enter   
+0926   60 5C 60 61 62 63 60 20 27 20 5C 40 20 60 5C 6E 00 .CSTR   "`","\\`abc` ' \\@ ","`\\n"   
+0937   21 61 00               LD   HL,$61   
+093A   E5                     PUSH   HL   
+093B   CD B1 81               CALL   crlf   
+093E   CD C2 81               CALL   enter   
+0941   60 45 78 70 65 63 74 65 64 20 60 2E 60 20 41 63 74 75 61 6C 20 60 2E 00 .CSTR   "`Expected `.` Actual `."   
+0959   76                     HALT      
+095A   00                     .CSTR      
+095B                EXPECTM_0_87S26:      
+095B   E1                     POP   HL   
+095C                             ; 
+095C   CD C2 81               CALL   enter   
+095F   60 44 6F 6E 65 21 60 00 .CSTR   "`Done!`"   
+0967   76                     HALT      
+0968                             ; 
+0968                             ; *************************************************************************
+0968                             ; 
+0968                             ;        MINT1_13 Micro-Interpreter for the Z80
+0968                             ; 
+0968                             ;        Ken Boak and John Hardy November 10th 2021
+0968                             ; 
+0968                             ;	     Interim snapshot file to be merged later when confirmed
+0968                             ; 
+0968                             ;        New in this version 1_13:
+0968                             ; 
+0968                             ;        Macros and new loop code
+0968                             ; 
+0968                             ; 
+0968                             ;		 Invert inv and Negate neg now use the Subtraction routine.
+0968                             ; 
+0968                             ;        Shift Left 00bbIGFuZCBzaGlmdCByaWdodCA= operations added
+0968                             ; 
+0968                             ;        Over reverted to %
+0968                             ; 
+0968                             ;        Additional commands available using backslash prefix \
+0968                             ; 
+0968                             ;        Mod operator removed, / is now /mod
+0968                             ; 
+0968                             ;        Division routine now working
+0968                             ; 
+0968                             ;        Hexadecimal number entry routine #ABCD
+0968                             ; 
+0968                             ;        Comma , is used to output in hexadecimal format
+0968                             ; 
+0968                             ;		 Invert inv is ~ and Negate neg is _ now use the Subtraction routine.
+0968                             ; 
+0968                             ;        Grave is now used to enclose  `text strings`
+0968                             ; 
+0968                             ; 
+0968                             ; 
+0968                             ;        Includes serial routines getchar and putchar
+0968                             ;        printstring
+0968                             ;        printdec
+0968                             ;        printhex
+0968                             ;        crlf
+0968                             ; 
+0968                             ;        Register Assignment:
+0968                             ; 
+0968                             ;        BC is the instruction pointer IP
+0968                             ;        DE is a working register and 2nd on stack NOS
+0968                             ;        HL is a working register and Top of stack TOS
+0968                             ;        SP is data stack pointer
+0968                             ;        IX is used to implement the return stack
+0968                             ;        IY is used as a jump back to NEXT
+0968                             ; 
+0968                             ;        All commands accessed via a byte wide look up table
+0968                             ; 
+0968                             ;        Heap used for command storage (HERE)
+0968                             ; 
+0968                             ;        Primitives are on two consecutive pages using a trampoline jump to the 2nd page.
+0968                             ; 
+0968                             ;        This allows single byte opcodes reducing the dispatch time from
+0968                             ;        64 t states to 33 t states
+0968                             ; 
+0968                             ; 
+0968                             ;        User defined commands and variables
+0968                             ; 
+0968                             ;        User Commands  A-Z
+0968                             ;        User Variables a-z
+0968                             ; 
+0968                             ;        Commands now available:
+0968                             ; 
+0968                             ;        Maths
+0968                             ; 
+0968                             ;        +     ADD
+0968                             ;		 -     SUB
+0968                             ;        *     MUL     (max product 65535)
+0968                             ;        /     DIV     Returns quotient and remainder
+0968                             ;        _     NEG
+0968                             ; 
+0968                             ;        }     Shift Right (2/)
+0968                             ;        {     Shift Left  (2*)
+0968                             ; 
+0968                             ;        Comparison - compare the top two elements on the stack
+0968                             ;        Puts 1 on the stack if condition is true, 0 if false
+0968                             ; 
+0968                             ;        <     LT
+0968                             ;        =     EQ
+0968                             ;        >     GT
+0968                             ; 
+0968                             ;        Logic
+0968                             ; 
+0968                             ;        &     AND
+0968                             ;        |     OR
+0968                             ;        ^     XOR
+0968                             ;        ~     INV
+0968                             ; 
+0968                             ;        Stack
+0968                             ; 
+0968                             ;        "     DUP
+0968                             ;        '     DROP
+0968                             ;        $     SWAP
+0968                             ;		 %     OVER
+0968                             ;        .     DOT     (Print the value of the top of stack as a decimal)
+0968                             ;        ,     COMMA   (Print the value of the top of stack as a hexadecimal)
+0968                             ;		 #     HEX     Accept a hexadecimal number
+0968                             ; 
+0968                             ;        Memory
+0968                             ; 
+0968                             ;        @     FETCH
+0968                             ;        !     STORE
+0968                             ; 
+0968                             ;        User Definitions
+0968                             ; 
+0968                             ;        :     Start a user definition
+0968                             ;        ;     End a user definition
+0968                             ; 
+0968                             ;        \     QUIT    (Print OK and return to monitor)
+0968                             ; 
+0968                             ; 
+0968                             ;        Loops    - execute the code between parenthesis
+0968                             ; 
+0968                             ;        The user variable i is used as the loop counter
+0968                             ;        It is decremented every time the loop is executed
+0968                             ; 
+0968                             ;        10(repeat this code 10 times)
+0968                             ; 
+0968                             ;        0(skip this code)
+0968                             ; 
+0968                             ;        1(execute this code only once)
+0968                             ; 
+0968                             ;        a@ b@ = (_print this if a=b_)
+0968                             ; 
+0968                             ;       1000(i@.)    Print out the value of i from 999 to 0
+0968                             ; 
+0968                             ;       10(a@ 1+ a! a@ .)  Increment a 10 times and print it out
+0968                             ; 
+0968                             ;       User Commands are allocated to uppercase alpha characters A to Z
+0968                             ; 
+0968                             ;       A user command can be defined by starting with a colon and
+0968                             ;       ending with a semicolon
+0968                             ; 
+0968                             ;       Example  :A 123 456 + . ;
+0968                             ; 
+0968                             ;       The A character represents a fixed address for the User routine
+0968                             ;       The interpreter copies all the characters after the A to a text buffer
+0968                             ;       located at address A
+0968                             ;       Each time A is encountered (outside of a colon definition)
+0968                             ;       it will execute the code  located there i.e. 123 456 + .
+0968                             ; 
+0968                             ;       Variables are associated with lowercase characters a-z
+0968                             ;       Each variable is allocated 2 bytes located on even addresses
+0968                             ;       They run contiguously from $A800 (a) to $A830 (z)
+0968                             ;       They are accessed using the fetch and store commands @ and !
+0968                             ; 
+0968                             ;       Examples:
+0968                             ; 
+0968                             ;       1234 a!     store 1234 in a
+0968                             ; 
+0968                             ;       b@ .        fetch the value from b and print it out
+0968                             ; 
+0968                             ;       a@ b@ + .   fetch values from a and b, add them together and print the sum
+0968                             ; 
+0968                             ;       a@ b!       copy the value in a and store it in b
+0968                             ; 
+0968                             ; 
+0968                             ; *****************************************************************************
+0968                             ;ROMSTART    EQU $8000
+0968                             ;RAMSTART    EQU $8800
+0968                ROMSIZE:   EQU   $800   
+0968                DSIZE:    EQU   $100   
+0968                RSIZE:    EQU   $100   
+0968                TIBSIZE:   EQU   $100   
+0968                TRUE:     EQU   1   
+0968                FALSE:    EQU   0   
+0968                .macro _RPUSH,reghi,reglo
+0968                             ; 
+0968                 DEC IX
+0968                 LD (IX+0),reghi
+0968                 DEC IX
+0968                 LD (IX+0),reglo
+0968                .endm
+0968                 
+0968                .macro _RPOP,reghi,reglo
+0968                             ; 
+0968                 LD reglo,(IX+0)
+0968                 INC IX
+0968                 LD reghi,(IX+0)
+0968                 INC IX
+0968                .endm
+0968                 
+0968                .macro _ISZERO,reghi,reglo
+0968                             ; 
+0968                 LD A,reglo
+0968                 OR reghi
+0968                .endm
+0968                 
+8000                          .ORG   ROMSTART   
+8000                OPCODES:      
+8000   F5                     DB   lsb(nop_)   ;    SP
+8001   4D                     DB   lsb(store_)   ;    !
+8002   54                     DB   lsb(dup_)   ;    "
+8003   CF                     DB   lsb(hex_)   ;    #
+8004   59                     DB   lsb(swap_)   ;    $
+8005   5F                     DB   lsb(over_)   ;    %
+8006   69                     DB   lsb(and_)   ;    &
+8007   66                     DB   lsb(drop_)   ;    '
+8008   EA                     DB   lsb(begin_)   ;    (
+8009   EC                     DB   lsb(again_)   ;    )
+800A   E3                     DB   lsb(mul_)   ;    *
+800B   8A                     DB   lsb(add_)   ;    +
+800C   DA                     DB   lsb(hexp_)   ;    ,
+800D   A8                     DB   lsb(sub_)   ;    -
+800E   D7                     DB   lsb(dot_)   ;    .
+800F   E5                     DB   lsb(div_)   ;    /
+8010   11                     DB   lsb(num_)   ;    0
+8011   11                     DB   lsb(num_)   ;    1
+8012   11                     DB   lsb(num_)   ;    2
+8013   11                     DB   lsb(num_)   ;    3
+8014   11                     DB   lsb(num_)   ;    4
+8015   11                     DB   lsb(num_)   ;    5
+8016   11                     DB   lsb(num_)   ;    6
+8017   11                     DB   lsb(num_)   ;    7
+8018   11                     DB   lsb(num_)   ;    8
+8019   11                     DB   lsb(num_)   ;    9
+801A   E7                     DB   lsb(def_)   ;    :
+801B   2F                     DB   lsb(ret_)   ;    ;
+801C   C0                     DB   lsb(lt_)   ;    <
+801D   B0                     DB   lsb(eq_)   ;    =
+801E   BC                     DB   lsb(gt_)   ;    >
+801F   DD                     DB   lsb(query_)   ;    ?
+8020   46                     DB   lsb(fetch_)   ;    @
+8021   14                     DB   lsb(call_)   ;    A
+8022   14                     DB   lsb(call_)   ;    B
+8023   14                     DB   lsb(call_)   ;    C
+8024   14                     DB   lsb(call_)   ;    D
+8025   14                     DB   lsb(call_)   ;    E
+8026   14                     DB   lsb(call_)   ;    F
+8027   14                     DB   lsb(call_)   ;    G
+8028   14                     DB   lsb(call_)   ;    H
+8029   14                     DB   lsb(call_)   ;    I
+802A   14                     DB   lsb(call_)   ;    J
+802B   14                     DB   lsb(call_)   ;    K
+802C   14                     DB   lsb(call_)   ;    L
+802D   14                     DB   lsb(call_)   ;    M
+802E   14                     DB   lsb(call_)   ;    N
+802F   14                     DB   lsb(call_)   ;    O
+8030   14                     DB   lsb(call_)   ;    P
+8031   14                     DB   lsb(call_)   ;    Q
+8032   14                     DB   lsb(call_)   ;    R
+8033   14                     DB   lsb(call_)   ;    S
+8034   14                     DB   lsb(call_)   ;    T
+8035   14                     DB   lsb(call_)   ;    U
+8036   14                     DB   lsb(call_)   ;    V
+8037   14                     DB   lsb(call_)   ;    W
+8038   14                     DB   lsb(call_)   ;    X
+8039   14                     DB   lsb(call_)   ;    Y
+803A   14                     DB   lsb(call_)   ;    Z
+803B   EF                     DB   lsb(arrDef_)   ;    [
+803C   00                     DB   lsb(alt_)   ;    \
+803D   F2                     DB   lsb(arrEnd_)   ;    ]
+803E   7F                     DB   lsb(xor_)   ;    ^
+803F   A2                     DB   lsb(neg_)   ;    _
+8040   D4                     DB   lsb(str_)   ;    `
+8041   3B                     DB   lsb(var_)   ;    a
+8042   3B                     DB   lsb(var_)   ;    b
+8043   3B                     DB   lsb(var_)   ;    c
+8044   3B                     DB   lsb(var_)   ;    d
+8045   3B                     DB   lsb(var_)   ;    e
+8046   3B                     DB   lsb(var_)   ;    f
+8047   3B                     DB   lsb(var_)   ;    g
+8048   3B                     DB   lsb(var_)   ;    h
+8049   3B                     DB   lsb(var_)   ;    i
+804A   3B                     DB   lsb(var_)   ;    j
+804B   3B                     DB   lsb(var_)   ;    k
+804C   3B                     DB   lsb(var_)   ;    l
+804D   3B                     DB   lsb(var_)   ;    m
+804E   3B                     DB   lsb(var_)   ;    n
+804F   3B                     DB   lsb(var_)   ;    o
+8050   3B                     DB   lsb(var_)   ;    p
+8051   3B                     DB   lsb(var_)   ;    q
+8052   3B                     DB   lsb(var_)   ;    r
+8053   3B                     DB   lsb(var_)   ;    s
+8054   3B                     DB   lsb(var_)   ;    t
+8055   3B                     DB   lsb(var_)   ;    u
+8056   3B                     DB   lsb(var_)   ;    v
+8057   3B                     DB   lsb(var_)   ;    w
+8058   3B                     DB   lsb(var_)   ;    x
+8059   3B                     DB   lsb(var_)   ;    y
+805A   3B                     DB   lsb(var_)   ;    z
+805B   90                     DB   lsb(shl_)   ;    {
+805C   74                     DB   lsb(or_)   ;    |
+805D   DF                     DB   lsb(shr_)   ;    }
+805E   9D                     DB   lsb(inv_)   ;    ~
+805F   E1                     DB   lsb(del_)   ;    backspace
+8060                             ; **********************************************************************
+8060                             ; 
+8060                             ; defs that are written in Mint - placed here to fill up zeroth page
+8060                             ; Note: opcode zero (i.e. exit_) can exit Mint and go into machine code
+8060                             ; Mint can be reentered from machine code by CALL enter
+8060                             ; 
+8060                             ; **********************************************************************
+8060                EMPTY_:      
+8060   3B 00                  .CSTR   ";"   
+8062                BACKSP_:      
+8062   31 5F 5C 32 5C 2B 38 5C 65 60 20 60 38 5C 65 3B 00 .CSTR   "1_\\2\\+8\\e` `8\\e;"   
+8073                TOGGLEBASE_:      
+8073   5C 34 40 31 5E 5C 34 21 3B 00 .CSTR   "\\4@1^\\4!;"   
+807D                PRINTSTACK_:      
+807D   60 3D 3E 20 60 5C 2E 5C 6E 5C 6E 60 3E 20 60 3B 00 .CSTR   "`=> `\\.\\n\\n`> `;"   
+808E                INITIALIZE:      
+808E   DD 21 00 8A            LD   IX,RSTACK   
+8092   FD 21 57 81            LD   IY,NEXT   ; IY provides a faster jump to NEXT
+8096   21 00 89               LD   HL,DSTACK   
+8099   22 34 8D               LD   (S0),HL   
+809C   21 00 8E               LD   HL,HEAP   
+809F   22 36 8D               LD   (HERE),HL   
+80A2   21 00 8A               LD   HL,TIB   
+80A5   22 38 8D               LD   (TIBPTR),HL   
+80A8   21 53 87               LD   HL,getCharImpl   
+80AB   22 3A 8D               LD   (VGETCHAR),HL   
+80AE   21 00 00               LD   HL,FALSE   
+80B1   22 3C 8D               LD   (isHex),HL   
+80B4   21 00 8D               LD   HL,defs   
+80B7   06 1A                  LD   B,26   
+80B9                INIT1:       
+80B9   36 60                  LD   (HL),lsb(empty_)   
+80BB   23                     INC   HL   
+80BC   36 80                  LD   (HL),msb(empty_)   
+80BE   23                     INC   HL   
+80BF   10 F8                  DJNZ   init1   
+80C1   01 20 00               LD   BC,$20   
+80C4   11 00 8C               LD   DE,macros   
+80C7   21 00 85               LD   HL,ctrlcodes   
+80CA   ED B0                  LDIR      
+80CC   C9                     RET      
+80CD                MINT:        
+80CD   31 00 89               LD   SP,DSTACK   
+80D0   CD 8E 80               CALL   initialize   
+80D3   CD C2 81               CALL   enter   
+80D6   60 4D 49 4E 54 20 56 31 2E 30 20 62 79 20 4B 65 6E 20 42 6F 61 6B 20 61 6E 64 20 4A 6F 68 6E 20 48 61 72 64 79 60 5C 6E 00 .CSTR   "`MINT V1.0 by Ken Boak and John Hardy`\\n"   
+80FF                INTERPRET:      
+80FF   CD C2 81               CALL   enter   
+8102   5C 6E 5C 6E 60 3E 20 60 00 .CSTR   "\\n\\n`> `"   
+810B                INTERPRET1:      
+810B   01 00 8A               LD   BC,TIB   
+810E                             ; *******************************************************************
+810E                             ; Wait for a character from the serial input (keyboard)
+810E                             ; and store it in the text buffer. Keep accepting characters,
+810E                             ; increasing the instruction pointer BC - until a newline received.
+810E                             ; *******************************************************************
+810E                WAITCHAR:      
+810E   CD 4F 87               CALL   getchar   ; loop around waiting for character
+8111   FE 7F                  CP   $7F   ; Greater or equal to $7F
+8113   30 37                  JR   NC,endchar   
+8115   FE 20                  CP   $20   
+8117   30 2A                  JR   NC,waitchar1   
+8119   FE 00                  CP   $0   ; is it end of string?
+811B   28 2F                  JR   Z,endchar   
+811D   FE 0A                  CP   "\n"   ; newline?
+811F   28 24                  JR   Z,waitchar2   
+8121   FE 0D                  CP   "\r"   ; carriage return?
+8123   28 25                  JR   Z,waitchar3   
+8125   3D                     DEC   A   
+8126   87                     ADD   A,A   
+8127   21 00 8C               LD   HL,MACROS   
+812A   16 00                  LD   D,0   
+812C   5F                     LD   E,A   
+812D   19                     ADD   HL,DE   
+812E   ED 43 38 8D            LD   (TIBPTR),BC   
+8132   5E                     LD   E,(HL)   
+8133   23                     INC   HL   
+8134   56                     LD   D,(HL)   
+8135   D5                     PUSH   DE   
+8136   CD C2 81               CALL   enter   
+8139   5C 67 00               .CSTR   "\\g"   
+813C   ED 4B 38 8D            LD   BC,(TIBPTR)   
+8140   C3 0E 81               JP   waitchar   
+8143                WAITCHAR1:      
+8143   02                     LD   (BC),A   ; store the character in textbuf
+8144   03                     INC   BC   
+8145                WAITCHAR2:      
+8145   CD 5C 87               CALL   putchar   ; echo character to screen
+8148   18 C4                  JR   waitchar   ; wait for next character
+814A                WAITCHAR3:      
+814A   02                     LD   (BC),A   ; store the character in textbuf
+814B   03                     INC   BC   
+814C                ENDCHAR:      
+814C   ED 43 38 8D            LD   (TIBPTR),BC   
+8150   CD B1 81               CALL   crlf   
+8153   01 00 8A               LD   BC,TIB   ; Instructions stored on heap at address HERE
+8156   0B                     DEC   BC   
+8157                             ; Drop into the NEXT and dispatch routines
+8157                             ; ********************************************************************************
+8157                             ; Dispatch Routine.
+8157                             ; 
+8157                             ; Get the next character and form a 1 byte jump address
+8157                             ; 
+8157                             ; This target jump address is loaded into HL, and using JP (HL) to quickly
+8157                             ; jump to the selected function.
+8157                             ; 
+8157                             ; Individual handler routines will deal with each category:
+8157                             ; 
+8157                             ; 1. Detect characters A-Z and jump to the User Command handler routine
+8157                             ; 
+8157                             ; 2. Detect characters a-z and jump to the variable handler routine
+8157                             ; 
+8157                             ; 3. All other characters are punctuation and cause a jump to the associated
+8157                             ; primitive code.
+8157                             ; 
+8157                             ; Instruction Pointer IP BC is incremented
+8157                             ; *********************************************************************************
+8157                NEXT:        
+8157   03                     INC   BC   ; 6t    Increment the IP
+8158   0A                     LD   A,(BC)   ; 7t    Get the next character and dispatch
+8159                             ; 
+8159                DISPATCH:      
+8159   D6 20                  SUB   " "   ; 7t    remove char offset
+815B   30 07                  JR   NC,dispatch1   
+815D   FE E0                  CP   0 - " "   ;       expected values: 0 or "\r"
+815F   CA 03 82               JP   Z,exit_   
+8162   18 9B                  JR   interpret   ;       back to OK prompt
+8164                DISPATCH1:      
+8164   11 00 80               LD   DE,opcodes   ; 7t    Start address of jump table
+8167   5F                     LD   E,A   ; 4t    Index into table
+8168   1A                     LD   A,(DE)   ; 7t    get low jump address
+8169   6F                     LD   L,A   ; 4t    and put into L
+816A   26 82                  LD   H,msb(page1)   ; 7t    Load H with the 1st page address
+816C   E9                     JP   (HL)   ; 4t    Jump to routine
+816D                             ; ********************************************************************************
+816D                             ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
+816D                             ; Read the first character.
+816D                             ;			
+816D                             ; Number characters ($30 to $39) are converted to digits by subtracting $30
+816D                             ; and then added into the L register. (HL forms a 16-bit accumulator)
+816D                             ; Fetch the next character, if it is a number, multiply contents of HL by 10
+816D                             ; and then add in the next digit. Repeat this until a non-number character is
+816D                             ; detected. Add in the final digit so that HL contains the converted number.
+816D                             ; Push HL onto the stack and proceed to the dispatch routine.
+816D                             ; ********************************************************************************
+816D                             ; 
+816D                NUMBER:      
+816D   21 00 00               LD   HL,$0000   ; 10t Clear HL to accept the number
+8170   0A                     LD   A,(BC)   ; 7t  Get the character which is a numeral
+8171                NUMBER1:      
+8171   D6 30                  SUB   $30   ; 7t    Form decimal digit
+8173   85                     ADD   A,L   ; 4t    Add into bottom of HL
+8174   6F                     LD   L,A   ; 4t
+8175                             ;  15t cycles
+8175   03                     INC   BC   ; 6t    Increment IP
+8176   0A                     LD   A,(BC)   ; 7t    and get the next character
+8177   FE 30                  CP   $30   ; 7t    Less than $30
+8179   38 0D                  JR   C,endnum   ; 7/12t Not a number / end of number
+817B   FE 3A                  CP   $3A   ; 7t    Greater or equal to $3A
+817D   30 09                  JR   NC,endnum   ; 7/12t Not a number / end of number
+817F                TIMES10:      ; Multiply digit(s) in HL by 10
+817F   29                     ADD   HL,HL   ; 11t    2X
+8180   5D                     LD   E,L   ;  4t    LD DE,HL
+8181   54                     LD   D,H   ;  4t
+8182   29                     ADD   HL,HL   ; 11t    4X
+8183   29                     ADD   HL,HL   ; 11t    8X
+8184   19                     ADD   HL,DE   ; 11t    2X  + 8X  = 10X
+8185                             ; 52t cycles
+8185   C3 71 81               JP   number1   
+8188                ENDNUM:      
+8188   E5                     PUSH   HL   ; 11t   Put the number on the stack
+8189   0B                     DEC   BC   
+818A   FD E9                  JP   (IY)   ; and process the next character
+818C                PRINTDEC:      
+818C                             ;Number in hl to decimal ASCII
+818C                             ;inputs:	hl = number to ASCII
+818C                             ;example: hl=300 outputs "00300"
+818C                             ;destroys: af, de, hl
+818C                DISPHL:      
+818C   11 F0 D8               LD   de,-10000   
+818F   CD A5 81               CALL   Num1   
+8192   11 18 FC               LD   de,-1000   
+8195   CD A5 81               CALL   Num1   
+8198   11 9C FF               LD   de,-100   
+819B   CD A5 81               CALL   Num1   
+819E   1E F6                  LD   e,-10   
+81A0   CD A5 81               CALL   Num1   
+81A3   1E FF                  LD   e,-1   
+81A5                NUM1:        
+81A5   3E 2F                  LD   a,"0"-1   
+81A7                NUM2:        
+81A7   3C                     INC   a   
+81A8   19                     ADD   hl,de   
+81A9   38 FC                  JR   c,Num2   
+81AB   ED 52                  SBC   hl,de   
+81AD   CD 5C 87               CALL   putchar   
+81B0   C9                     RET      
+81B1                CRLF:        
+81B1   3E 0D                  LD   A,"\r"   
+81B3   CD 5C 87               CALL   putchar   
+81B6   3E 0A                  LD   A,"\n"   
+81B8   CD 5C 87               CALL   putchar   
+81BB   C9                     RET      
+81BC                SPACE:       
+81BC   3E 20                  LD   A," "   
+81BE   CD 5C 87               CALL   putchar   
+81C1   C9                     RET      
+81C2                ENTER:       
+81C2                          ;*Macro unroll:  _rpush B,C              ; save Instruction Pointer
+81C2   DD 2B                  DEC   IX   ; save Instruction Pointer
+81C4   DD 70 00               LD   (IX+0),B   
+81C7   DD 2B                  DEC   IX   
+81C9   DD 71 00               LD   (IX+0),C   
+81CC   C1                     POP   BC   
+81CD   0B                     DEC   BC   
+81CE   FD E9                  JP   (IY)   ; Execute code from User def
+81D0                          ALIGN   $100   
+8200                             ; **********************************************************************			
+8200                             ; Start of primitive routines
+8200                             ; **********************************************************************
+8200                PAGE1:       
+8200                ALT_:        
+8200   C3 E6 83               JP   alt   
+8203                EXIT_:       
+8203   03                     INC   BC   
+8204   60 69                  LD   HL,BC   
+8206                          ;*Macro unroll:  _rpop B,C               ; Restore Instruction pointer
+8206   DD 4E 00               LD   C,(IX+0)   ; Restore Instruction pointer
+8209   DD 23                  INC   IX   
+820B   DD 46 00               LD   B,(IX+0)   
+820E   DD 23                  INC   IX   
+8210   E9                     JP   (HL)   
+8211   C3 6D 81     NUM_:     JP   number   
+8214                CALL_:       
+8214                          ;*Macro unroll:  _rpush B,C              ; save Instruction Pointer
+8214   DD 2B                  DEC   IX   ; save Instruction Pointer
+8216   DD 70 00               LD   (IX+0),B   
+8219   DD 2B                  DEC   IX   
+821B   DD 71 00               LD   (IX+0),C   
+821E   0A                     LD   A,(BC)   
+821F   D6 41                  SUB   "A"   ; Calc index
+8221   87                     ADD   A,A   
+8222   21 00 8D               LD   HL,DEFS   
+8225   5F                     LD   E,A   
+8226   16 00                  LD   D,0   
+8228   19                     ADD   HL,DE   
+8229   4E                     LD   C,(HL)   
+822A   23                     INC   HL   
+822B   46                     LD   B,(HL)   
+822C   0B                     DEC   BC   
+822D   FD E9                  JP   (IY)   ; Execute code from User def
+822F                RET_:        
+822F                          ;*Macro unroll:  _rpop B,C               ; Restore Instruction pointer
+822F   DD 4E 00               LD   C,(IX+0)   ; Restore Instruction pointer
+8232   DD 23                  INC   IX   
+8234   DD 46 00               LD   B,(IX+0)   
+8237   DD 23                  INC   IX   
+8239   FD E9                  JP   (IY)   
+823B                VAR_:        
+823B   0A                     LD   A,(BC)   
+823C   D6 61                  SUB   "a"   ; Calc index
+823E   87                     ADD   A,A   
+823F   21 00 8B               LD   HL,VARS   
+8242   6F                     LD   L,A   
+8243   E5                     PUSH   HL   
+8244   FD E9                  JP   (IY)   
+8246                FETCH_:      ; Fetch the value from the address placed on the top of the stack
+8246   E1                     POP   HL   ; 10t
+8247   5E                     LD   E,(HL)   ; 7t
+8248   23                     INC   HL   ; 6t
+8249   56                     LD   D,(HL)   ; 7t
+824A   D5                     PUSH   DE   ; 11t
+824B   FD E9                  JP   (IY)   ; 8t
+824D                             ; 49t
+824D                STORE_:      ; Store the value at the address placed on the top of the stack
+824D   E1                     POP   HL   ; 10t
+824E   D1                     POP   DE   ; 10t
+824F   73                     LD   (HL),E   ; 7t
+8250   23                     INC   HL   ; 6t
+8251   72                     LD   (HL),D   ; 7t
+8252   FD E9                  JP   (IY)   ; 8t
+8254                             ; 48t
+8254                DUP_:        
+8254   E1                     POP   HL   ; Duplicate the top member of the stack
+8255   E5                     PUSH   HL   
+8256   E5                     PUSH   HL   
+8257   FD E9                  JP   (IY)   
+8259                SWAP_:       
+8259   E1                     POP   HL   ; Swap the top 2 elements of the stack
+825A   D1                     POP   DE   
+825B   E5                     PUSH   HL   
+825C   D5                     PUSH   DE   
+825D   FD E9                  JP   (IY)   
+825F   E1           OVER_:    POP   HL   ; Duplicate 2nd element of the stack
+8260   D1                     POP   DE   
+8261   D5                     PUSH   DE   
+8262   E5                     PUSH   HL   
+8263   D5                     PUSH   DE   ; And push it to top of stack
+8264   FD E9                  JP   (IY)   
+8266                DROP_:       ; Discard the top member of the stack
+8266   E1                     POP   HL   
+8267   FD E9                  JP   (IY)   
+8269                AND_:        
+8269   D1                     POP   DE   ; 10t Bitwise AND the top 2 elements of the stack
+826A   E1                     POP   HL   ; 10t
+826B   7B                     LD   A,E   ; 4t
+826C   A5                     AND   L   ; 4t
+826D   6F                     LD   L,A   ; 4t
+826E   7A                     LD   A,D   ; 4t
+826F   A4                     AND   H   ; 4t
+8270   67                     LD   H,A   ; 4t
+8271   E5                     PUSH   HL   ; 11t
+8272   FD E9                  JP   (IY)   ; 8t
+8274                             ; 63t
+8274                OR_:         
+8274   D1                     POP   DE   ; Bitwise OR the top 2 elements of the stack
+8275   E1                     POP   HL   
+8276   7B                     LD   A,E   
+8277   B5                     OR   L   
+8278   6F                     LD   L,A   
+8279   7A                     LD   A,D   
+827A   B4                     OR   H   
+827B   67                     LD   H,A   
+827C   E5                     PUSH   HL   
+827D   FD E9                  JP   (IY)   
+827F                XOR_:        
+827F   D1                     POP   DE   ; Bitwise XOR the top 2 elements of the stack
+8280   E1                     POP   HL   
+8281   7B                     LD   A,E   
+8282   AD                     XOR   L   
+8283   6F                     LD   L,A   
+8284   7A                     LD   A,D   
+8285   AC                     XOR   H   
+8286   67                     LD   H,A   
+8287   E5                     PUSH   HL   
+8288   FD E9                  JP   (IY)   
+828A                ADD_:        ; Add the top 2 members of the stack
+828A   D1                     POP   DE   ; 10t
+828B   E1                     POP   HL   ; 10t
+828C   19                     ADD   HL,DE   ; 11t
+828D   E5                     PUSH   HL   ; 11t
+828E   FD E9                  JP   (IY)   ; 8t
+8290                             ; 50t
+8290                             ;  Left shift { is multply by 2		
+8290                SHL_:        
+8290   E1                     POP   HL   ; Duplicate the top member of the stack
+8291   29                     ADD   HL,HL   
+8292   E5                     PUSH   HL   ; shift left fallthrough into add_
+8293   FD E9                  JP   (IY)   ; 8t
+8295                             ;  Right shift } is a divide by 2		
+8295                             ; 
+8295                SHR:         
+8295   E1                     POP   HL   ; Get the top member of the stack
+8296   CB 3C                  SRL   H   
+8298   CB 1D                  RR   L   
+829A   E5                     PUSH   HL   
+829B   FD E9                  JP   (IY)   ; 8t
+829D                INV_:        ; Bitwise INVert the top member of the stack
+829D   11 FF FF               LD   DE,$FFFF   ; by subtracting from $FFFF
+82A0   18 07                  JR   SUB_1   
+82A2   21 00 00     NEG_:     LD   HL,0   ; NEGate the value on top of stack (2's complement)
+82A5   D1                     POP   DE   ; 10t
+82A6   18 02                  JR   SUB_2   ; use the SUBtract routine
+82A8                SUB_:        ; Subtract the value 2nd on stack from top of stack
+82A8   D1                     POP   DE   ; 10t
+82A9   E1           SUB_1:    POP   HL   ; 10t  Entry point for INVert
+82AA   A7           SUB_2:    AND   A   ;  4t  Entry point for NEGate
+82AB   ED 52                  SBC   HL,DE   ; 15t
+82AD   E5                     PUSH   HL   ; 11t
+82AE   FD E9                  JP   (IY)   ; 8t
+82B0                             ; 58t
+82B0                             ; **************************************************************************
+82B0                             ;  Comparison Operations
+82B0                             ;  Put 1 on stack if condition is true and 0 if it is false
+82B0                             ; **************************************************************************
+82B0   E1           EQ_:      POP   HL   
+82B1   D1                     POP   DE   
+82B2   A7                     AND   A   ; reset the carry flag
+82B3   ED 52                  SBC   HL,DE   ; only equality sets HL=0 here
+82B5   28 14                  JR   Z,equal   
+82B7   21 00 00               LD   HL,0   
+82BA   18 10                  JR   less   ; HL = 1
+82BC   D1           GT_:      POP   DE   
+82BD   E1                     POP   HL   
+82BE   18 02                  JR   cmp_   
+82C0   E1           LT_:      POP   HL   
+82C1   D1                     POP   DE   
+82C2   A7           CMP_:     AND   A   ; reset the carry flag
+82C3   ED 52                  SBC   HL,DE   ; only equality sets HL=0 here
+82C5   21 00 00               LD   HL,0   
+82C8   FA CC 82               JP   M,less   
+82CB   2C           EQUAL:    INC   L   ; HL = 1
+82CC                LESS:        
+82CC   E5                     PUSH   HL   
+82CD   FD E9                  JP   (IY)   
+82CF                             ;       Trampoline Jumps to Page 2 of primitives
+82CF   CD 6A 87     HEX_:     CALL   get_hex   
+82D2   18 F8                  JR   less   ; piggyback for ending
+82D4   C3 00 86     STR_:     JP   str   
+82D7   C3 F4 83     DOT_:     JP   dot   
+82DA   C3 0F 86     HEXP_:    JP   hexp   ; Print HL as a hexadecimal
+82DD   18 19        QUERY_:   JR   query   
+82DF   18 B4        SHR_:     JR   shr   
+82E1   18 17        DEL_:     JR   del   
+82E3   18 17        MUL_:     JR   mul   
+82E5   18 2F        DIV_:     JR   div   
+82E7   C3 C2 83     DEF_:     JP   def   
+82EA   18 5A        BEGIN_:   JR   begin   
+82EC   C3 94 83     AGAIN_:   JP   again   
+82EF   C3 32 86     ARRDEF_:   JP   arrDef   
+82F2   C3 4C 86     ARREND_:   JP   arrEnd   
+82F5   C3 57 81     NOP_:     JP   NEXT   ; hardwire white space to always go to NEXT (important for arrays)
+82F8                             ;*******************************************************************
+82F8                             ; Page 2 Primitives
+82F8                             ;*******************************************************************
+82F8                QUERY:       
+82F8   FD E9                  JP   (IY)   
+82FA                DEL:         
+82FA   FD E9                  JP   (IY)   
+82FC                MUL:         ; 16-bit multiply
+82FC   D1                     POP   DE   ; get first value
+82FD   E1                     POP   HL   
+82FE   C5                     PUSH   BC   ; Preserve the IP
+82FF   44                     LD   B,H   ; BC = 2nd value
+8300   4D                     LD   C,L   
+8301   21 00 00               LD   HL,0   
+8304   3E 10                  LD   A,16   
+8306                MUL_LOOP_1:      
+8306   29                     ADD   HL,HL   
+8307   CB 13                  RL   E   
+8309   CB 12                  RL   D   
+830B   30 04                  JR   NC,$+6   
+830D   09                     ADD   HL,BC   
+830E   30 01                  JR   NC,$+3   
+8310   13                     INC   DE   
+8311   3D                     DEC   A   
+8312   20 F2                  JR   NZ,Mul_Loop_1   
+8314                             ; 
+8314   18 2B                  JR   mul_end   
+8316                             ; ********************************************************************
+8316                             ; 16-bit division subroutine.
+8316                             ; 
+8316                             ; BC: divisor, DE: dividend, HL: remainder
+8316                             ; *********************************************************************
+8316                             ; This divides DE by BC, storing the result in DE, remainder in HL
+8316                             ; *********************************************************************
+8316                DIV:         
+8316   D1                     POP   DE   ; get first value
+8317   E1                     POP   HL   ; get 2nd value
+8318   C5           DIV1:     PUSH   BC   ; Preserve the IP
+8319   44                     LD   B,H   ; BC = 2nd value
+831A   4D                     LD   C,L   
+831B                DIV16:       
+831B   21 00 00               LD   hl,0   
+831E   78                     LD   a,b   
+831F   06 08                  LD   b,8   
+8321                DIV16_LOOP1:      
+8321   17                     RLA      
+8322   ED 6A                  ADC   hl,hl   
+8324   ED 52                  SBC   hl,de   
+8326   30 01                  JR   nc,Div16_NoAdd1   
+8328   19                     ADD   hl,de   
+8329                DIV16_NOADD1:      
+8329   10 F6                  DJNZ   Div16_Loop1   
+832B   17                     RLA      
+832C   2F                     CPL      
+832D   47                     LD   b,a   
+832E   79                     LD   a,c   
+832F   48                     LD   c,b   
+8330   06 08                  LD   b,8   
+8332                DIV16_LOOP2:      
+8332   17                     RLA      
+8333   ED 6A                  ADC   hl,hl   
+8335   ED 52                  SBC   hl,de   
+8337   30 01                  JR   nc,Div16_NoAdd2   
+8339   19                     ADD   hl,de   
+833A                DIV16_NOADD2:      
+833A   10 F6                  DJNZ   Div16_Loop2   
+833C   17                     RLA      
+833D   2F                     CPL      
+833E   51                     LD   d,c   
+833F   5F                     LD   e,a   
+8340                             ; 
+8340   EB                     EX   DE,HL   
+8341                MUL_END:      
+8341                DIV_END:      
+8341   C1                     POP   BC   ; Restore the IP
+8342   D5                     PUSH   DE   ; Push Result
+8343   E5                     PUSH   HL   ; Push remainder
+8344   FD E9                  JP   (IY)   
+8346                             ; 
+8346                             ; 
+8346                BEGIN:       ; Left parentesis begins a loop
+8346   E1                     POP   HL   
+8347                          ;*Macro unroll:  _isZero H,L
+8347   7D                     LD   A,L   
+8348   B4                     OR   H   
+8349   28 23                  JR   Z,begin1   
+834B                          ;*Macro unroll:  _rpush B,C                  ; push loop address
+834B   DD 2B                  DEC   IX   ; push loop address
+834D   DD 70 00               LD   (IX+0),B   
+8350   DD 2B                  DEC   IX   
+8352   DD 71 00               LD   (IX+0),C   
+8355   2B                     DEC   HL   
+8356                          ;*Macro unroll:  _rpush H,L                  ; push loop limit
+8356   DD 2B                  DEC   IX   ; push loop limit
+8358   DD 74 00               LD   (IX+0),H   
+835B   DD 2B                  DEC   IX   
+835D   DD 75 00               LD   (IX+0),L   
+8360                          ;*Macro unroll:  _rpush 0,0                  ; push loop var=0
+8360   DD 2B                  DEC   IX   ; push loop var=0
+8362   DD 36 00 00            LD   (IX+0),0   
+8366   DD 2B                  DEC   IX   
+8368   DD 36 00 00            LD   (IX+0),0   
+836C   FD E9                  JP   (IY)   
+836E                BEGIN1:      
+836E   1E 01                  LD   E,1   
+8370                BEGIN2:      
+8370   03                     INC   BC   
+8371   0A                     LD   A,(BC)   
+8372   FE 5F                  CP   "_"   
+8374   20 06                  JR   NZ,begin3   
+8376   3E 80                  LD   A,$80   
+8378   AB                     XOR   E   
+8379   5F                     LD   E,A   
+837A   18 F4                  JR   begin2   
+837C                BEGIN3:      
+837C   FE 5B                  CP   "["   
+837E   28 04                  JR   Z,begin4   
+8380   FE 28                  CP   "("   
+8382   20 03                  JR   NZ,begin5   
+8384                BEGIN4:      
+8384   1C                     INC   E   
+8385   18 E9                  JR   begin2   
+8387                BEGIN5:      
+8387   FE 5D                  CP   "]"   
+8389   28 04                  JR   Z,begin6   
+838B   FE 29                  CP   ")"   
+838D   20 E1                  JR   NZ,begin2   
+838F                BEGIN6:      
+838F   1D                     DEC   E   
+8390   20 DE                  JR   NZ,begin2   
+8392   FD E9                  JP   (IY)   
+8394                AGAIN:       
+8394   DD 5E 00               LD   E,(IX+0)   ; peek loop var
+8397   DD 56 01               LD   D,(IX+1)   
+839A   DD 6E 02               LD   L,(IX+2)   ; peek loop limit
+839D   DD 66 03               LD   H,(IX+3)   
+83A0   B7                     OR   A   
+83A1   ED 52                  SBC   HL,DE   
+83A3   28 0F                  JR   Z,again1   
+83A5   13                     INC   DE   
+83A6   DD 73 00               LD   (IX+0),E   ; poke loop var
+83A9   DD 72 01               LD   (IX+1),D   
+83AC   DD 4E 04               LD   C,(IX+4)   ; peek loop address
+83AF   DD 46 05               LD   B,(IX+5)   
+83B2   FD E9                  JP   (IY)   
+83B4                AGAIN1:      
+83B4   DD 23                  INC   IX   ; drop loop var
+83B6   DD 23                  INC   IX   
+83B8   DD 23                  INC   IX   ; drop loop limit
+83BA   DD 23                  INC   IX   
+83BC   DD 23                  INC   IX   ; drop loop address
+83BE   DD 23                  INC   IX   
+83C0   FD E9                  JP   (IY)   
+83C2                             ; **************************************************************************
+83C2                             ; def is used to create a colon definition
+83C2                             ; When a colon is detected, the next character (usually uppercase alpha)
+83C2                             ; is looked up in the vector table to get its associated code field address
+83C2                             ; This CFA is updated to point to the character after uppercase alpha
+83C2                             ; The remainder of the characters are then skipped until after a semicolon
+83C2                             ; is found.
+83C2                             ; ***************************************************************************
+83C2                DEF:         ; Create a colon definition
+83C2   E5                     PUSH   HL   ; Save HL
+83C3   21 00 8D               LD   HL,DEFS   ; Start address of jump table
+83C6   03                     INC   BC   
+83C7   0A                     LD   A,(BC)   ; Get the next character
+83C8   03                     INC   BC   
+83C9   D6 41                  SUB   "A"   ; Calc index
+83CB   87                     ADD   A,A   ; Double A to index even addresses
+83CC   6F                     LD   L,A   ; Index into table
+83CD   ED 5B 36 8D            LD   DE,(HERE)   ; start of defintion
+83D1   73                     LD   (HL),E   ; Save low byte of address in CFA
+83D2   23                     INC   HL   
+83D3   72                     LD   (HL),D   ; Save high byte of address in CFA+1
+83D4   E1                     POP   HL   ; Restore HL
+83D5                NEXTBYTE:      ; Skip to end of definition
+83D5   0A                     LD   A,(BC)   ; Get the next character
+83D6   03                     INC   BC   ; Point to next character
+83D7   12                     LD   (DE),A   
+83D8   13                     INC   DE   
+83D9   FE 3B                  CP   ";"   ; Is it a semicolon
+83DB   28 06                  JR   z,end_def   ; end the definition
+83DD   ED 53 36 8D            LD   (HERE),DE   ; bump heap ptr to after definiton
+83E1   18 F2                  JR   nextbyte   ; get the next element
+83E3                END_DEF:      
+83E3   0B                     DEC   BC   
+83E4   FD E9                  JP   (IY)   
+83E6                ALT:         
+83E6   03                     INC   BC   
+83E7   0A                     LD   A,(BC)   
+83E8   D6 21                  SUB   "!"   ; Use lowercase letters for now
+83EA   87                     ADD   A,A   
+83EB   21 42 85               LD   HL,altcodes   
+83EE   6F                     LD   L,A   
+83EF   5E                     LD   E,(HL)   
+83F0   23                     INC   HL   
+83F1   56                     LD   D,(HL)   
+83F2   EB                     EX   DE,HL   
+83F3   E9                     JP   (HL)   ; Execute code from Alt
+83F4                DOT:         
+83F4   E1                     POP   HL   
+83F5   3A 3C 8D               LD   A,(isHex)   
+83F8   B7                     OR   A   
+83F9   28 05                  JR   Z,dot1   
+83FB   CD 85 87               CALL   printhex   
+83FE   18 03                  JR   dot2   
+8400                DOT1:        
+8400   CD 8C 81               CALL   printdec   
+8403                DOT2:        
+8403   CD BC 81               CALL   space   
+8406   FD E9                  JP   (IY)   
+8408                          ALIGN   $100   ; page boundary
+8500                CTRLCODES:      
+8500   60 80                  DW   empty_   ; NUL ^@
+8502   60 80                  DW   empty_   ; SOH ^A
+8504   73 80                  DW   toggleBase_   ; STX ^B
+8506   60 80                  DW   empty_   ; ETX ^C
+8508   60 80                  DW   empty_   ; EOT ^D
+850A   60 80                  DW   empty_   ; ENQ ^E
+850C   60 80                  DW   empty_   ; ACK ^F
+850E   60 80                  DW   empty_   ; BEL ^G
+8510   62 80                  DW   backsp_   ; BS  ^H
+8512   60 80                  DW   empty_   ; TAB ^I
+8514   60 80                  DW   empty_   ; LF  ^J
+8516   60 80                  DW   empty_   ; VT  ^K
+8518   60 80                  DW   empty_   ; FF  ^L
+851A   60 80                  DW   empty_   ; CR  ^M
+851C   60 80                  DW   empty_   ; SO  ^N
+851E   60 80                  DW   empty_   ; SI  ^O
+8520   7D 80                  DW   printStack_   ; DLE ^P
+8522   60 80                  DW   empty_   ; DC1 ^Q
+8524   60 80                  DW   empty_   ; DC2 ^R
+8526   60 80                  DW   empty_   ; DC3 ^S
+8528   60 80                  DW   empty_   ; DC4 ^T
+852A   60 80                  DW   empty_   ; NAK ^U
+852C   60 80                  DW   empty_   ; SYN ^V
+852E   60 80                  DW   empty_   ; ETB ^W
+8530   60 80                  DW   empty_   ; CAN ^X
+8532   60 80                  DW   empty_   ; EM  ^Y
+8534   60 80                  DW   empty_   ; SUB ^Z
+8536   60 80                  DW   empty_   ; ESC ^[
+8538   60 80                  DW   empty_   ; FS  ^\
+853A   60 80                  DW   empty_   ; GS  ^]
+853C   60 80                  DW   empty_   ; RS  ^^
+853E   60 80                  DW   empty_   ; US  ^_
+8540   60 80                  DW   empty_   ; SP  ^`
+8542                ALTCODES:      
+8542   82 86                  DW   cStore_   ;    !
+8544   F5 82                  DW   nop_   ;    "
+8546   F5 82                  DW   nop_   ;    #
+8548   F5 82                  DW   nop_   ;    $
+854A   F5 82                  DW   nop_   ;    %
+854C   F5 82                  DW   nop_   ;    &
+854E   F5 82                  DW   nop_   ;    '
+8550   F5 82                  DW   nop_   ;    (
+8552   F5 82                  DW   nop_   ;    )
+8554   F5 82                  DW   nop_   ;    *
+8556   E6 86                  DW   incr_   ;    +  ( adr -- ) decrements variable at address
+8558   F5 82                  DW   nop_   ;    ,
+855A   F5 82                  DW   nop_   ;    -  ( adr -- ) increments variable at address
+855C   A4 86                  DW   dots_   ;    .  ( -- ) non-destructively prints stack
+855E   F5 82                  DW   nop_   ;    /
+8560   2B 87                  DW   sysvar_   ;    0  ( -- adr ) start of data stack constant
+8562   2B 87                  DW   sysvar_   ;    1  ; returns HERE variable
+8564   2B 87                  DW   sysvar_   ;    2  ( -- adr ) tibPtr variable
+8566   2B 87                  DW   sysvar_   ;    3  ( -- adr ) isHex variable
+8568   2B 87                  DW   sysvar_   ;    4
+856A   2B 87                  DW   sysvar_   ;    5
+856C   2B 87                  DW   sysvar_   ;    6
+856E   2B 87                  DW   sysvar_   ;    7
+8570   2B 87                  DW   sysvar_   ;    8
+8572   2B 87                  DW   sysvar_   ;    9
+8574   87 86                  DW   adef_   ;    :  TODO: starts defining a macro
+8576   F5 82                  DW   nop_   ;    ;
+8578   F5 82                  DW   nop_   ;    <
+857A   F5 82                  DW   nop_   ;    =
+857C   F5 82                  DW   nop_   ;    >
+857E   F5 82                  DW   nop_   ;    ?
+8580   7B 86                  DW   cFetch_   ;    @
+8582   F5 82                  DW   nop_   ;    A
+8584   F5 82                  DW   nop_   ;    B
+8586   F5 82                  DW   nop_   ;    C
+8588   F5 82                  DW   nop_   ;    D
+858A   F5 82                  DW   nop_   ;    E
+858C   F5 82                  DW   nop_   ;    F
+858E   F5 82                  DW   nop_   ;    G
+8590   F5 82                  DW   nop_   ;    H
+8592   D9 86                  DW   inPort_   ;    I  ( port -- val )
+8594   F5 82                  DW   nop_   ;    J
+8596   F5 82                  DW   nop_   ;    K
+8598   F5 82                  DW   nop_   ;    L
+859A   F5 82                  DW   nop_   ;    M
+859C   F5 82                  DW   nop_   ;    N
+859E   12 87                  DW   outPort_   ;    O  ( val port -- )
+85A0   F5 82                  DW   nop_   ;    P
+85A2   F5 82                  DW   nop_   ;    Q
+85A4   F5 82                  DW   nop_   ;    R
+85A6   F5 82                  DW   nop_   ;    S
+85A8   F5 82                  DW   nop_   ;    T
+85AA   F5 82                  DW   nop_   ;    U
+85AC   F5 82                  DW   nop_   ;    V
+85AE   F5 82                  DW   nop_   ;    W
+85B0   C3 86                  DW   exec_   ;    X
+85B2   F5 82                  DW   nop_   ;    Y
+85B4   F5 82                  DW   nop_   ;    Z
+85B6   38 86                  DW   cArrDef_   ;    [
+85B8   89 86                  DW   comment_   ;    \  TODO: comment text, skips reading until end of line
+85BA   63 86                  DW   cArrEnd_   ;    ]
+85BC   F5 82                  DW   nop_   ;    ^
+85BE   F5 82                  DW   nop_   ;    _
+85C0   1A 87                  DW   strDef_   ;    `
+85C2   F5 82                  DW   nop_   ;    a
+85C4   F5 82                  DW   nop_   ;    b
+85C6   F5 82                  DW   nop_   ;    c
+85C8   92 86                  DW   depth_   ;    d  ( -- val ) depth of data stack
+85CA   BC 86                  DW   emit_   ;    e  ( val -- ) emits a char to output
+85CC   F5 82                  DW   nop_   ;    f
+85CE   C5 86                  DW   go_   ;    g  ( -- ? ) execute mint definition
+85D0   F5 82                  DW   nop_   ;    h  ; returns HERE variable
+85D2   E2 86                  DW   i_   ;    i  ; returns index variable of current loop
+85D4   F1 86                  DW   j_   ;    j  ; returns index variable of outer loop
+85D6   FB 86                  DW   key_   ;    k  ( -- val )  read a char from input
+85D8   F5 82                  DW   nop_   ;    l
+85DA   F5 82                  DW   nop_   ;    m
+85DC   04 87                  DW   newln_   ;    n  ; prints a newline to output
+85DE   F5 82                  DW   nop_   ;    o
+85E0   F5 82                  DW   nop_   ;    p
+85E2   19 87                  DW   quit_   ;    q  ; quits from Mint REPL
+85E4   F5 82                  DW   nop_   ;    r
+85E6   F5 82                  DW   nop_   ;    s
+85E8   F5 82                  DW   nop_   ;    t
+85EA   F5 82                  DW   nop_   ;    u
+85EC   F5 82                  DW   nop_   ;    v
+85EE   F5 82                  DW   nop_   ;    w
+85F0   C3 86                  DW   exec_   ;    x
+85F2   F5 82                  DW   nop_   ;    y
+85F4   F5 82                  DW   nop_   ;    z
+85F6   F5 82                  DW   nop_   ;    {
+85F8   F5 82                  DW   nop_   ;    |
+85FA   F5 82                  DW   nop_   ;    }
+85FC   09 87                  DW   not_   ;    ~ ( b -- notb ) logical not
+85FE   F5 82                  DW   nop_   ;    BS
+8600                             ; **************************************************************************
+8600                             ; Print the string between underscores
+8600                STR:         
+8600   03                     INC   BC   
+8601                NEXTCHAR:      
+8601   0A                     LD   A,(BC)   
+8602   03                     INC   BC   
+8603   FE 60                  CP   "`"   ; ` is the string terminator
+8605   28 05                  JR   Z,stringend   
+8607   CD 5C 87               CALL   putchar   
+860A   18 F5                  JR   nextchar   
+860C                STRINGEND:      
+860C   0B                     DEC   BC   
+860D   FD E9                  JP   (IY)   
+860F                HEXP:        ; Print HL as a hexadecimal
+860F   E1                     POP   HL   
+8610   CD 85 87               CALL   printhex   
+8613   CD BC 81               CALL   space   
+8616   FD E9                  JP   (IY)   
+8618                COMPNEXT:      
+8618   D1                     POP   DE   ; DE = return address
+8619   2A 36 8D               LD   HL,(HERE)   ; load heap ptr
+861C   73                     LD   (HL),E   ; store lsb
+861D   23                     INC   HL   
+861E   72                     LD   (HL),D   
+861F   23                     INC   HL   
+8620   22 36 8D               LD   (HERE),HL   ; save heap ptr
+8623   C3 57 81               JP   NEXT   
+8626                CCOMPNEXT:      
+8626   D1                     POP   DE   ; DE = return address
+8627   2A 36 8D               LD   HL,(HERE)   ; load heap ptr
+862A   73                     LD   (HL),E   ; store lsb
+862B   23                     INC   HL   
+862C   22 36 8D               LD   (HERE),HL   ; save heap ptr
+862F   C3 57 81               JP   NEXT   
+8632                             ; define a word array
+8632                ARRDEF:      
+8632   FD 21 18 86            LD   IY,compNEXT   
+8636   18 04                  JR   arrDef1   
+8638                             ; define a character array
+8638                CARRDEF_:      
+8638   FD 21 26 86            LD   IY,ccompNEXT   
+863C                ARRDEF1:      
+863C   2A 36 8D               LD   HL,(HERE)   ; HL = heap ptr
+863F                          ;*Macro unroll:  _rpush H,L      ; save start of array \[  \]
+863F   DD 2B                  DEC   IX   ; save start of array \[  \]
+8641   DD 74 00               LD   (IX+0),H   
+8644   DD 2B                  DEC   IX   
+8646   DD 75 00               LD   (IX+0),L   
+8649   C3 57 81               JP   NEXT   ; hardwired to NEXT
+864C                             ; end a word array
+864C                ARREND:      
+864C                          ;*Macro unroll:  _rpop D,E       ; DE = start of array
+864C   DD 5E 00               LD   E,(IX+0)   ; DE = start of array
+864F   DD 23                  INC   IX   
+8651   DD 56 00               LD   D,(IX+0)   
+8654   DD 23                  INC   IX   
+8656   D5                     PUSH   DE   
+8657   2A 36 8D               LD   HL,(HERE)   ; HL = heap ptr
+865A   B7                     OR   A   
+865B   ED 52                  SBC   HL,DE   ; bytes on heap
+865D   CB 3C                  SRL   H   ; BC = m words
+865F   CB 1D                  RR   L   
+8661   18 11                  JR   arrEnd2   
+8663                             ; end a character array
+8663                CARREND_:      
+8663                          ;*Macro unroll:  _rpop D,E       ; DE = start of array
+8663   DD 5E 00               LD   E,(IX+0)   ; DE = start of array
+8666   DD 23                  INC   IX   
+8668   DD 56 00               LD   D,(IX+0)   
+866B   DD 23                  INC   IX   
+866D   D5                     PUSH   DE   
+866E   2A 36 8D               LD   HL,(HERE)   ; HL = heap ptr
+8671   B7                     OR   A   
+8672   ED 52                  SBC   HL,DE   ; bytes on heap
+8674                ARREND2:      
+8674   E5                     PUSH   HL   
+8675   FD 21 57 81            LD   IY,NEXT   
+8679   FD E9                  JP   (IY)   ; hardwired to NEXT
+867B                CFETCH_:      ; Fetch the value from the address placed on the top of the stack
+867B   E1                     POP   HL   ; 10t
+867C   5E                     LD   E,(HL)   ; 7t
+867D   16 00                  LD   D,0   ; 7t
+867F   D5                     PUSH   DE   ; 11t
+8680   FD E9                  JP   (IY)   ; 8t
+8682                             ; 49t
+8682                CSTORE_:      ; Store the value at the address placed on the top of the stack
+8682   E1                     POP   HL   ; 10t
+8683   D1                     POP   DE   ; 10t
+8684   73                     LD   (HL),E   ; 7t
+8685   FD E9                  JP   (IY)   ; 8t
+8687                             ; 48t
+8687                ADEF_:       
+8687   FD E9                  JP   (IY)   
+8689                COMMENT_:      
+8689   03                     INC   BC   ; point to next char
+868A   0A                     LD   A,(BC)   
+868B   FE 0D                  CP   "\r"   ; terminate at newline
+868D   20 FA                  JR   NZ,comment_   
+868F   0B                     DEC   BC   
+8690   FD E9                  JP   (IY)   
+8692                DEPTH_:      
+8692   21 00 00               LD   HL,0   
+8695   39                     ADD   HL,SP   
+8696   EB                     EX   DE,HL   
+8697   21 00 89               LD   HL,DSTACK   
+869A   B7                     OR   A   
+869B   ED 52                  SBC   HL,DE   
+869D   CB 3C                  SRL   H   
+869F   CB 1D                  RR   L   
+86A1   E5                     PUSH   HL   
+86A2   FD E9                  JP   (IY)   
+86A4                DOTS_:       
+86A4   CD C2 81               CALL   enter   
+86A7   5C 30 40 20 32 2D 5C 64 31 2D 28 22 40 2E 32 2D 29 27 00 DB   "\\0@ 2-\\d1-(",$22,"@.2-)'",0   
+86BA   FD E9                  JP   (IY)   
+86BC                EMIT_:       
+86BC   E1                     POP   HL   
+86BD   7D                     LD   A,L   
+86BE   CD 5C 87               CALL   putchar   
+86C1   FD E9                  JP   (IY)   
+86C3                EXEC_:       
+86C3   E1                     POP   HL   
+86C4   E9                     JP   (HL)   
+86C5                GO_:         
+86C5                          ;*Macro unroll:  _rpush B,C              ; save Instruction Pointer
+86C5   DD 2B                  DEC   IX   ; save Instruction Pointer
+86C7   DD 70 00               LD   (IX+0),B   
+86CA   DD 2B                  DEC   IX   
+86CC   DD 71 00               LD   (IX+0),C   
+86CF   C1                     POP   BC   
+86D0   0B                     DEC   BC   
+86D1   FD E9                  JP   (IY)   ; Execute code from User def
+86D3                HERE_:       
+86D3   21 36 8D               LD   HL,HERE   
+86D6   E5                     PUSH   HL   
+86D7   FD E9                  JP   (IY)   
+86D9                INPORT_:      
+86D9   E1                     POP   HL   
+86DA   4D                     LD   C,L   
+86DB   ED 68                  IN   L,(C)   
+86DD   26 00                  LD   H,0   
+86DF   E5                     PUSH   HL   
+86E0   FD E9                  JP   (IY)   
+86E2                I_:          
+86E2   DD E5                  PUSH   IX   
+86E4   FD E9                  JP   (IY)   
+86E6                INCR_:       
+86E6   E1                     POP   HL   ; HL = addr, save BC
+86E7   D1                     POP   DE   ; DE = incr
+86E8   7B                     LD   A,E   ; A = lsb(addr@)
+86E9   86                     ADD   A,(HL)   ; add lsb(incr) and A
+86EA   77                     LD   (HL),A   ; store A in lsb(addr@)
+86EB   23                     INC   HL   
+86EC   7A                     LD   A,D   ; A = msb(addr@)
+86ED   8E                     ADC   A,(HL)   ; add with carry msb(addr@)
+86EE   77                     LD   (HL),A   ; store A in msb(addr@)
+86EF   FD E9                  JP   (IY)   
+86F1                J_:          
+86F1   DD E5                  PUSH   IX   
+86F3   E1                     POP   HL   
+86F4   11 06 00               LD   DE,6   
+86F7   19                     ADD   HL,DE   
+86F8   E5                     PUSH   HL   
+86F9   FD E9                  JP   (IY)   
+86FB                KEY_:        
+86FB   CD 4F 87               CALL   getchar   
+86FE   6F                     LD   L,A   
+86FF   26 00                  LD   H,0   
+8701   E5                     PUSH   HL   
+8702   FD E9                  JP   (IY)   
+8704                NEWLN_:      
+8704   CD B1 81               CALL   crlf   
+8707   FD E9                  JP   (IY)   
+8709                NOT_:        
+8709   CD C2 81               CALL   enter   
+870C   7E 31 26 00            .CSTR   "~1&"   
+8710   FD E9                  JP   (IY)   
+8712                OUTPORT_:      
+8712   E1                     POP   HL   
+8713   4D                     LD   C,L   
+8714   E1                     POP   HL   
+8715   ED 69                  OUT   (C),L   
+8717   FD E9                  JP   (IY)   
+8719                QUIT_:       
+8719   C9                     RET      ; display OK and exit interpreter
+871A                STRDEF_:      
+871A   03                     INC   BC   ; point to next char
+871B   C5                     PUSH   BC   ; push string address
+871C   11 00 00               LD   DE,0   ; count = 0
+871F   18 02                  JR   strDef2   
+8721                STRDEF1:      
+8721   03                     INC   BC   ; point to next char
+8722   13                     INC   DE   ; increase count
+8723                STRDEF2:      
+8723   0A                     LD   A,(BC)   
+8724   FE 60                  CP   "`"   ; ` is the string terminator
+8726   20 F9                  JR   NZ,strDef1   
+8728   D5                     PUSH   DE   ; push count
+8729   FD E9                  JP   (IY)   
+872B                SYSVAR_:      
+872B   0A                     LD   A,(BC)   
+872C   D6 30                  SUB   "0"   ; Calc index
+872E   87                     ADD   A,A   
+872F   21 34 8D               LD   HL,SYSVARS   
+8732   5F                     LD   E,A   
+8733   16 00                  LD   D,0   
+8735   19                     ADD   HL,DE   
+8736   E5                     PUSH   HL   
+8737   FD E9                  JP   (IY)   
+8739                             ; ************************SERIAL HANDLING ROUTINES**********************
+8739                             ; 
+8739                             ;        Includes drivers for 68B50 ACIA
+8739                             ;		 serial interface I/O primitive routines getchar and putchar
+8739                             ;        printstring
+8739                             ;        printdec
+8739                             ;        printhex
+8739                             ;        crlf
+8739                             ; **********************************************************************
+8739                             ; **  Device Driver                             by Stephen C Cousins  **
+8739                             ; **  Hardware:  RC2014                                               **
+8739                             ; **  Interface: Serial 6850 ACIA                                     **
+8739                             ; **********************************************************************
+8739                             ; This module is the driver for the RC2014 serial I/O interface which is
+8739                             ; based on the 6850 Asynchronous Communications Interface Adapter (ACIA)
+8739                             ; 
+8739                             ; Base addresses for ACIA externally defined. eg:
+8739                KACIA1:   EQU   0x80   ;Base address of serial ACIA #1
+8739                KACIA2:   EQU   0x80   ;Base address of serial ACIA #2
+8739                             ; 
+8739                             ; RC2014 addresses for 68B50 number 2:
+8739                             ; 0x40   Control registers (read and write)
+8739                             ; 0x41   Data registers (read and write)
+8739                             ; 
+8739                             ; Control registers (read and write)
+8739                             ; Bit   Control write              Control read
+8739                             ;  0    Counter divide select 1    Receive data register full
+8739                             ;  1    Counter divide select 2    Transmit data register empty
+8739                             ;  2    Word select 1              Data carrier detect (/DCD) input
+8739                             ;  3    Word seelct 2              Clear to send (/CTS) input
+8739                             ;  4    Word select 3              Framing error
+8739                             ;  5    Transmit contol 1          Receiver overrun
+8739                             ;  6    Transmit control 2         Parity error
+8739                             ;  7    Receive interrupt enable   Interrupt request
+8739                             ; 
+8739                             ; Control register write
+8739                             ; Bit   7   6   5   4   3   2   1   0
+8739                             ;       |   |   |   |   |   |   |   |
+8739                             ;       |   |   |   |   |   |   0   0     Clock divide 1
+8739                             ;       |   |   |   |   |   |   0   1     Clock divide 16
+8739                             ; >     |   |   |   |   |   |   1   0  >  Clock divide 64
+8739                             ;       |   |   |   |   |   |   1   1     Master reset
+8739                             ;       |   |   |   |   |   |
+8739                             ;       |   |   |   0   0   0     7 data bits, even parity, 2 stop bits
+8739                             ;       |   |   |   0   0   1     7 data bits, odd parity,  2 stop bits
+8739                             ;       |   |   |   0   1   0     7 data bits, even parity, 1 stop bit
+8739                             ;       |   |   |   0   1   1     7 data bits, odd parity,  1 stop bit
+8739                             ;       |   |   |   1   0   0     8 data bits, no parity,   2 stop bits
+8739                             ;       |   |   |   1   0   1  >  8 data bits, no parity,   1 stop bit
+8739                             ;       |   |   |   1   1   0     8 data bits, even parity, 1 stop bit
+8739                             ;       |   |   |   1   1   1     8 data bits, odd parity,  1 stop bit
+8739                             ;       |   |   |
+8739                             ;       |   0   0  >  /RTS = low (ready), tx interrupt disabled
+8739                             ;       |   0   1     /RTS = low (ready), tx interrupt enabled
+8739                             ;       |   1   0     /RTS = high (not ready), tx interrupt disabled
+8739                             ;       |   1   1     /RTS = low, tx break, tx interrupt disabled
+8739                             ;       |
+8739                             ;       0  >  Receive interrupt disabled
+8739                             ;       1     Receive interrupt enabled
+8739                             ; 
+8739                             ; Control register read
+8739                             ; Bit   7   6   5   4   3   2   1   0
+8739                             ;       |   |   |   |   |   |   |   |
+8739                             ;       |   |   |   |   |   |   |   +-------  Receive data register full
+8739                             ;       |   |   |   |   |   |   +-------  Transmit data register empty
+8739                             ;       |   |   |   |   |   +-------  Data carrier detect (/DCD)
+8739                             ;       |   |   |   |   +-------  Clear to send (/CTS)
+8739                             ;       |   |   |   +-------  Framing error
+8739                             ;       |   |   +-------  Receiver overrun
+8739                             ;       |   +-------  Parity error
+8739                             ;       +-------  Interrupt request
+8739                             ; 6850 #1 registers derived from base address (above)
+8739                KACIA1CONT:   EQU   kACIA1+0   ;I/O address of control register
+8739                KACIA1DATA:   EQU   kACIA1+1   ;I/O address of data register
+8739                             ; 6850 #2 registers derived from base address (above)
+8739                KACIA2CONT:   EQU   kACIA2+0   ;I/O address of control register
+8739                KACIA2DATA:   EQU   kACIA2+1   ;I/O address of data register
+8739                             ; Control register values
+8739                K6850RESET:   EQU   0b00000011   ;Master reset
+8739                K6850INIT:   EQU   0b00010110   ;No int, RTS low, 8+1, /64
+8739                             ; Status (control) register bit numbers
+8739                K6850RXRDY:   EQU   0   ;Receive data available bit number
+8739                K6850TXRDY:   EQU   1   ;Transmit data empty bit number
+8739                             ; Device detection, test 1
+8739                             ; This test just reads from the devices' status (control) register
+8739                             ; and looks for register bits in known states:
+8739                             ; /CTS input bit = low
+8739                             ; /DCD input bit = low
+8739                             ; WARNING
+8739                             ; Sometimes at power up the Tx data reg empty bit is zero, but
+8739                             ; recovers after device initialised. So test 1 excludes this bit.
+8739                K6850MASK1:   EQU   0b00001100   ;Mask for known bits in control reg
+8739                K6850TEST1:   EQU   0b00000000   ;Test value following masking
+8739                             ; Device detection, test 2
+8739                             ; This test just reads from the devices' status (control) register
+8739                             ; and looks for register bits in known states:
+8739                             ; /CTS input bit = low
+8739                             ; /DCD input bit = low
+8739                             ; Transmit data register empty bit = high
+8739                K6850MASK2:   EQU   0b00001110   ;Mask for known bits in control reg
+8739                K6850TEST2:   EQU   0b00000010   ;Test value following masking
+8739                             ; RC2014 serial 6850 initialise
+8739                             ;   On entry: No parameters required
+8739                             ;   On exit:  Z flagged if device is found and initialised
+8739                             ;             AF BC DE HL not specified
+8739                             ;             IX IY I AF" BC" DE" HL" preserved
+8739                             ; If the device is found it is initialised
+8739                SERIAL_INIT:      
+8739                             ; First look to see if the device is present
+8739                             ; Test 1, just read from chip, do not write anything
+8739   DB 80                  IN   A,(kACIA1Cont)   ;Read status (control) register
+873B   E6 00                  AND   k6850Mask1   ;Mask for known bits in control reg
+873D   FE 00                  CP   k6850Test1   ;and check for known values
+873F   C0                     RET   NZ   ;If not found return with NZ flag
+8740                             ; Attempt to initialise the chip
+8740   3E 00                  LD   A,k6850Reset   ;Master reset
+8742   D3 80                  OUT   (kACIA1Cont),A   ;Write to ACIA control register
+8744   3E 00                  LD   A,k6850Init   ;No int, RTS low, 8+1, /64
+8746   D3 80                  OUT   (kACIA1Cont),A   ;Write to ACIA control register
+8748                             ; Test 2, perform tests on chip following initialisation
+8748   DB 80                  IN   A,(kACIA1Cont)   ;Read status (control) register
+874A   E6 00                  AND   k6850Mask2   ;Mask for known bits in control reg
+874C   FE 00                  CP   k6850Test2   ;Test value following masking
+874E                             ;           RET  NZ             ;Return not found NZ flagged
+874E   C9                     RET      ;Return Z if found, NZ if not
+874F                             ; RC2014 serial 6850 input character
+874F                             ;   On entry: No parameters required
+874F                             ;   On exit:  A = Character input from the device
+874F                             ;             NZ flagged if character input
+874F                             ;             BC DE IX IY I AF" BC" DE" HL" preserved
+874F                             ;             HL destroyed
+874F                             ; This function does not return until a character is available
+874F                GETCHAR:      
+874F   2A 3A 8D               LD   HL,(VGETCHAR)   
+8752   E9                     JP   (HL)   
+8753                GETCHARIMPL:      
+8753   DB 80                  IN   A,(kACIA1Cont)   ;Address of status register
+8755   E6 01                  AND   $01   ;Receive byte available
+8757   28 F6                  JR   Z,getchar   ;Return Z if no character
+8759   DB 81                  IN   A,(kACIA1Data)   ;Read data byte
+875B   C9                     RET      ;NZ flagged if character input
+875C                             ; RC2014 serial 6850 output character
+875C                             ;   On entry: A = Character to be output to the device
+875C                             ;   On exit:  If character output successful (eg. device was ready)
+875C                             ;               NZ flagged and A != 0
+875C                             ;             If character output failed (eg. device busy)
+875C                             ;               Z flagged and A = Character to output
+875C                             ;             BC DE HL IX IY I AF" BC" DE" HL" preserved
+875C                PUTCHAR:      
+875C   C5                     PUSH   BC   
+875D   0E 80                  LD   C,kACIA1Cont   ;ACIA control register
+875F   ED 40                  IN   B,(C)   ;Read ACIA control register
+8761   00                     BIT   k6850TxRdy,B   ;Transmit register full?
+8762   C1                     POP   BC   
+8763   28 F7                  JR   Z,putchar   ;Return Z as character not output
+8765   D3 81                  OUT   (kACIA1Data),A   ;Write data byte
+8767   F6 FF                  OR   0xFF   ;Return success A=0xFF and NZ flagged
+8769   C9                     RET      
+876A                GET_HEX:      
+876A   21 00 00               LD   HL,$0000   ; 10t Clear HL to accept the number
+876D   0A                     LD   A,(BC)   ; 7t  Get the character which is a numeral
+876E                GET_HEX1:      
+876E   CB 77                  BIT   6,A   ; 7t    is it alpha?
+8770   28 02                  JR   Z,ASCHX1   ; no
+8772   C6 09                  ADD   A,$09   ; add 9 to make $A - $F
+8774                ASCHX1:      
+8774   E6 0F                  AND   $0F   ; form hex nybble
+8776   85                     ADD   A,L   ; 4t    Add into bottom of HL
+8777   6F                     LD   L,A   ; 4t
+8778                             ;  15t cycles
+8778   03                     INC   BC   ; 6t    Increment IP
+8779   0A                     LD   A,(BC)   ; 7t    and get the next character
+877A   FE 30                  CP   $30   ; 7t    Is it a space terminator?
+877C   38 06                  JR   C,endhex   ; 7/12t Not a number / end of number
+877E                TIMES16:      ; Multiply digit(s) in HL by 16
+877E   29                     ADD   HL,HL   ; 11t    2X
+877F   29                     ADD   HL,HL   ; 11t    4X
+8780   29                     ADD   HL,HL   ; 11t    8X
+8781   29                     ADD   HL,HL   ; 11t   16X
+8782                             ; 44t cycles
+8782   18 EA                  JR   get_hex1   
+8784                ENDHEX:      
+8784                             ;        PUSH HL                ; 11t   Put the number on the stack
+8784                             ;        JR dispatch            ; and process the next character
+8784   C9                     RET      
+8785                PRINTHEX:      
+8785                             ; Display HL as a 16-bit number in hex.
+8785   C5                     PUSH   BC   ; preserve the IP
+8786   7C                     LD   A,H   
+8787   CD 90 87               CALL   Print_Hex8   
+878A   7D                     LD   A,L   
+878B   CD 90 87               CALL   Print_Hex8   
+878E   C1                     POP   BC   
+878F   C9                     RET      
+8790                             ; Print an 8-bit HEX number
+8790                             ; A: Number to print
+8790                             ; 
+8790                PRINT_HEX8:      
+8790   4F                     LD   C,A   
+8791   1F                     RRA      
+8792   1F                     RRA      
+8793   1F                     RRA      
+8794   1F                     RRA      
+8795                             ; 
+8795   E6 0F        CONV:     AND   0x0F   
+8797   C6 90                  ADD   A,0x90   
+8799   27                     DAA      
+879A   CE 40                  ADC   A,0x40   
+879C   27                     DAA      
+879D   CD 5C 87               CALL   putchar   
+87A0   79                     LD   A,C   
+87A1   E6 0F                  AND   0x0F   
+87A3   C6 90                  ADD   A,0x90   
+87A5   27                     DAA      
+87A6   CE 40                  ADC   A,0x40   
+87A8   27                     DAA      
+87A9   CD 5C 87               CALL   putchar   
+87AC   C9                     RET      
+8800                          .ORG   RAMSTART   
+8800                          DS   DSIZE   
+8900                DSTACK:      
+8900                          DS   RSIZE   
+8A00                RSTACK:      
+8A00                TIB:         
+8A00                          DS   TIBSIZE   
+8B00                             ; ****************************************************************
+8B00                             ; VARS Table - holds 26 16-bit user variables
+8B00                             ; ****************************************************************
+8B00                          ALIGN   $100   
+8B00                VARS:        
+8B00                          DS   26 * 2   
+8B34                             ; ****************************************************************
+8B34                             ; CDEFS Table - holds $20 ctrl key macros
+8B34                             ; ****************************************************************
+8B34                          ALIGN   $100   
+8C00                MACROS:      
+8C00                          DS   $20 * 2   
+8C34                             ; ****************************************************************
+8C34                             ; DEFS Table - holds 26 addresses of user routines
+8C34                             ; ****************************************************************
+8C34                          ALIGN   $100   
+8D00                DEFS:        
+8D00                          DS   26 * 2   
+8D34                SYSVARS:      
+8D34   00 00        S0:       DW   0   ; \0
+8D36   00 00        HERE:     DW   0   ; \1
+8D38   00 00        TIBPTR:   DW   0   ; \2
+8D3A   00 00        VGETCHAR:   DW   0   ; \3 vector with pointer to getchar implementation
+8D3C   00 00        ISHEX:    DW   0   ; \4
+8D3E   00 00        TBPTR:    DW   0   ; reserved for tests
+8D40                          ALIGN   $100   
+8E00                HEAP:        
