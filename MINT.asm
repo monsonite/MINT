@@ -312,6 +312,98 @@ toggleBase_:
 printStack_:
         .cstr "`=> `\\p\\n\\n`> `;"
 
+printdec:
+
+;Number in hl to decimal ASCII
+
+;inputs:	hl = number to ASCII
+;example: hl=300 outputs '00300'
+;destroys: af, de, hl
+DispHL:
+        ld	de,-10000
+        call	Num1
+        ld	de,-1000
+        call	Num1
+        ld	de,-100
+        call	Num1
+        ld	e,-10
+        call	Num1
+        ld	e,-1
+Num1:	    
+        ld	a,'0'-1
+Num2:	    
+        inc	a
+        add	hl,de
+        jr	c,Num2
+        sbc	hl,de
+        call putchar
+        ret 
+        
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        CALL putchar
+        RET
+        
+space:       
+        LD A, ' '           
+        CALL putchar
+        RET
+
+enter:
+        _rpush B,C              ; save Instruction Pointer
+        POP BC
+        DEC BC
+        JP  (IY)                ; Execute code from User def
+
+; ********************************************************************************
+; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
+; Read the first character. 
+;			
+; Number characters ($30 to $39) are converted to digits by subtracting $30
+; and then added into the L register. (HL forms a 16-bit accumulator)
+; Fetch the next character, if it is a number, multiply contents of HL by 10
+; and then add in the next digit. Repeat this until a non-number character is 
+; detected. Add in the final digit so that HL contains the converted number.
+; Push HL onto the stack and proceed to the dispatch routine.
+; ********************************************************************************
+         
+								 
+number:
+		LD HL,$0000				; 10t Clear HL to accept the number
+		LD A,(BC)				; 7t  Get the character which is a numeral
+        
+number1:        
+        SUB $30                 ; 7t    Form decimal digit
+        ADD A,L                 ; 4t    Add into bottom of HL
+        LD  L,A                 ; 4t
+        
+                                ;  15t cycles
+      
+        INC BC                  ; 6t    Increment IP
+        LD A, (BC)              ; 7t    and get the next character
+        CP $30                  ; 7t    Less than $30
+        JR C, endnum            ; 7/12t Not a number / end of number
+        CP $3A                  ; 7t    Greater or equal to $3A
+        JR NC, endnum           ; 7/12t Not a number / end of number
+       
+times10:                        ; Multiply digit(s) in HL by 10
+        ADD HL,HL               ; 11t    2X
+        LD  E,L                 ;  4t    LD DE,HL
+        LD  D,H                 ;  4t
+        ADD HL,HL               ; 11t    4X
+        ADD HL,HL               ; 11t    8X
+        ADD HL,DE               ; 11t    2X  + 8X  = 10X
+                                ; 52t cycles
+
+        JP  number1
+                
+endnum:
+        PUSH HL                 ; 11t   Put the number on the stack
+        DEC BC
+        JP (IY)                 ; and process the next character
+
 initialize:
         LD IX,RSTACK
         LD IY,NEXT			; IY provides a faster jump to NEXT
@@ -441,101 +533,140 @@ dispatch1:
         LD L,A                      ; 4t    and put into L
         LD H, msb(page1)            ; 7t    Load H with the 1st page address
         JP  (HL)                    ; 4t    Jump to routine
-        
 
-; ********************************************************************************
-; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
-; Read the first character. 
-;			
-; Number characters ($30 to $39) are converted to digits by subtracting $30
-; and then added into the L register. (HL forms a 16-bit accumulator)
-; Fetch the next character, if it is a number, multiply contents of HL by 10
-; and then add in the next digit. Repeat this until a non-number character is 
-; detected. Add in the final digit so that HL contains the converted number.
-; Push HL onto the stack and proceed to the dispatch routine.
-; ********************************************************************************
-         
-								 
-number:
-		LD HL,$0000				; 10t Clear HL to accept the number
-		LD A,(BC)				; 7t  Get the character which is a numeral
-        
-number1:        
-        SUB $30                 ; 7t    Form decimal digit
-        ADD A,L                 ; 4t    Add into bottom of HL
-        LD  L,A                 ; 4t
-        
-                                ;  15t cycles
-      
-        INC BC                  ; 6t    Increment IP
-        LD A, (BC)              ; 7t    and get the next character
-        CP $30                  ; 7t    Less than $30
-        JR C, endnum            ; 7/12t Not a number / end of number
-        CP $3A                  ; 7t    Greater or equal to $3A
-        JR NC, endnum           ; 7/12t Not a number / end of number
-       
-times10:                        ; Multiply digit(s) in HL by 10
-        ADD HL,HL               ; 11t    2X
-        LD  E,L                 ;  4t    LD DE,HL
-        LD  D,H                 ;  4t
-        ADD HL,HL               ; 11t    4X
-        ADD HL,HL               ; 11t    8X
-        ADD HL,DE               ; 11t    2X  + 8X  = 10X
-                                ; 52t cycles
+        .align $100             ; page boundary
 
-        JP  number1
-                
-endnum:
-        PUSH HL                 ; 11t   Put the number on the stack
-        DEC BC
-        JP (IY)                 ; and process the next character
-        
+ctrlcodes:
+altcodes:
+        DW empty_       ; NUL ^@
+        DW empty_       ; SOH ^A
+        DW toggleBase_  ; STX ^B
+        DW empty_       ; ETX ^C
+        DW empty_       ; EOT ^D
+        DW empty_       ; ENQ ^E
+        DW empty_       ; ACK ^F
+        DW empty_       ; BEL ^G
+        DW backsp_      ; BS  ^H
+        DW empty_       ; TAB ^I
+        DW empty_       ; LF  ^J
+        DW empty_       ; VT  ^K
+        DW empty_       ; FF  ^L
+        DW empty_       ; CR  ^M
+        DW empty_       ; SO  ^N
+        DW empty_       ; SI  ^O
+        DW printStack_  ; DLE ^P
+        DW empty_       ; DC1 ^Q
+        DW empty_       ; DC2 ^R
+        DW empty_       ; DC3 ^S
+        DW empty_       ; DC4 ^T
+        DW empty_       ; NAK ^U
+        DW empty_       ; SYN ^V
+        DW empty_       ; ETB ^W
+        DW empty_       ; CAN ^X
+        DW empty_       ; EM  ^Y
+        DW empty_       ; SUB ^Z
+        DW empty_       ; ESC ^[
+        DW empty_       ; FS  ^\
+        DW empty_       ; GS  ^]
+        DW empty_       ; RS  ^^
+        DW empty_       ; US  ^_
+        DW empty_       ; SP  ^`
+        DW   cStore_    ;    !            
+        DW   nop_       ;    "
+        DW   nop_       ;    #
+        DW   nop_       ;    $            
+        DW   nop_       ;    %            
+        DW   nop_       ;    &
+        DW   nop_       ;    '
+        DW   nop_       ;    (        
+        DW   nop_       ;    )
+        DW   nop_       ;    *            
+        DW   incr_      ;    +  ( adr -- ) decrements variable at address
+        DW   nop_       ;    ,            
+        DW   nop_       ;    -  ( adr -- ) increments variable at address
+        DW   nop_       ;    .  
+        DW   nop_       ;    /
+        DW   sysvar_    ;    0  ( -- adr ) start of data stack constant         
+        DW   sysvar_    ;    1  ; returns HERE variable
+        DW   sysvar_    ;    2  ( -- adr ) tibPtr variable          
+        DW   sysvar_    ;    3  ( -- adr ) isHex variable
+        DW   sysvar_    ;    4            
+        DW   sysvar_    ;    5            
+        DW   sysvar_    ;    6            
+        DW   sysvar_    ;    7
+        DW   sysvar_    ;    8            
+        DW   sysvar_    ;    9        
+        DW   adef_      ;    :  start defining a macro        
+        DW   nop_       ;    ;  
+        DW   nop_       ;    <
+        DW   nop_       ;    =            
+        DW   nop_       ;    >            
+        DW   nop_       ;    ?
+        DW   cFetch_    ;    @      
+        DW   nop_       ;    A    
+        DW   nop_       ;    B
+        DW   nop_       ;    C
+        DW   nop_       ;    D    
+        DW   nop_       ;    E  
+        DW   nop_       ;    F
+        DW   nop_       ;    G
+        DW   nop_       ;    H  
+        DW   inPort_    ;    I  ( port -- val )   
+        DW   nop_       ;    J
+        DW   nop_       ;    K  
+        DW   nop_       ;    L
+        DW   nop_       ;    M
+        DW   nop_       ;    N
+        DW   outPort_   ;    O  ( val port -- )
+        DW   nop_       ;    P
+        DW   nop_       ;    Q
+        DW   nop_       ;    R
+        DW   nop_       ;    S
+        DW   nop_       ;    T
+        DW   nop_       ;    U
+        DW   nop_       ;    V
+        DW   nop_       ;    W
+        DW   exec_      ;    X
+        DW   nop_       ;    Y
+        DW   nop_       ;    Z
+        DW   cArrDef_   ;    [
+        DW   comment_   ;    \  TODO: comment text, skips reading until end of line
+        DW   cArrEnd_   ;    ]
+        DW   nop_       ;    ^
+        DW   nop_       ;    _
+        DW   strDef_    ;    `            
+        DW   nop_       ;    a
+        DW   nop_       ;    b
+        DW   nop_       ;    c
+        DW   depth_     ;    d  ( -- val ) depth of data stack
+        DW   emit_      ;    e  ( val -- ) emits a char to output
+        DW   nop_       ;    f
+        DW   go_        ;    g  ( -- ? ) execute mint definition
+        DW   nop_       ;    h  ; returns HERE variable
+        DW   i_         ;    i  ; returns index variable of current loop          
+        DW   j_         ;    j  ; returns index variable of outer loop
+        DW   key_       ;    k  ( -- val )  read a char from input
+        DW   nop_       ;    l
+        DW   nop_       ;    m
+        DW   newln_     ;    n  ; prints a newline to output
+        DW   nop_       ;    o
+        DW   dots_      ;    p  ( -- ) non-destructively prints stack
+        DW   quit_      ;    q  ; quits from Mint REPL         
+        DW   nop_       ;    r
+        DW   nop_       ;    s    
+        DW   nop_       ;    t
+        DW   nop_       ;    u
+        DW   nop_       ;    v
+        DW   nop_       ;    w
+        DW   exec_      ;    x
+        DW   nop_       ;    y
+        DW   nop_       ;    z
+        DW   nop_       ;    {
+        DW   nop_       ;    |            
+        DW   nop_       ;    }            
+        DW   not_       ;    ~ ( b -- notb ) logical not           
+        DW   nop_       ;    BS
 
-        
-printdec:
-
-;Number in hl to decimal ASCII
-
-;inputs:	hl = number to ASCII
-;example: hl=300 outputs '00300'
-;destroys: af, de, hl
-DispHL:
-        ld	de,-10000
-        call	Num1
-        ld	de,-1000
-        call	Num1
-        ld	de,-100
-        call	Num1
-        ld	e,-10
-        call	Num1
-        ld	e,-1
-Num1:	    
-        ld	a,'0'-1
-Num2:	    
-        inc	a
-        add	hl,de
-        jr	c,Num2
-        sbc	hl,de
-        call putchar
-        ret 
-        
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        CALL putchar
-        RET
-        
-space:       
-        LD A, ' '           
-        CALL putchar
-        RET
-
-enter:
-        _rpush B,C              ; save Instruction Pointer
-        POP BC
-        DEC BC
-        JP  (IY)                ; Execute code from User def
         
 
         .align $100
@@ -932,6 +1063,7 @@ def:                       ; Create a colon definition
         LD  A,(BC)          ; Get the next character
         INC BC
         SUB "A"             ; Calc index
+def1:
         ADD A,A             ; Double A to index even addresses
         LD L,A              ; Index into table
         LD DE,(HERE)        ; start of defintion
@@ -977,139 +1109,6 @@ dot2:
         CALL space
         JP (IY)
         
-        .align $100             ; page boundary
-
-ctrlcodes:
-altcodes:
-        DW empty_       ; NUL ^@
-        DW empty_       ; SOH ^A
-        DW toggleBase_  ; STX ^B
-        DW empty_       ; ETX ^C
-        DW empty_       ; EOT ^D
-        DW empty_       ; ENQ ^E
-        DW empty_       ; ACK ^F
-        DW empty_       ; BEL ^G
-        DW backsp_      ; BS  ^H
-        DW empty_       ; TAB ^I
-        DW empty_       ; LF  ^J
-        DW empty_       ; VT  ^K
-        DW empty_       ; FF  ^L
-        DW empty_       ; CR  ^M
-        DW empty_       ; SO  ^N
-        DW empty_       ; SI  ^O
-        DW printStack_  ; DLE ^P
-        DW empty_       ; DC1 ^Q
-        DW empty_       ; DC2 ^R
-        DW empty_       ; DC3 ^S
-        DW empty_       ; DC4 ^T
-        DW empty_       ; NAK ^U
-        DW empty_       ; SYN ^V
-        DW empty_       ; ETB ^W
-        DW empty_       ; CAN ^X
-        DW empty_       ; EM  ^Y
-        DW empty_       ; SUB ^Z
-        DW empty_       ; ESC ^[
-        DW empty_       ; FS  ^\
-        DW empty_       ; GS  ^]
-        DW empty_       ; RS  ^^
-        DW empty_       ; US  ^_
-        DW empty_       ; SP  ^`
-        DW   cStore_    ;    !            
-        DW   nop_       ;    "
-        DW   nop_       ;    #
-        DW   nop_       ;    $            
-        DW   nop_       ;    %            
-        DW   nop_       ;    &
-        DW   nop_       ;    '
-        DW   nop_       ;    (        
-        DW   nop_       ;    )
-        DW   nop_       ;    *            
-        DW   incr_      ;    +  ( adr -- ) decrements variable at address
-        DW   nop_       ;    ,            
-        DW   nop_       ;    -  ( adr -- ) increments variable at address
-        DW   nop_       ;    .  
-        DW   nop_       ;    /
-        DW   sysvar_    ;    0  ( -- adr ) start of data stack constant         
-        DW   sysvar_    ;    1  ; returns HERE variable
-        DW   sysvar_    ;    2  ( -- adr ) tibPtr variable          
-        DW   sysvar_    ;    3  ( -- adr ) isHex variable
-        DW   sysvar_    ;    4            
-        DW   sysvar_    ;    5            
-        DW   sysvar_    ;    6            
-        DW   sysvar_    ;    7
-        DW   sysvar_    ;    8            
-        DW   sysvar_    ;    9        
-        DW   adef_      ;    :  TODO: starts defining a macro        
-        DW   nop_       ;    ;
-        DW   nop_       ;    <
-        DW   nop_       ;    =            
-        DW   nop_       ;    >            
-        DW   nop_       ;    ?
-        DW   cFetch_    ;    @      
-        DW   nop_       ;    A    
-        DW   nop_       ;    B
-        DW   nop_       ;    C
-        DW   nop_       ;    D    
-        DW   nop_       ;    E  
-        DW   nop_       ;    F
-        DW   nop_       ;    G
-        DW   nop_       ;    H  
-        DW   inPort_    ;    I  ( port -- val )   
-        DW   nop_       ;    J
-        DW   nop_       ;    K  
-        DW   nop_       ;    L
-        DW   nop_       ;    M
-        DW   nop_       ;    N
-        DW   outPort_   ;    O  ( val port -- )
-        DW   nop_       ;    P
-        DW   nop_       ;    Q
-        DW   nop_       ;    R
-        DW   nop_       ;    S
-        DW   nop_       ;    T
-        DW   nop_       ;    U
-        DW   nop_       ;    V
-        DW   nop_       ;    W
-        DW   exec_      ;    X
-        DW   nop_       ;    Y
-        DW   nop_       ;    Z
-        DW   cArrDef_   ;    [
-        DW   comment_   ;    \  TODO: comment text, skips reading until end of line
-        DW   cArrEnd_   ;    ]
-        DW   nop_       ;    ^
-        DW   nop_       ;    _
-        DW   strDef_    ;    `            
-        DW   nop_       ;    a
-        DW   nop_       ;    b
-        DW   nop_       ;    c
-        DW   depth_     ;    d  ( -- val ) depth of data stack
-        DW   emit_      ;    e  ( val -- ) emits a char to output
-        DW   nop_       ;    f
-        DW   go_        ;    g  ( -- ? ) execute mint definition
-        DW   nop_       ;    h  ; returns HERE variable
-        DW   i_         ;    i  ; returns index variable of current loop          
-        DW   j_         ;    j  ; returns index variable of outer loop
-        DW   key_       ;    k  ( -- val )  read a char from input
-        DW   nop_       ;    l
-        DW   nop_       ;    m
-        DW   newln_     ;    n  ; prints a newline to output
-        DW   nop_       ;    o
-        DW   dots_      ;    p  ( -- ) non-destructively prints stack
-        DW   quit_      ;    q  ; quits from Mint REPL         
-        DW   nop_       ;    r
-        DW   nop_       ;    s    
-        DW   nop_       ;    t
-        DW   nop_       ;    u
-        DW   nop_       ;    v
-        DW   nop_       ;    w
-        DW   exec_      ;    x
-        DW   nop_       ;    y
-        DW   nop_       ;    z
-        DW   nop_       ;    {
-        DW   nop_       ;    |            
-        DW   nop_       ;    }            
-        DW   not_       ;    ~ ( b -- notb ) logical not           
-        DW   nop_       ;    BS
-
 ; **************************************************************************             
 ; Print the string between underscores
 str:                       
@@ -1204,12 +1203,18 @@ cStore_:                    ; Store the value at the address placed on the top o
                             ; 48t
 
 adef_:
-        JP (IY)
+        PUSH HL             ; Save HL
+        LD HL, MACROS + 2   ; Start address of jump table         
+        INC BC
+        LD  A,(BC)          ; Get the next character
+        INC BC
+        SUB "@"             ; Calc index
+        JP def1
 
 comment_:
-        INC BC                  ; point to next char
+        INC BC              ; point to next char
         LD A,(BC)
-        CP "\r"                 ; terminate at newline 
+        CP "\r"             ; terminate at newline 
         JR NZ,comment_
         DEC BC
         JP   (IY) 
@@ -1246,11 +1251,6 @@ go_:
         POP BC
         DEC BC
         JP  (IY)                ; Execute code from User def
-
-here_:
-        LD HL,HERE
-        PUSH HL
-        JP (IY)
 
 inPort_:
         POP HL
@@ -1585,7 +1585,7 @@ conv:		AND	0x0F
 			DAA
 			CALL putchar
             RET                
-        
+
 
         .ORG RAMSTART
         

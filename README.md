@@ -144,8 +144,8 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | <      | 16-bit comparison LT                      | a b -- c |
 | =      | 16 bit comparison EQ                      | a b -- c |
 | >      | 16-bit comparison GT                      | a b -- c |
-| {      | Shift the number to the left (2\*)        | a -- b   |
-| }      | Shift the number to the right (2/)        | a -- b   |
+| {      | shift the number to the left (2\*)        | a -- b   |
+| }      | shift the number to the right (2/)        | a -- b   |
 
 ### Logical Operators
 
@@ -156,24 +156,24 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | &      | 16-bit bitwise AND                   | a b -- c |
 | \|     | 16-bit bitwise OR                    | a b -- c |
 | ^      | 16-bit bitwise XOR                   | a b -- c |
-| \\~    | boolean not                          | a -- b   |
+| \\~    | boolean NOT                          | a -- b   |
 
 ### Stack Operations
 
 | Symbol | Description                                                                   | Effect       |
 | ------ | ----------------------------------------------------------------------------- | ------------ |
-| "      | Duplicate the top member of the stack DUP                                     | a -- a a     |
-| '      | Drop the top member of the stack DROP                                         | a a -- a     |
-| $      | Swap the top 2 members of the stack SWAP                                      | a b -- b a   |
-| %      | Over - take the 2nd member of the stack and copy it onto the top of the stack | a b -- a b a |
+| "      | duplicate the top member of the stack DUP                                     | a -- a a     |
+| '      | drop the top member of the stack DROP                                         | a a -- a     |
+| $      | swap the top 2 members of the stack SWAP                                      | a b -- b a   |
+| %      | over - take the 2nd member of the stack and copy it onto the top of the stack | a b -- a b a |
 
 ### Input & Output Operations
 
 | Symbol | Description                                               | Effect      |
 | ------ | --------------------------------------------------------- | ----------- |
-| #      | The following number is in hexadecimal                    | a --        |
-| .      | Print the top member of the stack as a decimal number DOT | a --        |
-| ,      | Print the number on the stack as a hexadecimal            | a --        |
+| #      | the following number is in hexadecimal                    | a --        |
+| .      | print the top member of the stack as a decimal number DOT | a --        |
+| ,      | print the number on the stack as a hexadecimal            | a --        |
 | \`     | \`Everything between ticks is printed as a string\`       | --          |
 | \\p    | non-destructively prints stack                            | --          |
 | \\e    | emits a char to output                                    | val --      |
@@ -186,9 +186,9 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 | Symbol | Description                   | Effect |
 | ------ | ----------------------------- | ------ |
-| :      | Define a new word DEF         |
-| ;      | End of user definition END    |
-| \\:    | TODO: starts defining a macro | --     |
+| :      | define a new word DEF         |
+| ;      | end of user definition END    |
+| \\:    | start defining a macro | --     |
 
 ### Loops and conditional execution
 
@@ -207,10 +207,10 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | !      | STORE a value to memory                     | val adr --    |
 | \\@    | FETCH a byte from memory                    | -- val        |
 | \\!    | STORE a byte to memory                      | val adr --    |
-| [      | Begin an array definition                   | --            |
-| ]      | End an array definition                     | -- adr nwords |
-| \\[    | Begin a byte array definition               | --            |
-| \\]    | End a byte array definition                 | -- adr nbytes |
+| [      | begin an array definition                   | --            |
+| ]      | end an array definition                     | -- adr nwords |
+| \\[    | begin a byte array definition               | --            |
+| \\]    | end a byte array definition                 | -- adr nbytes |
 | \\\`   | define a string                             | -- adr nchars |
 | \\+    | increments variable at address by an amount | val addr --   |
 
@@ -235,3 +235,4 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | ^B     | toggle base decimal/hexadecimal |
 | ^H     | backspace           |
 | ^P     | print stack |
+
