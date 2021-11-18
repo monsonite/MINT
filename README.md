@@ -229,6 +229,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 ### Macros
 
-| Symbol | Description  |
-| ------ | ------------ |
-| ^U     | toggle stack |
+| Symbol | Description         |
+| ------ | ------------------- |
+| ^H     | backspace           |
+| ^U     | toggle utility view |

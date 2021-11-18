@@ -318,9 +318,9 @@ init1:
         LD HL,macros
         LD B,$20
 init2:
-        LD (HL),lsb(mempty_)
+        LD (HL),lsb(empty_)
         INC HL
-        LD (HL),msb(mempty_)
+        LD (HL),msb(empty_)
         INC HL
         DJNZ init2
         LD HL,macros + ('H' - 'A') * 2
@@ -532,13 +532,16 @@ enter:
         DEC BC
         JP  (IY)                ; Execute code from User def
         
+
 ; **********************************************************************
 ; 
-; macros  
+; defs that are written in Mint - placed here to fill up zeroth page
+; Note: opcode zero (i.e. exit_) can exit Mint and go into machine code
+; Mint can be reentered from machine code by CALL enter
 ;
 ; **********************************************************************
 
-mempty_:
+empty_:
         .cstr ";"
 
 backsp_:
@@ -546,18 +549,6 @@ backsp_:
 
 toggleStk_:
         .cstr "\\3@1^\\3!\\3@(\\4@1^\\4!);"
-
-; **********************************************************************
-; 
-; defs that are written in Mint - placed here to fill up zeroth page
-; Note: opcode zero can exit Mint and go into machine code
-; Mint can be reentered from machine code by CALL enter
-;
-; **********************************************************************
-
-empty_:
-        DB 0
-        JP (IY)
 
         .align $100
 ; **********************************************************************			 
@@ -583,7 +574,9 @@ call_:
         SUB "A"                 ; Calc index
         ADD A,A
         LD HL,DEFS
-        LD L,A
+        LD E,A
+        LD D,0
+        ADD HL,DE
         LD C,(HL)
         INC HL
         LD B,(HL)
@@ -1578,10 +1571,12 @@ DSTACK:
 RSTACK:        
 TIB:
         DS TIBSIZE
-tbPtr:
-        DW 0                    ; reserved for tests
-VGETCHAR:
-        DW 0                    ; vector with pointer to getchar implementation
+; ****************************************************************
+; VARS Table - holds 26 16-bit user variables
+; ****************************************************************
+        .align $100
+VARS:
+        DS 26 * 2
 
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros
@@ -1597,20 +1592,16 @@ MACROS:
 DEFS:
         DS 26 * 2
 
-; ****************************************************************
-; VARS Table - holds 26 16-bit user variables
-; ****************************************************************
-        .align $100
-VARS:
-        DS 26 * 2
-
 SYSVARS:
 S0:         DW 0                ; \0                   
 HERE:       DW 0                ; \1
 TIBPTR:     DW 0                ; \2
 showStk:    DW 0                ; \3
 isHex:      DW 0                ; \4
+VGETCHAR:   DW 0                ; vector with pointer to getchar implementation
+tbPtr:      DW 0                ; reserved for tests
         
         .align $100
 HEAP:         
+
 
