@@ -1296,8 +1296,14 @@ newln_:
         JP (IY)        
 
 not_:
-        call enter
-        .cstr "~1&"
+        POP HL
+        LD A,L
+        INC A
+        AND $01
+        LD L,A
+        XOR A
+        LD H,A
+        PUSH HL
         JP (IY)        
 
 outPort_:
