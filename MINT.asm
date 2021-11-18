@@ -292,19 +292,37 @@ opcodes:
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
 
+; **********************************************************************
+; 
+; defs that are written in Mint - placed here to fill up zeroth page
+; Note: opcode zero (i.e. exit_) can exit Mint and go into machine code
+; Mint can be reentered from machine code by CALL enter
+;
+; **********************************************************************
+
+empty_:
+        .cstr ";"
+
+backsp_:
+        .cstr "1_\\2\\+8\\e` `8\\e;"
+
+toggleBase_:
+        .cstr "\\4@1^\\4!;"
+
+printStack_:
+        .cstr "`=> `\\.\\n\\n`> `;"
+
 initialize:
         LD IX,RSTACK
         LD IY,NEXT			; IY provides a faster jump to NEXT
-        LD HL,getCharImpl
-        LD (VGETCHAR),HL
         LD HL,DSTACK
         LD (S0),HL
         LD HL,HEAP
         LD (HERE),HL
         LD HL,TIB
         ld (TIBPTR),HL
-        LD HL,TRUE
-        LD (showStk),HL
+        LD HL,getCharImpl
+        LD (VGETCHAR),HL
         LD HL,FALSE
         LD (isHex),HL
         LD HL,defs
@@ -327,10 +345,14 @@ init2:
         LD (HL),lsb(backsp_)
         INC HL
         LD (HL),msb(backsp_)
-        LD HL,macros + ('U' - 'A') * 2
-        LD (HL),lsb(toggleStk_)
+        LD HL,macros + ('B' - 'A') * 2
+        LD (HL),lsb(toggleBase_)
         INC HL
-        LD (HL),msb(toggleStk_)
+        LD (HL),msb(toggleBase_)
+        LD HL,macros + ('P' - 'A') * 2
+        LD (HL),lsb(printStack_)
+        INC HL
+        LD (HL),msb(printStack_)
         RET
 
 mint:
@@ -340,7 +362,7 @@ mint:
         .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
 interpret:
         CALL enter
-        .cstr "\\3@(\\n`=> `\\.\\n)\\n`>`"
+        .cstr "\\n\\n`> `"
 interpret1:
         LD BC,TIB
 
@@ -532,23 +554,6 @@ enter:
         DEC BC
         JP  (IY)                ; Execute code from User def
         
-
-; **********************************************************************
-; 
-; defs that are written in Mint - placed here to fill up zeroth page
-; Note: opcode zero (i.e. exit_) can exit Mint and go into machine code
-; Mint can be reentered from machine code by CALL enter
-;
-; **********************************************************************
-
-empty_:
-        .cstr ";"
-
-backsp_:
-        .cstr "1_\\2\\+8\\e` `8\\e;"
-
-toggleStk_:
-        .cstr "\\3@1^\\3!\\3@(\\4@1^\\4!);"
 
         .align $100
 ; **********************************************************************			 
@@ -1086,7 +1091,7 @@ altcodes:
         DW   nop_       ;    {
         DW   nop_       ;    |            
         DW   nop_       ;    }            
-        DW   nop_       ;    ~            
+        DW   not_       ;    ~ ( b -- notb ) logical not           
         DW   nop_       ;    BS
 
 ; **************************************************************************             
@@ -1202,13 +1207,12 @@ depth_:
         SBC HL,DE
         SRL H
         RR L
-        DEC HL
         PUSH HL
         JP (IY)
 
 dots_:
         CALL enter
-        DB "\\0@ 2-\\d(",$22,"@.2-)'",0
+        DB "\\0@ 2-\\d1-(",$22,"@.2-)'",0
         JP (IY)
 
 emit_:
@@ -1273,6 +1277,11 @@ key_:
 
 newln_:
         call crlf
+        JP (IY)        
+
+not_:
+        call enter
+        .cstr "~1&"
         JP (IY)        
 
 outPort_:
@@ -1596,9 +1605,8 @@ SYSVARS:
 S0:         DW 0                ; \0                   
 HERE:       DW 0                ; \1
 TIBPTR:     DW 0                ; \2
-showStk:    DW 0                ; \3
+VGETCHAR:   DW 0                ; \3 vector with pointer to getchar implementation
 isHex:      DW 0                ; \4
-VGETCHAR:   DW 0                ; vector with pointer to getchar implementation
 tbPtr:      DW 0                ; reserved for tests
         
         .align $100

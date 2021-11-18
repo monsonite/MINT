@@ -156,6 +156,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | &      | 16-bit bitwise AND                   | a b -- c |
 | \|     | 16-bit bitwise OR                    | a b -- c |
 | ^      | 16-bit bitwise XOR                   | a b -- c |
+| \\~    | boolean not                          | a -- b   |
 
 ### Stack Operations
 
@@ -174,7 +175,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | .      | Print the top member of the stack as a decimal number DOT | a --        |
 | ,      | Print the number on the stack as a hexadecimal            | a --        |
 | \`     | \`Everything between ticks is printed as a string\`       | --          |
-| \\.    | non-destructively prints stack                            | --          |
+| \\p    | non-destructively prints stack                            | --          |
 | \\e    | emits a char to output                                    | val --      |
 | \\I    | input from a I/O port                                     | port -- val |
 | \\k    | read a char from input                                    | -- val      |
@@ -202,15 +203,15 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 | Symbol | Description                                 | Effect        |
 | ------ | ------------------------------------------- | ------------- |
-| @      | FETCH a value from memory                   |               |
-| !      | STORE a value to memory                     |               |
+| @      | FETCH a value from memory                   | -- val        |
+| !      | STORE a value to memory                     | val adr --    |
+| \\@    | FETCH a byte from memory                    | -- val        |
+| \\!    | STORE a byte to memory                      | val adr --    |
 | [      | Begin an array definition                   | --            |
 | ]      | End an array definition                     | -- adr nwords |
 | \\[    | Begin a byte array definition               | --            |
 | \\]    | End a byte array definition                 | -- adr nbytes |
 | \\\`   | define a string                             | -- adr nchars |
-| \\@    | FETCH a byte from memory                    |               |
-| \\!    | STORE a byte to memory                      |               |
 | \\+    | increments variable at address by an amount | val addr --   |
 
 ### Miscellaneous
@@ -224,12 +225,13 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | \\0    | start address of data stack                   | -- adr    |
 | \\1    | heap pointer variable                         | -- adr    |
 | \\2    | text input buffer pointer variable            | -- adr    |
-| \\2    | show stack                                    | -- adr    |
+| \\3    | show stack                                    | -- adr    |
 | \\4    | is hex variable                               | -- adr    |
 
 ### Macros
 
 | Symbol | Description         |
 | ------ | ------------------- |
+| ^B     | toggle base decimal/hexadecimal |
 | ^H     | backspace           |
-| ^U     | toggle utility view |
+| ^P     | print stack |

@@ -10,6 +10,7 @@ CALL initialize
 ; .cstr "`Done!!`"
 ; HALT
 
+test "1\\~",0
 test "\\0@",DSTACK
 test "1_ 2+",1
 test "3x! 1 x\\+ x@", 4
@@ -34,6 +35,7 @@ test "[]", 0
 test "[10] '@", 10
 test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t\\+ ) t@", 6
 CALL enter
+
 DB "0 t!"                           ; total = 0
 DB "[1 2 3 4 5]"                    ; declare array, returns address length
 DB "$ a!"                           ; store address in a, leave length
