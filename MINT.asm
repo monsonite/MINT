@@ -294,10 +294,10 @@ opcodes:
 
 iUserVars:
         DW dStack               ; \0 S0
-        DW HEAP                 ; \1 vHERE
+        DW HEAP                 ; \1 vHeapPtr
         DW TIB                  ; \3 vTibPtr
         DW getCharImpl          ; \2 vGetChar
-        DW FALSE                ; \4 vIsHex
+        DW FALSE                ; \4 vBase16
         DW altcodes             ; \5 vAltCodes
         DW defs                 ; \6 cDefs
         DW vars                 ; \7 cVars
@@ -319,7 +319,7 @@ backsp_:
         .cstr "1_\\2\\+8\\e` `8\\e;"
 
 toggleBase_:
-        .cstr "\\4@1^\\4!;"
+        .cstr "\\b@1^\\b!;"
 
 printStack_:
         .cstr "`=> `\\p\\n\\n`> `;"
@@ -589,7 +589,7 @@ altcodes:
         DW empty_       ; SP  ^`
         DW   cStore_    ;    !            
         DW   nop_       ;    "
-        DW   nop_       ;    #
+        DW   access_    ;    #  ( idx adr -- adr ) access item in array
         DW   nop_       ;    $            
         DW   nop_       ;    %            
         DW   nop_       ;    &
@@ -602,16 +602,16 @@ altcodes:
         DW   nop_       ;    -  ( adr -- ) increments variable at address
         DW   nop_       ;    .  
         DW   nop_       ;    /
-        DW   sysvar_    ;    0  ( -- adr ) start of data stack constant         
-        DW   sysvar_    ;    1  ; returns HERE variable
-        DW   sysvar_    ;    2  ( -- adr ) tibPtr variable          
-        DW   sysvar_    ;    3  ( -- adr ) isHex variable
-        DW   sysvar_    ;    4            
-        DW   sysvar_    ;    5            
-        DW   sysvar_    ;    6            
-        DW   sysvar_    ;    7
-        DW   sysvar_    ;    8            
-        DW   sysvar_    ;    9        
+        DW   knownVar_  ;    0  ( -- adr ) start of data stack constant         
+        DW   knownVar_  ;    1  ; returns HERE variable
+        DW   knownVar_  ;    2  ( -- adr ) tibPtr variable          
+        DW   knownVar_  ;    3  ( -- adr ) isHex variable
+        DW   knownVar_  ;    4            
+        DW   knownVar_  ;    5            
+        DW   knownVar_  ;    6            
+        DW   knownVar_  ;    7
+        DW   knownVar_  ;    8            
+        DW   knownVar_  ;    9        
         DW   adef_      ;    :  start defining a macro        
         DW   nop_       ;    ;  
         DW   nop_       ;    <
@@ -646,19 +646,19 @@ altcodes:
         DW   nop_       ;    Y
         DW   nop_       ;    Z
         DW   cArrDef_   ;    [
-        DW   comment_   ;    \  TODO: comment text, skips reading until end of line
+        DW   comment_   ;    \  comment text, skips reading until end of line
         DW   cArrEnd_   ;    ]
         DW   nop_       ;    ^
         DW   nop_       ;    _
         DW   strDef_    ;    `            
         DW   nop_       ;    a
-        DW   nop_       ;    b
+        DW   base16_    ;    b
         DW   nop_       ;    c
         DW   depth_     ;    d  ( -- val ) depth of data stack
         DW   emit_      ;    e  ( val -- ) emits a char to output
         DW   nop_       ;    f
         DW   go_        ;    g  ( -- ? ) execute mint definition
-        DW   nop_       ;    h  ; returns HERE variable
+        DW   heapPtr_   ;    h  ; returns haep ptr variable
         DW   i_         ;    i  ; returns index variable of current loop          
         DW   j_         ;    j  ; returns index variable of outer loop
         DW   key_       ;    k  ( -- val )  read a char from input
@@ -672,7 +672,7 @@ altcodes:
         DW   nop_       ;    s    
         DW   nop_       ;    t
         DW   nop_       ;    u
-        DW   nop_       ;    v
+        DW   nop_       ;    v   
         DW   nop_       ;    w
         DW   exec_      ;    x
         DW   nop_       ;    y
@@ -1086,7 +1086,7 @@ def1:
         LD E,A              ; Index into table
         LD D,0
         ADD HL,DE
-        LD DE,(vHERE)       ; start of defintion
+        LD DE,(vHeapPtr)       ; start of defintion
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
         LD (HL),D           ; Save high byte of address in CFA+1
@@ -1100,7 +1100,7 @@ nextbyte:                   ; Skip to end of definition
         JR z, end_def       ; end the definition
         JR  nextbyte        ; get the next element
 end_def:    
-        LD (vHERE),DE        ; bump heap ptr to after definiton
+        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
         DEC BC
         JP (IY)       
 
@@ -1118,7 +1118,7 @@ alt:
 
 dot:        
         POP HL
-        LD A,(vIsHex)
+        LD A,(vBase16)
         OR A
         JR Z,dot1
         CALL printhex
@@ -1152,22 +1152,36 @@ hexp:                      ; Print HL as a hexadecimal
         CALL    space
         JP      (IY)
 
+userVar_:
+        LD DE,userVars
+        JP access1
+
+access_:
+        POP DE
+access1:
+        POP HL
+access2:
+        ADD HL,HL
+        ADD HL,DE
+        PUSH HL
+        JP (IY)
+
 compNEXT:
         POP DE          ; DE = return address
-        LD HL,(vHERE)    ; load heap ptr
+        LD HL,(vHeapPtr)    ; load heap ptr
         LD (HL),E       ; store lsb
         INC HL          
         LD (HL),D
         INC HL
-        LD (vHERE),HL    ; save heap ptr
+        LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
 
 ccompNEXT:
         POP DE          ; DE = return address
-        LD HL,(vHERE)    ; load heap ptr
+        LD HL,(vHeapPtr)    ; load heap ptr
         LD (HL),E       ; store lsb
         INC HL          
-        LD (vHERE),HL    ; save heap ptr
+        LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
 
 ; define a word array
@@ -1179,7 +1193,7 @@ arrDef:
 cArrDef_:
         LD IY,ccompNEXT 
 arrDef1:      
-        LD HL,(vHERE)    ; HL = heap ptr
+        LD HL,(vHeapPtr)    ; HL = heap ptr
         _rpush H,L      ; save start of array \[  \]
         JP NEXT         ; hardwired to NEXT
 
@@ -1187,7 +1201,7 @@ arrDef1:
 arrEnd:
         _rpop D,E       ; DE = start of array
         PUSH DE         
-        LD HL,(vHERE)    ; HL = heap ptr
+        LD HL,(vHeapPtr)    ; HL = heap ptr
         OR A
         SBC HL,DE       ; bytes on heap 
         SRL H           ; BC = m words
@@ -1199,7 +1213,7 @@ arrEnd:
 cArrEnd_:
         _rpop D,E       ; DE = start of array
         PUSH DE         
-        LD HL,(vHERE)    ; HL = heap ptr
+        LD HL,(vHeapPtr)    ; HL = heap ptr
         OR A
         SBC HL,DE       ; bytes on heap 
 arrEnd2:
@@ -1230,6 +1244,11 @@ adef_:
         INC BC
         SUB "@"             ; Calc index
         JP def1
+
+base16_:
+        LD HL,vBase16
+        PUSH HL
+        JP (IY)
 
 comment_:
         INC BC              ; point to next char
@@ -1271,6 +1290,11 @@ go_:
         POP BC
         DEC BC
         JP  (IY)                ; Execute code from User def
+
+heapPtr_:
+        LD HL,vHeapPtr
+        PUSH HL
+        JP (IY)
 
 inPort_:
         POP HL
@@ -1351,18 +1375,13 @@ strDef2:
         PUSH DE                 ; push count
         JP   (IY) 
         
-sysvar_:
+knownVar_:
         LD A,(BC)
         SUB "0"                 ; Calc index
-        ADD A,A
-        LD HL,userVars
-        LD E,A
-        LD D,0
-        ADD HL,DE
-        PUSH HL
-        JP (IY)
-
-
+        LD L,A
+        LD H,0
+        LD DE,userVars
+        JP access2
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
@@ -1644,10 +1663,10 @@ defs:
 userVars:
 
 cS0:        DW 0                ; \0                   
-vHERE:      DW 0                ; \1
+vHeapPtr:   DW 0                ; \1
 vTibPtr:    DW 0                ; \2
-vGetChar:  DW 0                ; \3 
-vIsHex:     DW 0                ; \4
+vGetChar:   DW 0                ; \3 
+vBase16:    DW 0                ; \4
 vAltCodes:  DW 0                ; \5
 cDefs:      DW 0                ; \6
 cVars:      DW 0                ; \7

@@ -213,6 +213,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | \\]    | end a byte array definition                 | -- adr nbytes |
 | \\\`   | define a string                             | -- adr nchars |
 | \\+    | increments variable at address by an amount | val addr --   |
+| \\v    | 16-bit value lookup                         | index addr -- addr |
 
 ### Miscellaneous
 
