@@ -323,7 +323,7 @@ empty_:
         .cstr ";"
 
 backsp_:
-        .cstr "1_\\|\\+8\\e` `8\\e;"
+        .cstr "\\$@\\~\\~(1\\$\\-8\\e` `8\\e);"
 
 toggleBase_:
         .cstr "\\b@\\~\\b!;"
@@ -361,7 +361,7 @@ interpret:
         CALL enter
         .cstr "\\n\\n`> `"
 interpret1:
-        LD BC,TIB
+        LD BC,0
 
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
@@ -398,7 +398,9 @@ waitchar:
         JP waitchar
 
 waitchar1:
-        LD (BC), A          ; store the character in textbuf
+        LD HL,TIB
+        ADD HL,BC
+        LD (HL), A          ; store the character in textbuf
         INC BC
 
 waitchar2:        
@@ -406,7 +408,9 @@ waitchar2:
         JR  waitchar        ; wait for next character
 
 waitchar3:
-        LD (BC), A          ; store the character in textbuf
+        LD HL,TIB
+        ADD HL,BC
+        LD (HL), A          ; store the character in textbuf
         INC BC
 
 endchar:    
@@ -587,7 +591,7 @@ altcodes:
         DW   cStore_    ;    !            
         DW   nop_       ;    "
         DW   access_    ;    #  ( idx adr -- adr ) access item in array
-        DW   nop_       ;    $            
+        DW   tibPtr_    ;    $  ( -- adr ) text input ptr           
         DW   nop_       ;    %            
         DW   nop_       ;    &
         DW   nop_       ;    '
@@ -596,7 +600,7 @@ altcodes:
         DW   nop_       ;    *            
         DW   incr_      ;    +  ( adr -- ) decrements variable at address
         DW   nop_       ;    ,            
-        DW   nop_       ;    -  ( adr -- ) increments variable at address
+        DW   decr_      ;    -  ( adr -- ) increments variable at address
         DW   nop_       ;    .  
         DW   nop_       ;    /
         DW   knownVar_  ;    0  ( -- adr ) start of data stack constant         
@@ -628,7 +632,7 @@ altcodes:
         DW   nop_       ;    J
         DW   nop_       ;    K  
         DW   nop_       ;    L
-        DW   nop_       ;    M
+        DW   max_       ;    M  ( a b -- c ) return the maximum value
         DW   nop_       ;    N
         DW   outPort_   ;    O  ( val port -- )
         DW   nop_       ;    P
@@ -646,7 +650,7 @@ altcodes:
         DW   comment_   ;    \  comment text, skips reading until end of line
         DW   cArrEnd_   ;    ]
         DW   nop_       ;    ^
-        DW   nop_       ;    _
+        DW   sign_      ;    _  ( n -- b ) returns true if -ve 
         DW   strDef_    ;    `            
         DW   nop_       ;    a
         DW   base16_    ;    b
@@ -660,14 +664,14 @@ altcodes:
         DW   j_         ;    j  ; returns index variable of outer loop
         DW   key_       ;    k  ( -- val )  read a char from input
         DW   nop_       ;    l
-        DW   nop_       ;    m
+        DW   min_       ;    m  ( a b -- c ) return the minimum value
         DW   newln_     ;    n  ; prints a newline to output
         DW   nop_       ;    o
         DW   dots_      ;    p  ( -- ) non-destructively prints stack
         DW   quit_      ;    q  ; quits from Mint REPL         
         DW   nop_       ;    r
-        DW   nop_       ;    s    
-        DW   nop_       ;    t
+        DW   nop_       ;    s 
+        DW   type_      ;    t
         DW   userVar_   ;    u
         DW   nop_       ;    v   
         DW   nop_       ;    w
@@ -675,7 +679,7 @@ altcodes:
         DW   nop_       ;    y
         DW   nop_       ;    z
         DW   nop_       ;    {
-        DW   tibPtr_    ;    |            
+        DW   nop_       ;    |            
         DW   nop_       ;    }            
         DW   not_       ;    ~ ( b -- notb ) logical not           
         DW   nop_       ;    BS
@@ -1125,6 +1129,16 @@ dot1:
 dot2:
         CALL space
         JP (IY)
+
+sign_:
+        POP HL
+        BIT 7,H
+        LD HL,0
+        JR Z,sign1
+        INC HL
+sign1:        
+        PUSH HL
+        JP (IY)
         
 ; **************************************************************************             
 ; Print the string between underscores
@@ -1217,7 +1231,18 @@ depth_:
 
 dots_:
         CALL enter
-        DB "\\0@ 2-\\d1-(",$22,"@.2-)'",0
+        ; DB "\\0@2-\\d1-\\9!\\9@\\_\\~  \\9@(",$22,"@.2-)'",0
+        DB "\\0@2-\\d1-\\9!\\9@\\_\\~(\\9@(",$22,"@.2-))'",0
+        JP (IY)
+
+max_:
+        CALL enter
+        .cstr "%%<($)'"
+        JP (IY)
+
+min_:
+        CALL enter
+        .cstr "%%>($)'"
         JP (IY)
 
 emit_:
@@ -1253,6 +1278,24 @@ i_:
         PUSH IX
         JP (IY)
 
+decr_:
+        CALL enter
+        .cstr "$_$\\+"
+        JP (IY)
+
+incr_:
+        POP HL                  ; HL = addr
+        POP DE                  ; DE = incr
+incr1:
+        LD A,E                  ; A = lsb(addr@)
+        ADD A,(HL)              ; add lsb(incr) and A 
+        LD (HL),A               ; store A in lsb(addr@)
+        INC HL
+        LD A,D                  ; A = msb(addr@)
+        ADC A,(HL)              ; add with carry msb(addr@)
+        LD (HL),A               ; store A in msb(addr@)
+        JP (IY)        
+
 j_:
         PUSH IX
         POP HL
@@ -1275,11 +1318,11 @@ newln_:
 not_:
         POP HL
         LD A,L
-        INC A
-        AND $01
-        LD L,A
-        XOR A
-        LD H,A
+        OR H
+        JR Z,not1
+        LD HL,-1
+not1:
+        INC HL
         PUSH HL
         JP (IY)        
 
@@ -1361,18 +1404,6 @@ adef_:
         SUB "@"             ; Calc index
         JP def1
 
-incr_:
-        POP HL                  ; HL = addr, save BC
-        POP DE                  ; DE = incr
-        LD A,E                  ; A = lsb(addr@)
-        ADD A,(HL)              ; add lsb(incr) and A 
-        LD (HL),A               ; store A in lsb(addr@)
-        INC HL
-        LD A,D                  ; A = msb(addr@)
-        ADC A,(HL)              ; add with carry msb(addr@)
-        LD (HL),A               ; store A in msb(addr@)
-        JP (IY)        
-
 strDef_:
         INC BC                  ; point to next char
         PUSH BC                 ; push string address
@@ -1388,6 +1419,18 @@ strDef2:
         PUSH DE                 ; push count
         JP   (IY) 
         
+type_:
+        POP BC
+        POP HL
+        JR type2
+type1:        
+        LD A,(HL)
+        CALL PUTCHAR
+        DEC BC
+type2:
+        LD A,C
+        OR B
+        JR NZ,type1
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
@@ -1706,4 +1749,4 @@ HEAP:
         DW 0                    ; \6 
         DW 0                    ; \7 
         DW 0                    ; \8 
-        DW 0                    ; \9 
+        DW 0                    ; \9 TMP
