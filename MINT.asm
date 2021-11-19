@@ -293,16 +293,17 @@ opcodes:
         DB    lsb(del_)    ;    backspace
 
 iUserVars:
-        DW dStack               ; \0 S0
-        DW HEAP                 ; \1 vHeapPtr
-        DW TIB                  ; \3 vTibPtr
-        DW getCharImpl          ; \2 vGetChar
-        DW FALSE                ; \4 vBase16
-        DW altcodes             ; \5 vAltCodes
-        DW defs                 ; \6 cDefs
-        DW vars                 ; \7 cVars
-        DW macros               ; \8 cMacros
-        DW 0                    ; \9 
+        DW HEAP                 ; vHeapPtr
+        DW FALSE                ; vBase16
+        DW TIB                  ; vTibPtr
+        DW getCharImpl          ; vGetChar
+        DW altcodes             ; vAltCodes
+        
+        DW dStack               ; \0 cS0
+        DW TIB                  ; \1 cTIB
+        DW defs                 ; \2 cDefs
+        DW vars                 ; \3 cVars
+        DW macros               ; \4 cMacros
 
 ; **********************************************************************
 ; 
@@ -327,16 +328,6 @@ printStack_:
 initialize:
         LD IX,RSTACK
         LD IY,NEXT			; IY provides a faster jump to NEXT
-        ; LD HL,DSTACK
-        ; LD (S0),HL
-        ; LD HL,HEAP
-        ; LD (HERE),HL
-        ; LD HL,TIB
-        ; ld (vTibPtr),HL
-        ; LD HL,getCharImpl
-        ; LD (VGETCHAR),HL
-        ; LD HL,FALSE
-        ; LD (isHex),HL
         LD HL,iUserVars
         LD DE,userVars
         LD BC,10 * 2
@@ -1380,7 +1371,7 @@ knownVar_:
         SUB "0"                 ; Calc index
         LD L,A
         LD H,0
-        LD DE,userVars
+        LD DE,knownVars
         JP access2
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
@@ -1662,20 +1653,22 @@ defs:
 
 userVars:
 
+vHeapPtr:   DW 0                ; 
+vBase16:    DW 0                ; 
+vTibPtr:    DW 0                ; 
+vGetChar:   DW 0                ;  
+vAltCodes:  DW 0                ; 
+
+knownVars:
+
 cS0:        DW 0                ; \0                   
-vHeapPtr:   DW 0                ; \1
-vTibPtr:    DW 0                ; \2
-vGetChar:   DW 0                ; \3 
-vBase16:    DW 0                ; \4
-vAltCodes:  DW 0                ; \5
-cDefs:      DW 0                ; \6
-cVars:      DW 0                ; \7
-cMacros:    DW 0                ; \8
-            DW 0                ; \9
+cTIB        DW 0                ; \4
+cDefs:      DW 0                ; \1
+cVars:      DW 0                ; \2
+cMacros:    DW 0                ; \3
 
 tbPtr:      DW 0                ; reserved for tests
 
         
 HEAP:         
-
 

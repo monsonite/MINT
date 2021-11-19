@@ -146,6 +146,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | >      | 16-bit comparison GT                      | a b -- c |
 | {      | shift the number to the left (2\*)        | a -- b   |
 | }      | shift the number to the right (2/)        | a -- b   |
+| \\b    | base 16 flag variable                     | -- a     |
 
 ### Logical Operators
 
@@ -184,11 +185,11 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 ### User Definitions
 
-| Symbol | Description                   | Effect |
-| ------ | ----------------------------- | ------ |
-| :      | define a new word DEF         |
-| ;      | end of user definition END    |
-| \\:    | start defining a macro | --     |
+| Symbol | Description                | Effect |
+| ------ | -------------------------- | ------ |
+| :      | define a new word DEF      |
+| ;      | end of user definition END |
+| \\:    | start defining a macro     | --     |
 
 ### Loops and conditional execution
 
@@ -201,19 +202,20 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 
 ### Memory and Variable Operations
 
-| Symbol | Description                                 | Effect        |
-| ------ | ------------------------------------------- | ------------- |
-| @      | FETCH a value from memory                   | -- val        |
-| !      | STORE a value to memory                     | val adr --    |
-| \\@    | FETCH a byte from memory                    | -- val        |
-| \\!    | STORE a byte to memory                      | val adr --    |
-| [      | begin an array definition                   | --            |
-| ]      | end an array definition                     | -- adr nwords |
-| \\[    | begin a byte array definition               | --            |
-| \\]    | end a byte array definition                 | -- adr nbytes |
-| \\\`   | define a string                             | -- adr nchars |
-| \\+    | increments variable at address by an amount | val addr --   |
-| \\v    | 16-bit value lookup                         | index addr -- addr |
+| Symbol | Description                                 | Effect         |
+| ------ | ------------------------------------------- | -------------- |
+| @      | FETCH a value from memory                   | -- val         |
+| !      | STORE a value to memory                     | val adr --     |
+| \\@    | FETCH a byte from memory                    | -- val         |
+| \\!    | STORE a byte to memory                      | val adr --     |
+| [      | begin an array definition                   | --             |
+| ]      | end an array definition                     | -- adr nwords  |
+| \\[    | begin a byte array definition               | --             |
+| \\]    | end a byte array definition                 | -- adr nbytes  |
+| \\\`   | define a string                             | -- adr nchars  |
+| \\+    | increments variable at address by an amount | val addr --    |
+| \\#    | 16-bit value lookup                         | idx adr -- adr |
+| \\h    | heap pointer variable                       | -- adr         |
 
 ### Miscellaneous
 
@@ -224,16 +226,12 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | \\q    | quits from Mint interpreter                   | --        |
 | \\x    | execute machine code at address               | addr -- ? |
 | \\0    | start address of data stack                   | -- adr    |
-| \\1    | heap pointer variable                         | -- adr    |
-| \\2    | text input buffer pointer variable            | -- adr    |
-| \\3    | show stack                                    | -- adr    |
-| \\4    | is hex variable                               | -- adr    |
+| \\1    | text input buffer pointer variable            | -- adr    |
 
 ### Macros
 
-| Symbol | Description         |
-| ------ | ------------------- |
+| Symbol | Description                     |
+| ------ | ------------------------------- |
 | ^B     | toggle base decimal/hexadecimal |
-| ^H     | backspace           |
-| ^P     | print stack |
-
+| ^H     | backspace                       |
+| ^P     | print stack                     |
