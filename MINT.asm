@@ -292,6 +292,18 @@ opcodes:
         DB    lsb(inv_)    ;    ~            
         DB    lsb(del_)    ;    backspace
 
+iUserVars:
+        DW dStack               ; \0 S0
+        DW HEAP                 ; \1 vHERE
+        DW TIB                  ; \3 vTibPtr
+        DW getCharImpl          ; \2 vGetChar
+        DW FALSE                ; \4 vIsHex
+        DW altcodes             ; \5 vAltCodes
+        DW defs                 ; \6 cDefs
+        DW vars                 ; \7 cVars
+        DW macros               ; \8 cMacros
+        DW 0                    ; \9 
+
 ; **********************************************************************
 ; 
 ; defs that are written in Mint - placed here to fill up zeroth page
@@ -311,6 +323,140 @@ toggleBase_:
 
 printStack_:
         .cstr "`=> `\\p\\n\\n`> `;"
+
+initialize:
+        LD IX,RSTACK
+        LD IY,NEXT			; IY provides a faster jump to NEXT
+        ; LD HL,DSTACK
+        ; LD (S0),HL
+        ; LD HL,HEAP
+        ; LD (HERE),HL
+        ; LD HL,TIB
+        ; ld (vTibPtr),HL
+        ; LD HL,getCharImpl
+        ; LD (VGETCHAR),HL
+        ; LD HL,FALSE
+        ; LD (isHex),HL
+        LD HL,iUserVars
+        LD DE,userVars
+        LD BC,10 * 2
+        LDIR
+        LD HL,defs
+        LD B,26
+init1:
+        LD (HL),lsb(empty_)
+        INC HL
+        LD (HL),msb(empty_)
+        INC HL
+        DJNZ init1
+        LD BC,$20 * 2
+        LD DE,macros
+        LD HL,ctrlcodes
+        LDIR
+        RET
+
+mint:
+        LD SP,DSTACK
+        CALL initialize
+        CALL enter
+        .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
+interpret:
+        CALL enter
+        .cstr "\\n\\n`> `"
+interpret1:
+        LD BC,TIB
+
+; *******************************************************************         
+; Wait for a character from the serial input (keyboard) 
+; and store it in the text buffer. Keep accepting characters,
+; increasing the instruction pointer BC - until a newline received.
+; *******************************************************************
+
+waitchar:   
+        CALL getchar        ; loop around waiting for character
+        CP $7F              ; Greater or equal to $7F
+        JR NC, endchar             
+        CP $20
+        JR NC, waitchar1
+        CP $0               ; is it end of string?
+        JR Z, endchar
+        CP '\n'              ; newline?
+        JR Z, waitchar2
+        CP '\r'              ; carriage return?
+        JR Z, waitchar3
+        
+        ADD A,A
+        LD HL,MACROS
+        LD D,0
+        LD E,A
+        ADD HL,DE
+        LD (vTibPtr),BC
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        PUSH DE
+        CALL enter
+        .cstr "\\g"
+        LD BC,(vTibPtr)
+        JP waitchar
+
+waitchar1:
+        LD (BC), A          ; store the character in textbuf
+        INC BC
+
+waitchar2:        
+        CALL putchar        ; echo character to screen
+        JR  waitchar        ; wait for next character
+
+waitchar3:
+        LD (BC), A          ; store the character in textbuf
+        INC BC
+
+endchar:    
+        LD (vTibPtr),BC
+        CALL crlf
+
+        LD BC,TIB           ; Instructions stored on heap at address HERE
+        DEC BC
+                            ; Drop into the NEXT and dispatch routines
+
+; ********************************************************************************
+; Dispatch Routine.
+;
+; Get the next character and form a 1 byte jump address
+;
+; This target jump address is loaded into HL, and using JP (HL) to quickly 
+; jump to the selected function.
+;
+; Individual handler routines will deal with each category:
+;
+; 1. Detect characters A-Z and jump to the User Command handler routine
+;
+; 2. Detect characters a-z and jump to the variable handler routine
+;
+; 3. All other characters are punctuation and cause a jump to the associated
+; primitive code.
+;
+; Instruction Pointer IP BC is incremented
+; *********************************************************************************
+
+NEXT:   
+        INC BC                      ; 6t    Increment the IP
+        LD A, (BC)                  ; 7t    Get the next character and dispatch
+		
+dispatch:                        
+        sub ' '                     ; 7t    remove char offset
+        JR NC,dispatch1
+        CP 0 - ' '                  ;       expected values: 0 or '\r'
+        JP Z, exit_
+        JR interpret                ;       back to OK prompt
+dispatch1:
+        LD DE, opcodes              ; 7t    Start address of jump table         
+        LD E,A                      ; 4t    Index into table
+        LD A,(DE)                   ; 7t    get low jump address
+        LD L,A                      ; 4t    and put into L
+        LD H, msb(page1)            ; 7t    Load H with the 1st page address
+        JP  (HL)                    ; 4t    Jump to routine
 
 printdec:
 
@@ -403,136 +549,6 @@ endnum:
         PUSH HL                 ; 11t   Put the number on the stack
         DEC BC
         JP (IY)                 ; and process the next character
-
-initialize:
-        LD IX,RSTACK
-        LD IY,NEXT			; IY provides a faster jump to NEXT
-        LD HL,DSTACK
-        LD (S0),HL
-        LD HL,HEAP
-        LD (HERE),HL
-        LD HL,TIB
-        ld (TIBPTR),HL
-        LD HL,getCharImpl
-        LD (VGETCHAR),HL
-        LD HL,FALSE
-        LD (isHex),HL
-        LD HL,defs
-        LD B,26
-init1:
-        LD (HL),lsb(empty_)
-        INC HL
-        LD (HL),msb(empty_)
-        INC HL
-        DJNZ init1
-        LD BC,$20 * 2
-        LD DE,macros
-        LD HL,ctrlcodes
-        LDIR
-        RET
-
-mint:
-        LD SP,DSTACK
-        CALL initialize
-        CALL enter
-        .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
-interpret:
-        CALL enter
-        .cstr "\\n\\n`> `"
-interpret1:
-        LD BC,TIB
-
-; *******************************************************************         
-; Wait for a character from the serial input (keyboard) 
-; and store it in the text buffer. Keep accepting characters,
-; increasing the instruction pointer BC - until a newline received.
-; *******************************************************************
-
-waitchar:   
-        CALL getchar        ; loop around waiting for character
-        CP $7F              ; Greater or equal to $7F
-        JR NC, endchar             
-        CP $20
-        JR NC, waitchar1
-        CP $0               ; is it end of string?
-        JR Z, endchar
-        CP '\n'              ; newline?
-        JR Z, waitchar2
-        CP '\r'              ; carriage return?
-        JR Z, waitchar3
-        
-        ADD A,A
-        LD HL,MACROS
-        LD D,0
-        LD E,A
-        ADD HL,DE
-        LD (TIBPTR),BC
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        PUSH DE
-        CALL enter
-        .cstr "\\g"
-        LD BC,(TIBPTR)
-        JP waitchar
-
-waitchar1:
-        LD (BC), A          ; store the character in textbuf
-        INC BC
-
-waitchar2:        
-        CALL putchar        ; echo character to screen
-        JR  waitchar        ; wait for next character
-
-waitchar3:
-        LD (BC), A          ; store the character in textbuf
-        INC BC
-
-endchar:    
-        LD (TIBPTR),BC
-        CALL crlf
-
-        LD BC,TIB           ; Instructions stored on heap at address HERE
-        DEC BC
-                            ; Drop into the NEXT and dispatch routines
-
-; ********************************************************************************
-; Dispatch Routine.
-;
-; Get the next character and form a 1 byte jump address
-;
-; This target jump address is loaded into HL, and using JP (HL) to quickly 
-; jump to the selected function.
-;
-; Individual handler routines will deal with each category:
-;
-; 1. Detect characters A-Z and jump to the User Command handler routine
-;
-; 2. Detect characters a-z and jump to the variable handler routine
-;
-; 3. All other characters are punctuation and cause a jump to the associated
-; primitive code.
-;
-; Instruction Pointer IP BC is incremented
-; *********************************************************************************
-
-NEXT:   
-        INC BC                      ; 6t    Increment the IP
-        LD A, (BC)                  ; 7t    Get the next character and dispatch
-		
-dispatch:                        
-        sub ' '                     ; 7t    remove char offset
-        JR NC,dispatch1
-        CP 0 - ' '                  ;       expected values: 0 or '\r'
-        JP Z, exit_
-        JR interpret                ;       back to OK prompt
-dispatch1:
-        LD DE, opcodes              ; 7t    Start address of jump table         
-        LD E,A                      ; 4t    Index into table
-        LD A,(DE)                   ; 7t    get low jump address
-        LD L,A                      ; 4t    and put into L
-        LD H, msb(page1)            ; 7t    Load H with the 1st page address
-        JP  (HL)                    ; 4t    Jump to routine
 
         .align $100             ; page boundary
 
@@ -1070,7 +1086,7 @@ def1:
         LD E,A              ; Index into table
         LD D,0
         ADD HL,DE
-        LD DE,(HERE)        ; start of defintion
+        LD DE,(vHERE)       ; start of defintion
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
         LD (HL),D           ; Save high byte of address in CFA+1
@@ -1084,7 +1100,7 @@ nextbyte:                   ; Skip to end of definition
         JR z, end_def       ; end the definition
         JR  nextbyte        ; get the next element
 end_def:    
-        LD (HERE),DE        ; bump heap ptr to after definiton
+        LD (vHERE),DE        ; bump heap ptr to after definiton
         DEC BC
         JP (IY)       
 
@@ -1102,7 +1118,7 @@ alt:
 
 dot:        
         POP HL
-        LD A,(isHex)
+        LD A,(vIsHex)
         OR A
         JR Z,dot1
         CALL printhex
@@ -1138,20 +1154,20 @@ hexp:                      ; Print HL as a hexadecimal
 
 compNEXT:
         POP DE          ; DE = return address
-        LD HL,(HERE)    ; load heap ptr
+        LD HL,(vHERE)    ; load heap ptr
         LD (HL),E       ; store lsb
         INC HL          
         LD (HL),D
         INC HL
-        LD (HERE),HL    ; save heap ptr
+        LD (vHERE),HL    ; save heap ptr
         JP NEXT
 
 ccompNEXT:
         POP DE          ; DE = return address
-        LD HL,(HERE)    ; load heap ptr
+        LD HL,(vHERE)    ; load heap ptr
         LD (HL),E       ; store lsb
         INC HL          
-        LD (HERE),HL    ; save heap ptr
+        LD (vHERE),HL    ; save heap ptr
         JP NEXT
 
 ; define a word array
@@ -1163,7 +1179,7 @@ arrDef:
 cArrDef_:
         LD IY,ccompNEXT 
 arrDef1:      
-        LD HL,(HERE)    ; HL = heap ptr
+        LD HL,(vHERE)    ; HL = heap ptr
         _rpush H,L      ; save start of array \[  \]
         JP NEXT         ; hardwired to NEXT
 
@@ -1171,7 +1187,7 @@ arrDef1:
 arrEnd:
         _rpop D,E       ; DE = start of array
         PUSH DE         
-        LD HL,(HERE)    ; HL = heap ptr
+        LD HL,(vHERE)    ; HL = heap ptr
         OR A
         SBC HL,DE       ; bytes on heap 
         SRL H           ; BC = m words
@@ -1183,7 +1199,7 @@ arrEnd:
 cArrEnd_:
         _rpop D,E       ; DE = start of array
         PUSH DE         
-        LD HL,(HERE)    ; HL = heap ptr
+        LD HL,(vHERE)    ; HL = heap ptr
         OR A
         SBC HL,DE       ; bytes on heap 
 arrEnd2:
@@ -1339,7 +1355,7 @@ sysvar_:
         LD A,(BC)
         SUB "0"                 ; Calc index
         ADD A,A
-        LD HL,SYSVARS
+        LD HL,userVars
         LD E,A
         LD D,0
         ADD HL,DE
@@ -1491,7 +1507,7 @@ serial_init:
 ;             HL destroyed
 ; This function does not return until a character is available
 getchar:
-        LD HL,(VGETCHAR)
+        LD HL,(vGetChar)
         JP (HL)
         
 getCharImpl:
@@ -1600,38 +1616,46 @@ conv:		AND	0x0F
         .ORG RAMSTART
         
         DS DSIZE
-DSTACK:        
+dStack:        
 
         DS RSIZE
-RSTACK:        
-TIB:
+rStack:        
+tib:
         DS TIBSIZE
 
 ; ****************************************************************
 ; VARS Table - holds 26 16-bit user variables
 ; ****************************************************************
-VARS:
+vars:
         DS 26 * 2
 
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros
 ; ****************************************************************
-MACROS:
+macros:
         DS $20 * 2
 
 ; ****************************************************************
 ; DEFS Table - holds 26 addresses of user routines
 ; ****************************************************************
-DEFS:
+defs:
         DS 26 * 2
 
-SYSVARS:
-S0:         DW 0                ; \0                   
-HERE:       DW 0                ; \1
-TIBPTR:     DW 0                ; \2
-VGETCHAR:   DW 0                ; \3 vector with pointer to getchar implementation
-isHex:      DW 0                ; \4
+userVars:
+
+cS0:        DW 0                ; \0                   
+vHERE:      DW 0                ; \1
+vTibPtr:    DW 0                ; \2
+vGetChar:  DW 0                ; \3 
+vIsHex:     DW 0                ; \4
+vAltCodes:  DW 0                ; \5
+cDefs:      DW 0                ; \6
+cVars:      DW 0                ; \7
+cMacros:    DW 0                ; \8
+            DW 0                ; \9
+
 tbPtr:      DW 0                ; reserved for tests
+
         
 HEAP:         
 
