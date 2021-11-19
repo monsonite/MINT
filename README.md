@@ -182,6 +182,7 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | \\k    | read a char from input                                    | -- val      |
 | \\n    | prints a newline to output                                | --          |
 | \\O    | output to an I/O port                                     | val port -- |
+| \\\|    | text input buffer pointer variable                        | -- adr         |
 
 ### User Definitions
 

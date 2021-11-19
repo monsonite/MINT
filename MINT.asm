@@ -298,12 +298,18 @@ iUserVars:
         DW TIB                  ; vTibPtr
         DW getCharImpl          ; vGetChar
         DW altcodes             ; vAltCodes
+        DW 0                    ; 
         
         DW dStack               ; \0 cS0
         DW TIB                  ; \1 cTIB
         DW defs                 ; \2 cDefs
         DW vars                 ; \3 cVars
         DW macros               ; \4 cMacros
+        DW userVars             ; \5 cUserVars
+        DW 0                    ; \6 
+        DW 0                    ; \7 
+        DW 0                    ; \8 
+        DW 0                    ; \9 
 
 ; **********************************************************************
 ; 
@@ -317,10 +323,10 @@ empty_:
         .cstr ";"
 
 backsp_:
-        .cstr "1_\\2\\+8\\e` `8\\e;"
+        .cstr "1_\\|\\+8\\e` `8\\e;"
 
 toggleBase_:
-        .cstr "\\b@1^\\b!;"
+        .cstr "\\b@\\~\\b!;"
 
 printStack_:
         .cstr "`=> `\\p\\n\\n`> `;"
@@ -330,7 +336,7 @@ initialize:
         LD IY,NEXT			; IY provides a faster jump to NEXT
         LD HL,iUserVars
         LD DE,userVars
-        LD BC,10 * 2
+        LD BC,16 * 2
         LDIR
         LD HL,defs
         LD B,26
@@ -662,14 +668,14 @@ altcodes:
         DW   nop_       ;    r
         DW   nop_       ;    s    
         DW   nop_       ;    t
-        DW   nop_       ;    u
+        DW   userVar_   ;    u
         DW   nop_       ;    v   
         DW   nop_       ;    w
         DW   exec_      ;    x
         DW   nop_       ;    y
         DW   nop_       ;    z
         DW   nop_       ;    {
-        DW   nop_       ;    |            
+        DW   tibPtr_    ;    |            
         DW   nop_       ;    }            
         DW   not_       ;    ~ ( b -- notb ) logical not           
         DW   nop_       ;    BS
@@ -1145,11 +1151,11 @@ hexp:                      ; Print HL as a hexadecimal
 
 userVar_:
         LD DE,userVars
-        JP access1
+        POP HL
+        JP access2
 
 access_:
         POP DE
-access1:
         POP HL
 access2:
         ADD HL,HL
@@ -1157,60 +1163,18 @@ access2:
         PUSH HL
         JP (IY)
 
-compNEXT:
-        POP DE          ; DE = return address
-        LD HL,(vHeapPtr)    ; load heap ptr
-        LD (HL),E       ; store lsb
-        INC HL          
-        LD (HL),D
-        INC HL
-        LD (vHeapPtr),HL    ; save heap ptr
-        JP NEXT
+knownVar_:
+        LD A,(BC)
+        SUB "0"                 ; Calc index
+        LD L,A
+        LD H,0
+        LD DE,knownVars
+        JP access2
 
-ccompNEXT:
-        POP DE          ; DE = return address
-        LD HL,(vHeapPtr)    ; load heap ptr
-        LD (HL),E       ; store lsb
-        INC HL          
-        LD (vHeapPtr),HL    ; save heap ptr
-        JP NEXT
-
-; define a word array
-arrDef:      
-        LD IY,compNEXT  
-        JR arrDef1
-
-; define a character array
-cArrDef_:
-        LD IY,ccompNEXT 
-arrDef1:      
-        LD HL,(vHeapPtr)    ; HL = heap ptr
-        _rpush H,L      ; save start of array \[  \]
-        JP NEXT         ; hardwired to NEXT
-
-; end a word array
-arrEnd:
-        _rpop D,E       ; DE = start of array
-        PUSH DE         
-        LD HL,(vHeapPtr)    ; HL = heap ptr
-        OR A
-        SBC HL,DE       ; bytes on heap 
-        SRL H           ; BC = m words
-        RR L
-        JR arrEnd2
-
-; end a character array
-
-cArrEnd_:
-        _rpop D,E       ; DE = start of array
-        PUSH DE         
-        LD HL,(vHeapPtr)    ; HL = heap ptr
-        OR A
-        SBC HL,DE       ; bytes on heap 
-arrEnd2:
-        PUSH HL 
-        LD IY,NEXT
-        JP (IY)         ; hardwired to NEXT
+tibPtr_:
+        LD HL,vTIBPtr
+        PUSH HL
+        JP (IY)
 
 cFetch_:                    ; Fetch the value from the address placed on the top of the stack      
         POP     HL          ; 10t
@@ -1226,16 +1190,6 @@ cStore_:                    ; Store the value at the address placed on the top o
         LD     (HL),E       ; 7t
         JP     (IY)         ; 8t
                             ; 48t
-
-adef_:
-        PUSH HL             ; Save HL
-        LD HL, MACROS       ; Start address of jump table         
-        INC BC
-        LD  A,(BC)          ; Get the next character
-        INC BC
-        SUB "@"             ; Calc index
-        JP def1
-
 base16_:
         LD HL,vBase16
         PUSH HL
@@ -1299,18 +1253,6 @@ i_:
         PUSH IX
         JP (IY)
 
-incr_:
-        POP HL                  ; HL = addr, save BC
-        POP DE                  ; DE = incr
-        LD A,E                  ; A = lsb(addr@)
-        ADD A,(HL)              ; add lsb(incr) and A 
-        LD (HL),A               ; store A in lsb(addr@)
-        INC HL
-        LD A,D                  ; A = msb(addr@)
-        ADC A,(HL)              ; add with carry msb(addr@)
-        LD (HL),A               ; store A in msb(addr@)
-        JP (IY)        
-
 j_:
         PUSH IX
         POP HL
@@ -1351,6 +1293,86 @@ outPort_:
 quit_:
         RET                     ; display OK and exit interpreter
 
+; *********************************************************************
+; * extensions
+; *********************************************************************
+
+compNEXT:
+        POP DE          ; DE = return address
+        LD HL,(vHeapPtr)    ; load heap ptr
+        LD (HL),E       ; store lsb
+        INC HL          
+        LD (HL),D
+        INC HL
+        LD (vHeapPtr),HL    ; save heap ptr
+        JP NEXT
+
+ccompNEXT:
+        POP DE          ; DE = return address
+        LD HL,(vHeapPtr)    ; load heap ptr
+        LD (HL),E       ; store lsb
+        INC HL          
+        LD (vHeapPtr),HL    ; save heap ptr
+        JP NEXT
+
+; define a word array
+arrDef:      
+        LD IY,compNEXT  
+        JR arrDef1
+
+; define a character array
+cArrDef_:
+        LD IY,ccompNEXT 
+arrDef1:      
+        LD HL,(vHeapPtr)    ; HL = heap ptr
+        _rpush H,L      ; save start of array \[  \]
+        JP NEXT         ; hardwired to NEXT
+
+; end a word array
+arrEnd:
+        _rpop D,E       ; DE = start of array
+        PUSH DE         
+        LD HL,(vHeapPtr)    ; HL = heap ptr
+        OR A
+        SBC HL,DE       ; bytes on heap 
+        SRL H           ; BC = m words
+        RR L
+        JR arrEnd2
+
+; end a character array
+
+cArrEnd_:
+        _rpop D,E       ; DE = start of array
+        PUSH DE         
+        LD HL,(vHeapPtr)    ; HL = heap ptr
+        OR A
+        SBC HL,DE       ; bytes on heap 
+arrEnd2:
+        PUSH HL 
+        LD IY,NEXT
+        JP (IY)         ; hardwired to NEXT
+
+adef_:
+        PUSH HL             ; Save HL
+        LD HL, MACROS       ; Start address of jump table         
+        INC BC
+        LD  A,(BC)          ; Get the next character
+        INC BC
+        SUB "@"             ; Calc index
+        JP def1
+
+incr_:
+        POP HL                  ; HL = addr, save BC
+        POP DE                  ; DE = incr
+        LD A,E                  ; A = lsb(addr@)
+        ADD A,(HL)              ; add lsb(incr) and A 
+        LD (HL),A               ; store A in lsb(addr@)
+        INC HL
+        LD A,D                  ; A = msb(addr@)
+        ADC A,(HL)              ; add with carry msb(addr@)
+        LD (HL),A               ; store A in msb(addr@)
+        JP (IY)        
+
 strDef_:
         INC BC                  ; point to next char
         PUSH BC                 ; push string address
@@ -1366,13 +1388,6 @@ strDef2:
         PUSH DE                 ; push count
         JP   (IY) 
         
-knownVar_:
-        LD A,(BC)
-        SUB "0"                 ; Calc index
-        LD L,A
-        LD H,0
-        LD DE,knownVars
-        JP access2
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
@@ -1625,31 +1640,28 @@ conv:		AND	0x0F
 
         .ORG RAMSTART
         
-        DS DSIZE
+            DS DSIZE
 dStack:        
 
-        DS RSIZE
+            DS RSIZE
 rStack:        
-tib:
-        DS TIBSIZE
+
+tib:        DS TIBSIZE
 
 ; ****************************************************************
 ; VARS Table - holds 26 16-bit user variables
 ; ****************************************************************
-vars:
-        DS 26 * 2
+vars:       DS 26 * 2
 
 ; ****************************************************************
 ; CDEFS Table - holds $20 ctrl key macros
 ; ****************************************************************
-macros:
-        DS $20 * 2
+macros:     DS $20 * 2
 
 ; ****************************************************************
 ; DEFS Table - holds 26 addresses of user routines
 ; ****************************************************************
-defs:
-        DS 26 * 2
+defs:       DS 26 * 2
 
 userVars:
 
@@ -1658,17 +1670,40 @@ vBase16:    DW 0                ;
 vTibPtr:    DW 0                ; 
 vGetChar:   DW 0                ;  
 vAltCodes:  DW 0                ; 
+            DW 0
 
 knownVars:
 
 cS0:        DW 0                ; \0                   
-cTIB        DW 0                ; \4
-cDefs:      DW 0                ; \1
-cVars:      DW 0                ; \2
-cMacros:    DW 0                ; \3
+cTIB        DW 0                ; \1
+cDefs:      DW 0                ; \2
+cVars:      DW 0                ; \3
+cMacros:    DW 0                ; \4
+cUserVars:  DW 0                ; \5
+            DW 0                ; 
+            DW 0                ; 
+            DW 0                ; 
+            DW 0                ; 
 
 tbPtr:      DW 0                ; reserved for tests
 
         
 HEAP:         
 
+        DW HEAP                 ; vHeapPtr
+        DW FALSE                ; vBase16
+        DW TIB                  ; vTibPtr
+        DW getCharImpl          ; vGetChar
+        DW altcodes             ; vAltCodes
+        DW 0                    ; 
+        
+        DW dStack               ; \0 cS0
+        DW TIB                  ; \1 cTIB
+        DW defs                 ; \2 cDefs
+        DW vars                 ; \3 cVars
+        DW macros               ; \4 cMacros
+        DW userVars             ; \5 cUserVars
+        DW 0                    ; \6 
+        DW 0                    ; \7 
+        DW 0                    ; \8 
+        DW 0                    ; \9 
