@@ -157,7 +157,8 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | &      | 16-bit bitwise AND                   | a b -- c |
 | \|     | 16-bit bitwise OR                    | a b -- c |
 | ^      | 16-bit bitwise XOR                   | a b -- c |
-| \\~    | boolean NOT                          | a -- b   |
+
+Note: logical NOT can be achieved with 0=
 
 ### Stack Operations
 
@@ -207,15 +208,16 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | ------ | ------------------------------------------- | -------------- |
 | @      | FETCH a value from memory                   | -- val         |
 | !      | STORE a value to memory                     | val adr --     |
+| \\+    | increments variable at address by an amount | val addr --    |
+| \\-    | decrements variable at address by an amount | val addr --    |
 | \\@    | FETCH a byte from memory                    | -- val         |
 | \\!    | STORE a byte to memory                      | val adr --     |
 | [      | begin an array definition                   | --             |
 | ]      | end an array definition                     | -- adr nwords  |
+| \\#    | calcs address of index in an array          | idx adr -- adr |
 | \\[    | begin a byte array definition               | --             |
 | \\]    | end a byte array definition                 | -- adr nbytes  |
 | \\\`   | define a string                             | -- adr nchars  |
-| \\+    | increments variable at address by an amount | val addr --    |
-| \\#    | 16-bit value lookup                         | idx adr -- adr |
 | \\h    | heap pointer variable                       | -- adr         |
 
 ### Miscellaneous

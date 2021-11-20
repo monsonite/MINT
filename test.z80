@@ -10,6 +10,7 @@ CALL initialize
 ; .cstr "`Done!!`"
 ; HALT
 
+test "1_~",0
 test "1\\~",0
 test "\\0@",DSTACK
 test "1_ 2+",1
@@ -28,6 +29,9 @@ test "1(\\i@)", 0
 test "1(1(\\i@ \\j@+))", 0
 test "2(2(\\i@ \\j@))+++++++", 4
 test "100a! 1 a\\+ a@", 101
+
+.if EXTENDED = TRUE
+
 test "[3] '@", 3
 test "[3]", 1
 test "[1 2 3] $ @ ", 1
@@ -50,6 +54,8 @@ test "\\h@ [1 2 3]'' \\h@ $ - ", 6
 test "\\h@ \\[1 2 3 \\]'' \\h@ $ - ", 3
 test "\\`abc` $ ' ",3
 test "\\`abc` ' \\@ ",$61
+
+.endif
 
 CALL enter
 .cstr "`Done!`"

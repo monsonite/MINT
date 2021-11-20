@@ -170,6 +170,7 @@
         TIBSIZE     EQU $100
         TRUE        EQU 1
         FALSE       EQU 0
+        EXTENDED    EQU FALSE
 
 .macro _rpush,reghi,reglo
 
@@ -323,10 +324,10 @@ empty_:
         .cstr ";"
 
 backsp_:
-        .cstr "\\$@\\~\\~(1\\$\\-8\\e` `8\\e);"
+        .cstr "\\$@0=0=(1\\$\\-8\\e` `8\\e);"
 
 toggleBase_:
-        .cstr "\\b@\\~\\b!;"
+        .cstr "\\b@0=\\b!;"
 
 printStack_:
         .cstr "`=> `\\p\\n\\n`> `;"
@@ -681,7 +682,7 @@ altcodes:
         DW   nop_       ;    {
         DW   nop_       ;    |            
         DW   nop_       ;    }            
-        DW   not_       ;    ~ ( b -- notb ) logical not           
+        DW   nop_       ;               
         DW   nop_       ;    BS
 
         
@@ -806,6 +807,7 @@ or_:
     
 xor_:		 
         POP     DE            ; Bitwise XOR the top 2 elements of the stack
+xor1:
         POP     HL
         LD      A,E
         XOR     L
@@ -816,6 +818,10 @@ xor_:
         PUSH    HL
         JP      (IY)
 
+inv_:						    ; Bitwise INVert the top member of the stack
+        LD DE, $FFFF            ; by xoring with $FFFF
+        JR xor1        
+   
 add_:                          ; Add the top 2 members of the stack
         POP     DE             ; 10t
         POP     HL             ; 10t
@@ -841,10 +847,6 @@ shr:
         PUSH HL
         JP (IY)                 ; 8t
 
-inv_:						    ; Bitwise INVert the top member of the stack
-        LD DE, $FFFF            ; by subtracting from $FFFF
-        JR      SUB_1        
-   
 neg_:   LD HL, 0    		    ; NEGate the value on top of stack (2's complement)
         POP DE                  ; 10t
         JR SUB_2                ; use the SUBtract routine
@@ -1231,8 +1233,7 @@ depth_:
 
 dots_:
         CALL enter
-        ; DB "\\0@2-\\d1-\\9!\\9@\\_\\~  \\9@(",$22,"@.2-)'",0
-        DB "\\0@2-\\d1-\\9!\\9@\\_\\~(\\9@(",$22,"@.2-))'",0
+        DB "\\0@2-\\d1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
         JP (IY)
 
 max_:
@@ -1280,21 +1281,13 @@ i_:
 
 decr_:
         CALL enter
-        .cstr "$_$\\+"
+        .cstr "$_%@+$!"
         JP (IY)
 
 incr_:
-        POP HL                  ; HL = addr
-        POP DE                  ; DE = incr
-incr1:
-        LD A,E                  ; A = lsb(addr@)
-        ADD A,(HL)              ; add lsb(incr) and A 
-        LD (HL),A               ; store A in lsb(addr@)
-        INC HL
-        LD A,D                  ; A = msb(addr@)
-        ADC A,(HL)              ; add with carry msb(addr@)
-        LD (HL),A               ; store A in msb(addr@)
-        JP (IY)        
+        CALL enter
+        .cstr "$%@+$!"
+        JP (IY)
 
 j_:
         PUSH IX
@@ -1315,17 +1308,6 @@ newln_:
         call crlf
         JP (IY)        
 
-not_:
-        POP HL
-        LD A,L
-        OR H
-        JR Z,not1
-        LD HL,-1
-not1:
-        INC HL
-        PUSH HL
-        JP (IY)        
-
 outPort_:
         POP HL
         LD C,L
@@ -1339,6 +1321,9 @@ quit_:
 ; *********************************************************************
 ; * extensions
 ; *********************************************************************
+
+        
+.if EXTENDED = TRUE
 
 compNEXT:
         POP DE          ; DE = return address
@@ -1418,7 +1403,8 @@ strDef2:
         JR NZ,strDef1
         PUSH DE                 ; push count
         JP   (IY) 
-        
+
+
 type_:
         POP BC
         POP HL
@@ -1431,6 +1417,20 @@ type2:
         LD A,C
         OR B
         JR NZ,type1
+
+
+.else
+
+arrDef:
+arrEnd:
+cArrDef_:
+cArrEnd_:
+adef_:
+strDef_:
+type_:
+        JP   (IY) 
+
+.endif
 
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
