@@ -170,7 +170,7 @@
         TIBSIZE     EQU $100
         TRUE        EQU 1
         FALSE       EQU 0
-        EXTENDED    EQU TRUE
+        EXTENDED    EQU FALSE
 
 .macro ENTER
         CALL enter
@@ -1164,22 +1164,24 @@ userVar_:
         POP HL
         JP access2
 
-access_:
-        POP DE
-        POP HL
-access2:
-        ADD HL,HL
-        ADD HL,DE
-        PUSH HL
-        JP (IY)
-
 knownVar_:
+        ; C32-\0
         LD A,(BC)
         SUB "0"                 ; Calc index
         LD L,A
         LD H,0
         LD DE,knownVars
         JP access2
+
+access_:
+        POP DE
+        POP HL
+access2:
+        ; {+
+        ADD HL,HL
+        ADD HL,DE
+        PUSH HL
+        JP (IY)
 
 tibPtr_:
         LD HL,vTIBPtr
@@ -1273,16 +1275,6 @@ i_:
         PUSH IX
         JP (IY)
 
-decr_:
-        ENTER
-        .cstr "$_%@+$!"
-        JP (IY)
-
-incr_:
-        ENTER
-        .cstr "$%@+$!"
-        JP (IY)
-
 j_:
         PUSH IX
         POP HL
@@ -1317,15 +1309,20 @@ sign_:
         .cstr "32768&0=0="
         JP (IY)
 
-type_:
-        ENTER
-        .cstr "(",$22,"\\@\\e1+)"
-        JP (IY)
-
 ; *********************************************************************
 ; * extensions
 ; *********************************************************************
 .if EXTENDED = TRUE
+
+decr_:
+        ENTER
+        .cstr "$_%@+$!"
+        JP (IY)
+
+incr_:
+        ENTER
+        .cstr "$%@+$!"
+        JP (IY)
 
 compNEXT:
         POP DE          ; DE = return address
@@ -1406,14 +1403,22 @@ strDef2:
         PUSH DE                 ; push count
         JP   (IY) 
 
+type_:
+        ENTER
+        .cstr "(",$22,"\\@\\e1+)"
+        JP (IY)
+
 .else
 
+decr_:
+incr_:
 arrDef:
 arrEnd:
 cArrDef_:
 cArrEnd_:
 adef_:
 strDef_:
+type_:
         JP   (IY) 
 
 .endif
