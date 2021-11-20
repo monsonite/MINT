@@ -170,7 +170,7 @@
         TIBSIZE     EQU $100
         TRUE        EQU 1
         FALSE       EQU 0
-        EXTENDED    EQU FALSE
+        EXTENDED    EQU TRUE
 
 .macro _rpush,reghi,reglo
 
@@ -1404,20 +1404,10 @@ strDef2:
         PUSH DE                 ; push count
         JP   (IY) 
 
-
 type_:
-        POP BC
-        POP HL
-        JR type2
-type1:        
-        LD A,(HL)
-        CALL PUTCHAR
-        DEC BC
-type2:
-        LD A,C
-        OR B
-        JR NZ,type1
-
+        CALL enter
+        .cstr "$\\9!(\\9@\\@\\e1\\9\\+)"
+        JP (IY)
 
 .else
 
