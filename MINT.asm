@@ -172,6 +172,10 @@
         FALSE       EQU 0
         EXTENDED    EQU TRUE
 
+.macro ENTER
+        CALL enter
+.endm
+
 .macro _rpush,reghi,reglo
 
         DEC IX                  
@@ -316,7 +320,7 @@ iUserVars:
 ; 
 ; defs that are written in Mint - placed here to fill up zeroth page
 ; Note: opcode zero (i.e. exit_) can exit Mint and go into machine code
-; Mint can be reentered from machine code by CALL enter
+; Mint can be reentered from machine code by ENTER
 ;
 ; **********************************************************************
 
@@ -356,10 +360,10 @@ init1:
 mint:
         LD SP,DSTACK
         CALL initialize
-        CALL enter
+        ENTER
         .cstr "`MINT V1.0 by Ken Boak and John Hardy`\\n"
 interpret:
-        CALL enter
+        ENTER
         .cstr "\\n\\n`> `"
 interpret1:
         LD BC,0
@@ -393,7 +397,7 @@ waitchar:
         INC HL
         LD D,(HL)
         PUSH DE
-        CALL enter
+        ENTER
         .cstr "\\g"
         LD BC,(vTibPtr)
         JP waitchar
@@ -1132,16 +1136,6 @@ dot2:
         CALL space
         JP (IY)
 
-sign_:
-        POP HL
-        BIT 7,H
-        LD HL,0
-        JR Z,sign1
-        INC HL
-sign1:        
-        PUSH HL
-        JP (IY)
-        
 ; **************************************************************************             
 ; Print the string between underscores
 str:                       
@@ -1232,17 +1226,17 @@ depth_:
         JP (IY)
 
 dots_:
-        CALL enter
+        ENTER
         DB "\\0@2-\\d1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
         JP (IY)
 
 max_:
-        CALL enter
+        ENTER
         .cstr "%%<($)'"
         JP (IY)
 
 min_:
-        CALL enter
+        ENTER
         .cstr "%%>($)'"
         JP (IY)
 
@@ -1280,12 +1274,12 @@ i_:
         JP (IY)
 
 decr_:
-        CALL enter
+        ENTER
         .cstr "$_%@+$!"
         JP (IY)
 
 incr_:
-        CALL enter
+        ENTER
         .cstr "$%@+$!"
         JP (IY)
 
@@ -1318,11 +1312,19 @@ outPort_:
 quit_:
         RET                     ; display OK and exit interpreter
 
+sign_:
+        ENTER
+        .cstr "32768&0=0="
+        JP (IY)
+
+type_:
+        ENTER
+        .cstr "(",$22,"\\@\\e1+)"
+        JP (IY)
+
 ; *********************************************************************
 ; * extensions
 ; *********************************************************************
-
-        
 .if EXTENDED = TRUE
 
 compNEXT:
@@ -1404,11 +1406,6 @@ strDef2:
         PUSH DE                 ; push count
         JP   (IY) 
 
-type_:
-        CALL enter
-        .cstr "$\\9!(\\9@\\@\\e1\\9\\+)"
-        JP (IY)
-
 .else
 
 arrDef:
@@ -1417,7 +1414,6 @@ cArrDef_:
 cArrEnd_:
 adef_:
 strDef_:
-type_:
         JP   (IY) 
 
 .endif
