@@ -201,6 +201,7 @@ Note: logical NOT can be achieved with 0=
 | )      | END a loop or conditionally executed code block   | --     |
 | \\i    | returns index variable of current loop            | -- val |
 | \\j    | returns index variable of outer loop              | -- val |
+| \\w    | if false then skip to end of loop                 | b --   |
 
 ### Memory and Variable Operations
 

@@ -170,7 +170,7 @@
         TIBSIZE     EQU $100
         TRUE        EQU 1
         FALSE       EQU 0
-        EXTENDED    EQU FALSE
+        EXTENDED    EQU TRUE
 
 .macro ENTER
         CALL enter
@@ -679,7 +679,7 @@ altcodes:
         DW   type_      ;    t
         DW   userVar_   ;    u
         DW   nop_       ;    v   
-        DW   nop_       ;    w
+        DW   while_     ;    w  ; ( b -- ) if false, skip to end of loop 
         DW   exec_      ;    x
         DW   nop_       ;    y
         DW   nop_       ;    z
@@ -1064,13 +1064,19 @@ again:
         LD B,(IX+5)                 
         JP (IY)
 again1:   
-        INC IX                      ; drop loop var
-        INC IX
-        INC IX                      ; drop loop limit
-        INC IX
-        INC IX                      ; drop loop address
-        INC IX
+        LD DE,6                     ; drop loop frame
+        ADD IX,DE
         JP (IY)
+
+while_: 
+        POP HL
+        _isZero H,L
+        JR Z,while1
+        JP (IY)
+while1:
+        LD DE,6                     ; drop loop frame
+        ADD IX,DE
+        JP begin1                   ; skip to end of loop        
 
 ; **************************************************************************             
 ; def is used to create a colon definition
