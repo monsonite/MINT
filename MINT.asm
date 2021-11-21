@@ -298,13 +298,6 @@ opcodes:
         DB    lsb(del_)    ;    backspace
 
 iUserVars:
-        DW HEAP                 ; vHeapPtr
-        DW FALSE                ; vBase16
-        DW TIB                  ; vTibPtr
-        DW getCharImpl          ; vGetChar
-        DW altcodes             ; vAltCodes
-        DW 0                    ; 
-        
         DW dStack               ; \0 cS0
         DW TIB                  ; \1 cTIB
         DW defs                 ; \2 cDefs
@@ -315,6 +308,14 @@ iUserVars:
         DW 0                    ; \7 
         DW 0                    ; \8 
         DW 0                    ; \9 
+
+        DW HEAP                 ; vHeapPtr
+        DW FALSE                ; vBase16
+        DW TIB                  ; vTibPtr
+        DW getCharImpl          ; vGetChar
+        DW altcodes             ; vAltCodes
+        DW 0                    ; 
+        
 
 ; **********************************************************************
 ; 
@@ -560,39 +561,39 @@ endnum:
 
 ctrlcodes:
 altcodes:
-        DW empty_       ; NUL ^@
-        DW empty_       ; SOH ^A
-        DW toggleBase_  ; STX ^B
-        DW empty_       ; ETX ^C
-        DW empty_       ; EOT ^D
-        DW empty_       ; ENQ ^E
-        DW empty_       ; ACK ^F
-        DW empty_       ; BEL ^G
-        DW backsp_      ; BS  ^H
-        DW empty_       ; TAB ^I
-        DW empty_       ; LF  ^J
-        DW empty_       ; VT  ^K
-        DW empty_       ; FF  ^L
-        DW empty_       ; CR  ^M
-        DW empty_       ; SO  ^N
-        DW empty_       ; SI  ^O
-        DW printStack_  ; DLE ^P
-        DW empty_       ; DC1 ^Q
-        DW empty_       ; DC2 ^R
-        DW empty_       ; DC3 ^S
-        DW empty_       ; DC4 ^T
-        DW empty_       ; NAK ^U
-        DW empty_       ; SYN ^V
-        DW empty_       ; ETB ^W
-        DW empty_       ; CAN ^X
-        DW empty_       ; EM  ^Y
-        DW empty_       ; SUB ^Z
-        DW empty_       ; ESC ^[
-        DW empty_       ; FS  ^\
-        DW empty_       ; GS  ^]
-        DW empty_       ; RS  ^^
-        DW empty_       ; US  ^_
-        DW empty_       ; SP  ^`
+        DW   empty_     ; NUL ^@
+        DW   empty_     ; SOH ^A
+        DW   toggleBase_; STX ^B
+        DW   empty_     ; ETX ^C
+        DW   empty_     ; EOT ^D
+        DW   empty_     ; ENQ ^E
+        DW   empty_     ; ACK ^F
+        DW   empty_     ; BEL ^G
+        DW   backsp_    ; BS  ^H
+        DW   empty_     ; TAB ^I
+        DW   empty_     ; LF  ^J
+        DW   empty_     ; VT  ^K
+        DW   empty_     ; FF  ^L
+        DW   empty_     ; CR  ^M
+        DW   empty_     ; SO  ^N
+        DW   empty_     ; SI  ^O
+        DW   printStack_; DLE ^P
+        DW   empty_     ; DC1 ^Q
+        DW   empty_     ; DC2 ^R
+        DW   empty_     ; DC3 ^S
+        DW   empty_     ; DC4 ^T
+        DW   empty_     ; NAK ^U
+        DW   empty_     ; SYN ^V
+        DW   empty_     ; ETB ^W
+        DW   empty_     ; CAN ^X
+        DW   empty_     ; EM  ^Y
+        DW   empty_     ; SUB ^Z
+        DW   empty_     ; ESC ^[
+        DW   empty_     ; FS  ^\
+        DW   empty_     ; GS  ^]
+        DW   empty_     ; RS  ^^
+        DW   empty_     ; US  ^_
+        DW   empty_     ; SP  ^`
         DW   cStore_    ;    !            
         DW   nop_       ;    "
         DW   access_    ;    #  ( idx adr -- adr ) access item in array
@@ -1703,13 +1704,6 @@ defs:       DS 26 * 2
 
 userVars:
 
-vHeapPtr:   DW 0                ; 
-vBase16:    DW 0                ; 
-vTibPtr:    DW 0                ; 
-vGetChar:   DW 0                ;  
-vAltCodes:  DW 0                ; 
-            DW 0
-
 knownVars:
 
 cS0:        DW 0                ; \0                   
@@ -1723,25 +1717,13 @@ cUserVars:  DW 0                ; \5
             DW 0                ; 
             DW 0                ; 
 
+vHeapPtr:   DW 0                ; 
+vBase16:    DW 0                ; 
+vTibPtr:    DW 0                ; 
+vGetChar:   DW 0                ;  
+vAltCodes:  DW 0                ; 
+            DW 0
+
 tbPtr:      DW 0                ; reserved for tests
 
-        
 HEAP:         
-
-        DW HEAP                 ; vHeapPtr
-        DW FALSE                ; vBase16
-        DW TIB                  ; vTibPtr
-        DW getCharImpl          ; vGetChar
-        DW altcodes             ; vAltCodes
-        DW 0                    ; 
-        
-        DW dStack               ; \0 cS0
-        DW TIB                  ; \1 cTIB
-        DW defs                 ; \2 cDefs
-        DW vars                 ; \3 cVars
-        DW macros               ; \4 cMacros
-        DW userVars             ; \5 cUserVars
-        DW 0                    ; \6 
-        DW 0                    ; \7 
-        DW 0                    ; \8 
-        DW 0                    ; \9 TMP
