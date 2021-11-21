@@ -183,7 +183,7 @@ Note: logical NOT can be achieved with 0=
 | \\k    | read a char from input                                    | -- val      |
 | \\n    | prints a newline to output                                | --          |
 | \\O    | output to an I/O port                                     | val port -- |
-| \\$    | text input pointer variable                               | -- adr         |
+| \\$    | text input pointer variable                               | -- adr      |
 
 ### User Definitions
 
