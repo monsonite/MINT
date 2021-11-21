@@ -593,7 +593,7 @@ altcodes:
         DW   empty_     ; GS  ^]
         DW   empty_     ; RS  ^^
         DW   empty_     ; US  ^_
-        DW   empty_     ; SP  ^`
+        DW   nop_       ; SP  ^`
         DW   cStore_    ;    !            
         DW   nop_       ;    "
         DW   access_    ;    #  ( idx adr -- adr ) access item in array
@@ -655,7 +655,7 @@ altcodes:
         DW   cArrDef_   ;    [
         DW   comment_   ;    \  comment text, skips reading until end of line
         DW   cArrEnd_   ;    ]
-        DW   nop_       ;    ^
+        DW   charCode_  ;    ^
         DW   sign_      ;    _  ( n -- b ) returns true if -ve 
         DW   strDef_    ;    `            
         DW   nop_       ;    a
@@ -1010,8 +1010,16 @@ div_end:
         JP       (IY)
         	        
         
-
-		
+while_: 
+        POP HL
+        _isZero H,L
+        JR Z,while1
+        JP (IY)
+while1:
+        LD DE,6                     ; drop loop frame
+        ADD IX,DE
+        JR begin1                   ; skip to end of loop        
+	
 begin:                               ; Left parentesis begins a loop
         POP HL
         _isZero H,L
@@ -1068,16 +1076,6 @@ again1:
         LD DE,6                     ; drop loop frame
         ADD IX,DE
         JP (IY)
-
-while_: 
-        POP HL
-        _isZero H,L
-        JR Z,while1
-        JP (IY)
-while1:
-        LD DE,6                     ; drop loop frame
-        ADD IX,DE
-        JP begin1                   ; skip to end of loop        
 
 ; **************************************************************************             
 ; def is used to create a colon definition
@@ -1331,6 +1329,14 @@ incr_:
 ; *********************************************************************
 .if EXTENDED = 1
 
+charCode_:
+        INC BC
+        LD A,(BC)
+        LD H,0
+        LD L,A
+        PUSH HL
+        JP (IY)
+
 compNEXT:
         POP DE          ; DE = return address
         LD HL,(vHeapPtr)    ; load heap ptr
@@ -1417,6 +1423,7 @@ type_:
 
 .else
 
+charCode_:
 arrDef:
 arrEnd:
 cArrDef_:
@@ -1706,23 +1713,22 @@ userVars:
 
 knownVars:
 
-cS0:        DW 0                ; \0                   
-cTIB        DW 0                ; \1
-cDefs:      DW 0                ; \2
-cVars:      DW 0                ; \3
-cMacros:    DW 0                ; \4
-cUserVars:  DW 0                ; \5
-            DW 0                ; 
-            DW 0                ; 
-            DW 0                ; 
-            DW 0                ; 
-
-vHeapPtr:   DW 0                ; 
-vBase16:    DW 0                ; 
-vTibPtr:    DW 0                ; 
-vGetChar:   DW 0                ;  
-vAltCodes:  DW 0                ; 
-            DW 0
+cS0:        DW 0                ; \00                   
+cTIB        DW 0                ; \01
+cDefs:      DW 0                ; \02
+cVars:      DW 0                ; \03
+cMacros:    DW 0                ; \04
+cUserVars:  DW 0                ; \05
+            DW 0                ; \06
+            DW 0                ; \07
+            DW 0                ; \08
+            DW 0                ; \09
+vHeapPtr:   DW 0                ; \10
+vBase16:    DW 0                ; \11
+vTibPtr:    DW 0                ; \12
+vGetChar:   DW 0                ; \13 
+vAltCodes:  DW 0                ; \14
+            DW 0                ; \15
 
 tbPtr:      DW 0                ; reserved for tests
 
