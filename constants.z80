@@ -2,6 +2,7 @@
 
 ROMSTART    EQU $8000
 RAMSTART    EQU $8800
+EXTENDED    EQU 1
         
 ; Configuration for TEC-1
 

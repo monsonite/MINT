@@ -6,12 +6,11 @@
 LD SP,DSTACK
 CALL initialize
 
-CALL enter
-.cstr "`Done!!`"
-HALT
+; CALL enter
+; .cstr "`Done!`"
+; HALT
 
 test "1_~",0
-test "1\\~",0
 test "\\0@",DSTACK
 test "1_ 2+",1
 test "3x! 1 x\\+ x@", 4
@@ -32,8 +31,9 @@ test "0t! 10(1t\\+) t@",10
 test "0t! 10(\\i@ 4< \\w 1t\\+) t@",5
 test "100a! 1 a\\+ a@", 101
 
-.if EXTENDED = TRUE
+.if EXTENDED = 1
 
+test "3",3
 test "[3] '@", 3
 test "[3]", 1
 test "[1 2 3] $ @ ", 1

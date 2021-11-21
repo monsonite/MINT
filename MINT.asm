@@ -163,6 +163,7 @@
 
         ;ROMSTART    EQU $8000
         ;RAMSTART    EQU $8800
+        ;EXTENDED    EQU 1
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -170,7 +171,6 @@
         TIBSIZE     EQU $100
         TRUE        EQU 1
         FALSE       EQU 0
-        EXTENDED    EQU TRUE
 
 .macro ENTER
         CALL enter
@@ -686,7 +686,7 @@ altcodes:
         DW   nop_       ;    {
         DW   nop_       ;    |            
         DW   nop_       ;    }            
-        DW   nop_       ;               
+        DW   nop_       ;    ~           
         DW   nop_       ;    BS
 
         
@@ -1315,11 +1315,6 @@ sign_:
         .cstr "32768&0=0="
         JP (IY)
 
-; *********************************************************************
-; * extensions
-; *********************************************************************
-.if EXTENDED = TRUE
-
 decr_:
         ENTER
         .cstr "$_%@+$!"
@@ -1329,6 +1324,11 @@ incr_:
         ENTER
         .cstr "$%@+$!"
         JP (IY)
+
+; *********************************************************************
+; * extensions
+; *********************************************************************
+.if EXTENDED = 1
 
 compNEXT:
         POP DE          ; DE = return address
@@ -1416,8 +1416,6 @@ type_:
 
 .else
 
-decr_:
-incr_:
 arrDef:
 arrEnd:
 cArrDef_:
