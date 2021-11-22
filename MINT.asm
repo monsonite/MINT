@@ -343,7 +343,7 @@ altCodes:
         DB     lsb(empty_)     ; CAN ^X
         DB     lsb(empty_)     ; EM  ^Y
         DB     lsb(empty_)     ; SUB ^Z
-        DB     lsb(empty_)     ; ESC ^[
+        DB     lsb(escape_)    ; ESC ^[
         DB     lsb(empty_)     ; FS  ^\
         DB     lsb(empty_)     ; GS  ^]
         DB     lsb(empty_)     ; RS  ^^
@@ -1041,25 +1041,6 @@ begin6:
         JR NZ,begin2
         JP (IY)
 
-again:
-        LD E,(IX+0)                 ; peek loop var
-        LD D,(IX+1)                 
-        LD L,(IX+2)                 ; peek loop limit
-        LD H,(IX+3)                 
-        OR A
-        SBC HL,DE
-        JR Z,again1
-        INC DE
-        LD (IX+0),E                 ; poke loop var
-        LD (IX+1),D                 
-        LD C,(IX+4)                 ; peek loop address
-        LD B,(IX+5)                 
-        JP (IY)
-again1:   
-        LD DE,6                     ; drop loop frame
-        ADD IX,DE
-        JP (IY)
-
 ; **************************************************************************
 ; Macros must end with ; 
 ; this code must not span pages
@@ -1068,6 +1049,9 @@ iMacros:
 
 empty_:
         .cstr ";"
+
+escape_:
+        .cstr "13\\e100(` `)13\\e`> `0\\$!;"
 
 backsp_:
         .cstr "\\$@0=0=(1\\$\\-8\\e` `8\\e);"
@@ -1202,14 +1186,26 @@ key_:
         PUSH HL
         JP (IY)
 
-max_:
-        call ENTER
-        .cstr "%%<($)'"
+min_:                           ; a b -- c
+        POP DE
+        POP HL
+        PUSH HL
+        OR A
+        SBC HL,DE
+        JR NC,max1
         JP (IY)
 
-min_:
-        call ENTER
-        .cstr "%%>($)'"
+max_:                           ; a b -- c
+        POP DE
+        POP HL
+        PUSH HL
+        OR A
+        SBC HL,DE
+        JR C,max1
+        JP (IY)
+max1:
+        EX DE,HL
+        EX (SP),HL
         JP (IY)
 
 newln_:
@@ -1350,6 +1346,25 @@ space:
         JP putchar
 
 ; **************************************************************************
+
+again:
+        LD E,(IX+0)                 ; peek loop var
+        LD D,(IX+1)                 
+        LD L,(IX+2)                 ; peek loop limit
+        LD H,(IX+3)                 
+        OR A
+        SBC HL,DE
+        JR Z,again1
+        INC DE
+        LD (IX+0),E                 ; poke loop var
+        LD (IX+1),D                 
+        LD C,(IX+4)                 ; peek loop address
+        LD B,(IX+5)                 
+        JP (IY)
+again1:   
+        LD DE,6                     ; drop loop frame
+        ADD IX,DE
+        JP (IY)
 
 alt:
         INC BC
