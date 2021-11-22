@@ -165,9 +165,15 @@
 ;
 ; *****************************************************************************
 
+<<<<<<< HEAD
         ; ROMSTART    EQU $0
         ; RAMSTART    EQU $800
         ; EXTENDED    EQU 1
+=======
+        ;ROMSTART    EQU $8000
+        ;RAMSTART    EQU $8800
+        ;EXTENDED    EQU 1
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -176,6 +182,13 @@
         TRUE        EQU 1
         FALSE       EQU 0
 
+<<<<<<< HEAD
+=======
+.macro ENTER
+        CALL enter
+.endm
+
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 .macro _rpush,reghi,reglo
 
         DEC IX                  
@@ -204,7 +217,11 @@
 ; **************************************************************************		
 
 
+<<<<<<< HEAD
         call ENTER
+=======
+        ENTER
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         .cstr "`MINT V1.0 by Ken Boak, John Hardy and Craig Jones`\\n"
 
 ; **************************************************************************
@@ -314,8 +331,13 @@ opcodes:
 ; ***********************************************************************
 ; Alternate function codes		
 ; ***********************************************************************		
+<<<<<<< HEAD
 ctrlCodes:
 altCodes:
+=======
+ctrlcodes:
+altcodes:
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         DB     lsb(empty_)     ; NUL ^@
         DB     lsb(empty_)     ; SOH ^A
         DB     lsb(toggleBase_); STX ^B
@@ -351,7 +373,11 @@ altCodes:
         DB     lsb(nop_)       ; SP  ^`
         DB     lsb(cStore_)    ;    !            
         DB     lsb(nop_)       ;    "
+<<<<<<< HEAD
         DB     lsb(nop_)       ;    
+=======
+        DB     lsb(access_)    ;    #  ( idx adr -- adr ) access item in array
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         DB     lsb(tibPtr_)    ;    $  ( -- adr ) text input ptr           
         DB     lsb(nop_)       ;    %            
         DB     lsb(nop_)       ;    &
@@ -461,7 +487,11 @@ iUserVars:
         DW FALSE                ; vBase16
         DW TIB                  ; vTibPtr
         DW getCharImpl          ; vGetChar
+<<<<<<< HEAD
         DW altCodes             ; vAltCodes
+=======
+        DW altcodes             ; vAltCodes
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         DW 0                    ; 
         
 
@@ -469,7 +499,11 @@ iUserVars:
 ; 
 ; defs that are written in Mint - placed here to fill up zeroth page
 ; Note: opcode zero (i.e. exit_) can exit Mint and go into machine code
+<<<<<<< HEAD
 ; Mint can be reentered from machine code by calling "enter"
+=======
+; Mint can be reentered from machine code by ENTER
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 ;
 ; **********************************************************************
 
@@ -490,6 +524,7 @@ init1:
         LD (HL),msb(empty_)
         INC HL
         DJNZ init1
+<<<<<<< HEAD
         LD BC,$20
         LD DE,ctrlCodes
         LD HL,macros
@@ -501,6 +536,12 @@ init2:
         LD (HL),msb(iMacros)
         INC HL
         DJNZ init2
+=======
+        LD BC,$20 * 2
+        LD DE,macros
+        LD HL,ctrlcodes
+        LDIR
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         RET
 
 mint:
@@ -508,7 +549,11 @@ mint:
         CALL initialize
 
 interpret:
+<<<<<<< HEAD
         call ENTER
+=======
+        ENTER
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         .cstr "\\n\\n`> `"
 interpret1:
         LD BC,0
@@ -542,7 +587,11 @@ waitchar:
         INC HL
         LD D,(HL)
         PUSH DE
+<<<<<<< HEAD
         call ENTER
+=======
+        ENTER
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         .cstr "\\g"
         LD BC,(vTibPtr)
         JP waitchar
@@ -596,17 +645,28 @@ NEXT:
         LD A, (BC)                  ; 7t    Get the next character and dispatch
 		
 dispatch:                        
+<<<<<<< HEAD
         LD H, msb(page1)            ; 7t    Load H with the 1st page address
         LD DE, opcodes              ; 7t    Start address of jump table         
+=======
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         sub ' '                     ; 7t    remove char offset
         JR NC,dispatch1
         CP 0 - ' '                  ;       expected values: 0 or '\r'
         JP Z, exit_
         JR interpret                ;       back to OK prompt
 dispatch1:
+<<<<<<< HEAD
         LD E,A                      ; 4t    Index into table
         LD A,(DE)                   ; 7t    get low jump address
         LD L,A                      ; 4t    and put into L
+=======
+        LD DE, opcodes              ; 7t    Start address of jump table         
+        LD E,A                      ; 4t    Index into table
+        LD A,(DE)                   ; 7t    get low jump address
+        LD L,A                      ; 4t    and put into L
+        LD H, msb(page1)            ; 7t    Load H with the 1st page address
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         JP  (HL)                    ; 4t    Jump to routine
 
 printdec:
@@ -633,9 +693,27 @@ Num2:
         add	hl,de
         jr	c,Num2
         sbc	hl,de
+<<<<<<< HEAD
         JP putchar
         
 ENTER:
+=======
+        JR put_ret
+        
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JR put_ret
+        
+space:       
+        LD A, ' '           
+put_ret:
+        CALL putchar
+        RET
+
+enter:
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         _rpush B,C              ; save Instruction Pointer
         POP BC
         DEC BC
@@ -692,7 +770,10 @@ endnum:
 ; **********************************************************************			 
 ; Start of primitive routines 
 ; **********************************************************************
+<<<<<<< HEAD
         .align $100
+=======
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 page1:
 
 alt_:        
@@ -914,7 +995,11 @@ nop_:       JP NEXT             ; hardwire white space to always go to NEXT (imp
 ;*******************************************************************
 ; Page 2 Primitives
 ;*******************************************************************
+<<<<<<< HEAD
         .align   $100           
+=======
+           
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 
 query:
         JP       (IY) 
@@ -1003,6 +1088,20 @@ div_end:
 
         JP       (IY)
         	        
+<<<<<<< HEAD
+=======
+        
+while_: 
+        POP HL
+        _isZero H,L
+        JR Z,while1
+        JP (IY)
+while1:
+        LD DE,6                     ; drop loop frame
+        ADD IX,DE
+        JR begin1                   ; skip to end of loop        
+	
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 begin:                               ; Left parentesis begins a loop
         POP HL
         _isZero H,L
@@ -1060,6 +1159,7 @@ again1:
         ADD IX,DE
         JP (IY)
 
+<<<<<<< HEAD
 ; **************************************************************************
 ; Macros must end with ; 
 ; this code must not span pages
@@ -1104,17 +1204,153 @@ cArrDef_:                   ; define a character array
         JP arrDef1
 
 cFetch_:
+=======
+; **************************************************************************             
+; def is used to create a colon definition
+; When a colon is detected, the next character (usually uppercase alpha)
+; is looked up in the vector table to get its associated code field address
+; This CFA is updated to point to the character after uppercase alpha
+; The remainder of the characters are then skipped until after a semicolon  
+; is found.
+; ***************************************************************************
+
+def:                       ; Create a colon definition
+        PUSH HL             ; Save HL
+        LD HL, DEFS         ; Start address of jump table         
+        INC BC
+        LD  A,(BC)          ; Get the next character
+        INC BC
+        SUB "A"             ; Calc index
+def1:
+        ADD A,A             ; Double A to index even addresses
+        LD E,A              ; Index into table
+        LD D,0
+        ADD HL,DE
+        LD DE,(vHeapPtr)       ; start of defintion
+        LD (HL),E           ; Save low byte of address in CFA
+        INC HL              
+        LD (HL),D           ; Save high byte of address in CFA+1
+        POP HL              ; Restore HL
+nextbyte:                   ; Skip to end of definition   
+        LD A,(BC)           ; Get the next character
+        INC BC              ; Point to next character
+        LD (DE),A
+        INC DE
+        CP ";"              ; Is it a semicolon 
+        JR z, end_def       ; end the definition
+        JR  nextbyte        ; get the next element
+end_def:    
+        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
+        DEC BC
+        JP (IY)       
+
+alt:
+        INC BC
+        LD A,(BC)
+        ADD A,A
+        LD HL,altcodes
+        LD L,A
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        EX DE,HL
+        JP (HL)                 ; Execute code from Alt
+        
+; **************************************************************************
+; Page 5  Extended (C)
+; **************************************************************************
+	        
+
+dot:        
+        POP HL
+        LD A,(vBase16)
+        OR A
+        JR Z,dot1
+        CALL printhex
+        JR dot2
+dot1:
+        CALL printdec
+dot2:
+        CALL space
+        JP (IY)
+
+; **************************************************************************             
+; Print the string between underscores
+str:                       
+        INC BC
+        
+nextchar:            
+        LD A, (BC)
+        INC BC
+        CP "`"              ; ` is the string terminator
+        JR Z,stringend
+        CALL putchar
+        JR   nextchar
+
+stringend:  
+        DEC BC
+        JP   (IY) 
+        
+hexp:                      ; Print HL as a hexadecimal
+        POP     HL
+        CALL    printhex
+        CALL    space
+        JP      (IY)
+
+userVar_:
+        LD DE,userVars
+        POP HL
+        JP access2
+
+knownVar_:
+        ; C32-\0
+        LD A,(BC)
+        SUB "0"                 ; Calc index
+        LD L,A
+        LD H,0
+        LD DE,knownVars
+        JP access2
+
+access_:
+        POP DE
+        POP HL
+access2:
+        ; {+
+        ADD HL,HL
+        ADD HL,DE
+        PUSH HL
+        JP (IY)
+
+tibPtr_:
+        LD HL,vTIBPtr
+        PUSH HL
+        JP (IY)
+
+cFetch_:                    ; Fetch the value from the address placed on the top of the stack      
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         POP     HL          ; 10t
         LD      E,(HL)      ; 7t
         LD      D,0         ; 7t
         PUSH    DE          ; 11t
         JP      (IY)        ; 8t
                             ; 49t 
+<<<<<<< HEAD
 charCode_:
         INC BC
         LD A,(BC)
         LD H,0
         LD L,A
+=======
+        
+cStore_:                    ; Store the value at the address placed on the top of the stack
+        POP    HL           ; 10t
+        POP    DE           ; 10t
+        LD     (HL),E       ; 7t
+        JP     (IY)         ; 8t
+                            ; 48t
+base16_:
+        LD HL,vBase16
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         PUSH HL
         JP (IY)
 
@@ -1126,6 +1362,7 @@ comment_:
         DEC BC
         JP   (IY) 
 
+<<<<<<< HEAD
 cStore_:	  
         POP    HL           ; 10t
         POP    DE           ; 10t
@@ -1137,6 +1374,8 @@ decr_:
         .cstr "$_%@+$!"
         JP (IY)
 
+=======
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 depth_:
         LD HL,0
         ADD HL,SP
@@ -1148,6 +1387,39 @@ depth_:
         RR L
         PUSH HL
         JP (IY)
+<<<<<<< HEAD
+=======
+        
+        
+empty_:
+        .cstr ";"
+
+backsp_:
+        .cstr "\\$@0=0=(1\\$\\-8\\e` `8\\e);"
+
+toggleBase_:
+        .cstr "\\b@0=\\b!;"
+
+printStack_:
+        .cstr "`=> `\\p\\n\\n`> `;"        
+        
+        
+
+dots_:
+        ENTER
+        DB "\\0@2-\\d1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
+        JP (IY)
+
+max_:
+        ENTER
+        .cstr "%%<($)'"
+        JP (IY)
+
+min_:
+        ENTER
+        .cstr "%%>($)'"
+        JP (IY)
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 
 emit_:
         POP HL
@@ -1158,6 +1430,15 @@ emit_:
 exec_:
         POP HL              
         JP (HL)
+<<<<<<< HEAD
+=======
+        
+        
+; **************************************************************************
+; Page 6  Extended (D)
+; **************************************************************************
+        
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 
 go_:
         _rpush B,C              ; save Instruction Pointer
@@ -1170,6 +1451,7 @@ heapPtr_:
         PUSH HL
         JP (IY)
 
+<<<<<<< HEAD
 i_:
         PUSH IX
         JP (IY)
@@ -1179,6 +1461,8 @@ incr_:
         .cstr "$%@+$!"
         JP (IY)
 
+=======
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 inPort_:
         POP HL
         LD C,L
@@ -1187,6 +1471,13 @@ inPort_:
         PUSH HL
         JP (IY)        
 
+<<<<<<< HEAD
+=======
+i_:
+        PUSH IX
+        JP (IY)
+
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 j_:
         PUSH IX
         POP HL
@@ -1202,6 +1493,7 @@ key_:
         PUSH HL
         JP (IY)
 
+<<<<<<< HEAD
 max_:
         call ENTER
         .cstr "%%<($)'"
@@ -1212,6 +1504,8 @@ min_:
         .cstr "%%>($)'"
         JP (IY)
 
+=======
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 newln_:
         call crlf
         JP (IY)        
@@ -1227,6 +1521,7 @@ quit_:
         RET                     ; display OK and exit interpreter
 
 sign_:
+<<<<<<< HEAD
         POP HL
         BIT 7,H
         LD HL,0
@@ -1319,6 +1614,35 @@ strDef2:
 
 ; ARRAY compilation routines ***********************************************
 
+=======
+        ENTER
+        .cstr "32768&0=0="
+        JP (IY)
+
+decr_:
+        ENTER
+        .cstr "$_%@+$!"
+        JP (IY)
+
+incr_:
+        ENTER
+        .cstr "$%@+$!"
+        JP (IY)
+
+; *********************************************************************
+; * extensions
+; *********************************************************************
+.if EXTENDED = 1
+
+charCode_:
+        INC BC
+        LD A,(BC)
+        LD H,0
+        LD L,A
+        PUSH HL
+        JP (IY)
+
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 compNEXT:
         POP DE          ; DE = return address
         LD HL,(vHeapPtr)    ; load heap ptr
@@ -1337,6 +1661,7 @@ ccompNEXT:
         LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
 
+<<<<<<< HEAD
 ; **************************************************************************
 
 crlf:       
@@ -1364,12 +1689,25 @@ alt:
 ; define a word array
 arrDef:      
         LD IY,compNEXT  
+=======
+; define a word array
+arrDef:      
+        LD IY,compNEXT  
+        JR arrDef1
+
+; define a character array
+cArrDef_:
+        LD IY,ccompNEXT 
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 arrDef1:      
         LD HL,(vHeapPtr)    ; HL = heap ptr
         _rpush H,L      ; save start of array \[  \]
         JP NEXT         ; hardwired to NEXT
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 ; end a word array
 arrEnd:
         _rpop D,E       ; DE = start of array
@@ -1379,11 +1717,25 @@ arrEnd:
         SBC HL,DE       ; bytes on heap 
         SRL H           ; BC = m words
         RR L
+<<<<<<< HEAD
+=======
+        JR arrEnd2
+
+; end a character array
+
+cArrEnd_:
+        _rpop D,E       ; DE = start of array
+        PUSH DE         
+        LD HL,(vHeapPtr)    ; HL = heap ptr
+        OR A
+        SBC HL,DE       ; bytes on heap 
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 arrEnd2:
         PUSH HL 
         LD IY,NEXT
         JP (IY)         ; hardwired to NEXT
 
+<<<<<<< HEAD
 ; **************************************************************************             
 ; def is used to create a colon definition
 ; When a colon is detected, the next character (usually uppercase alpha)
@@ -1470,6 +1822,47 @@ stringend:
 
 .else
 
+=======
+adef_:
+        PUSH HL             ; Save HL
+        LD HL, MACROS       ; Start address of jump table         
+        INC BC
+        LD  A,(BC)          ; Get the next character
+        INC BC
+        SUB "@"             ; Calc index
+        JP def1
+
+strDef_:
+        INC BC                  ; point to next char
+        PUSH BC                 ; push string address
+        LD DE,0                 ; count = 0
+        JR strDef2
+strDef1:
+        INC BC                  ; point to next char
+        INC DE                  ; increase count
+strDef2:
+        LD A,(BC)
+        CP "`"                  ; ` is the string terminator
+        JR NZ,strDef1
+        PUSH DE                 ; push count
+        JP   (IY) 
+
+type_:
+        ENTER
+        .cstr "(",$22,"\\@\\e1+)"
+        JP (IY)
+
+.else
+
+charCode_:
+arrDef:
+arrEnd:
+cArrDef_:
+cArrEnd_:
+adef_:
+strDef_:
+type_:
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         JP   (IY) 
 
 .endif
@@ -1730,6 +2123,10 @@ conv:		AND	0x0F
 			CALL putchar
             RET                
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
         .ORG RAMSTART
         
             DS DSIZE
@@ -1741,10 +2138,29 @@ rStack:
 tib:        DS TIBSIZE
 
 ; ****************************************************************
+<<<<<<< HEAD
 ; USER variables
 ; ****************************************************************
 
 userVars:
+=======
+; VARS Table - holds 26 16-bit user variables
+; ****************************************************************
+vars:       DS 26 * 2
+
+; ****************************************************************
+; CDEFS Table - holds $20 ctrl key macros
+; ****************************************************************
+macros:     DS $20 * 2
+
+; ****************************************************************
+; DEFS Table - holds 26 addresses of user routines
+; ****************************************************************
+defs:       DS 26 * 2
+
+userVars:
+
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 knownVars:
 
 cS0:        DW 0                ; \00                   
@@ -1764,6 +2180,7 @@ vGetChar:   DW 0                ; \13
 vAltCodes:  DW 0                ; \14
             DW 0                ; \15
 
+<<<<<<< HEAD
 ; ****************************************************************
 ; Macros Table - holds $20 ctrl key macros
 ; ****************************************************************
@@ -1780,6 +2197,8 @@ vars:       DS 26 * 2
 defs:       DS 26 * 2
 
 
+=======
+>>>>>>> 77f0fbcdd7be838dbd1502ce8466897f10dd16f1
 tbPtr:      DW 0                ; reserved for tests
 
 HEAP:         
