@@ -7,18 +7,22 @@ LD SP,DSTACK
 CALL initialize
 
 ; CALL enter
-; .cstr "`Done!`"
+; .cstr "`Done!!`"
 ; HALT
 
+test "0", 0
+test "1", 1
+test "1 2+", 3
+test "123 456+", 579
+test "1_ 2+",1
+test "1_\\_",1
 test "3",3
 test "1 2+",3
 test "1_ 2+",1
 test "1_~",0
 test "\\0@",DSTACK
+test "\\^A",65
 test "3x! 1 x\\+ x@", 4
-test "0", 0
-test "1", 1
-test "123 456+", 579
 test ":X1; X", 1
 test "2x! x@", 2
 test ":Aa!; 3A a@", 3
@@ -32,18 +36,18 @@ test "2(2(\\i@ \\j@))+++++++", 4
 test "0t! 10(1t\\+) t@",10
 test "0t! 10(\\i@ 4< \\w 1t\\+) t@",5
 test "100a! 1 a\\+ a@", 101
-
-.if EXTENDED = 1
-
-test "\\^A",65
+test "\\`abc` $ ' ",3
+test "\\`abc` ' \\@ ",$61
 test "[3] '@", 3
 test "[3]", 1
 test "[1 2 3] $ @ ", 1
 test "[]", 0
 test "[10] '@", 10
 test "0t! [1 2 3] $ a! ( a@ \\i@ {+ @ t\\+ ) t@", 6
-CALL enter
+test "\\h@ [1 2 3]'' \\h@ $ - ", 6
+test "\\h@ \\[1 2 3 \\]'' \\h@ $ - ", 3
 
+CALL enter
 DB "0 t!"                           ; total = 0
 DB "[1 2 3 4 5]"                    ; declare array, returns address length
 DB "$ a!"                           ; store address in a, leave length
@@ -54,12 +58,13 @@ DB ")"                              ; end loop
 DB "t@"                             ; print total
 DB 0
 expect "sum over array",15
-test "\\h@ [1 2 3]'' \\h@ $ - ", 6
-test "\\h@ \\[1 2 3 \\]'' \\h@ $ - ", 3
-test "\\`abc` $ ' ",3
-test "\\`abc` ' \\@ ",$61
 
-.endif
+
+; .if EXTENDED = 1
+
+
+
+; .endif
 
 CALL enter
 .cstr "`Done!`"
