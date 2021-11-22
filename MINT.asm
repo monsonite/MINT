@@ -202,10 +202,15 @@
 ; **************************************************************************
 ; Page 0  Initialisation
 ; **************************************************************************		
+        JP start
 
-
+start:
+mint:
+        LD SP,DSTACK
+        CALL initialize
         call ENTER
         .cstr "`MINT V1.0 by Ken Boak, John Hardy and Craig Jones`\\n"
+        JP interpret
 
 ; **************************************************************************
 ; Page 1  Jump Tables
@@ -385,7 +390,7 @@ altCodes:
         DB     lsb(nop_)       ;    B
         DB     lsb(nop_)       ;    C
         DB     lsb(nop_)       ;    D    
-        DB     lsb(nop_)       ;    E  
+        DB     lsb(edit_)      ;    E  
         DB     lsb(nop_)       ;    F
         DB     lsb(nop_)       ;    G
         DB     lsb(nop_)       ;    H  
@@ -490,7 +495,7 @@ init1:
         LD (HL),msb(empty_)
         INC HL
         DJNZ init1
-        LD BC,$20
+        LD B,$20
         LD DE,ctrlCodes
         LD HL,macros
 init2:
@@ -502,10 +507,6 @@ init2:
         INC HL
         DJNZ init2
         RET
-
-mint:
-        LD SP,DSTACK
-        CALL initialize
 
 interpret:
         call ENTER
@@ -1051,7 +1052,7 @@ empty_:
         .cstr ";"
 
 escape_:
-        .cstr "13\\e100(` `)13\\e`> `0\\$!;"
+        .cstr "13\\e70(` `)13\\e`> `0\\$!;"
 
 backsp_:
         .cstr "\\$@0=0=(1\\$\\-8\\e` `8\\e);"
@@ -1133,6 +1134,9 @@ depth_:
         PUSH HL
         JP (IY)
 
+edit_:
+        JP edit
+        
 emit_:
         POP HL
         LD A,L
@@ -1312,6 +1316,42 @@ strDef2:
         JR NZ,strDef1
         PUSH DE                 ; push count
         JP   (IY) 
+
+edit:
+        LD A,":"
+        CALL putchar
+        INC BC
+        LD A,(BC)
+        CALL putchar
+        LD A,(BC)
+        SUB "A"
+        ADD A,A
+        LD HL,defs
+        LD E,A
+        LD D,0
+        ADD HL,DE
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        EX DE,HL
+        LD DE,TIB
+        JR edit2
+edit1:
+        INC HL
+        INC DE
+edit2:        
+        LD A,(HL)
+        CALL putchar
+        LD A,(HL)
+        LD (DE),A
+        CP ";"
+        JR NZ, edit1
+        EX DE,HL
+        LD DE,TIB
+        OR A
+        SBC HL,DE
+        LD (vTibPtr),HL
+        JP (IY)
 
 ; ARRAY compilation routines ***********************************************
 

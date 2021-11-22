@@ -17,7 +17,7 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
-testInput {"1\b"}
+testInput {"\\EA"}
 JP interpret1
 
 testGetCharImpl:
