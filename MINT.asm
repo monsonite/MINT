@@ -701,8 +701,10 @@ alt_:
         JP alt
 exit_:
         INC BC
-        LD HL,BC
-        _rpop B,C               ; Restore Instruction pointer
+        LD DE,BC                
+        CALL rpop               ; Restore Instruction pointer
+        LD BC,HL
+        EX DE,HL
         JP (HL)
         
 num_:   JP  number
@@ -724,7 +726,8 @@ call_:
         JP  (IY)                ; Execute code from User def
 
 ret_:
-        _rpop B,C               ; Restore Instruction pointer
+        CALL rpop               ; Restore Instruction pointer
+        LD BC,HL                
         JP (IY)             
 
 var_:
@@ -1014,13 +1017,10 @@ begin:                               ; Left parentesis begins a loop
         LD HL,BC
         CALL rpush          ; push loop address
         EX DE,HL
-        ; _rpush B,C          ; push loop address
         DEC HL
         CALL rpush          ; push loop address
-        ; _rpush H,L          ; push loop limit
         LD HL,0
         CALL rpush          ; push loop var=0
-        ; _rpush 0,0          ; push loop var=0
         JP (IY)
 begin1:
         LD E,1
@@ -1127,22 +1127,6 @@ cStore_:
         JP     (IY)         ; 8t
                             ; 48t
         
-; \+    a b -- [b]-a            ; increment variable at b by a
-decr_:
-        ; call ENTER
-        ; .cstr "$_%@+$!"
-        ; JP (IY)
-        POP HL
-        POP DE
-        LD A,(HL)
-        SUB E
-        LD (HL),A
-        INC HL
-        LD A,(HL)
-        SBC A,D
-        LD (HL),A
-        JP (IY)
-
 depth_:
         LD HL,0
         ADD HL,SP
@@ -1169,7 +1153,8 @@ exec_:
         JP (HL)
 
 go_:
-        _rpush B,C              ; save Instruction Pointer
+        LD HL,BC
+        CALL rpush              ; save Instruction Pointer
         POP BC
         DEC BC
         JP  (IY)                ; Execute code from User def
@@ -1195,6 +1180,23 @@ incr_:
         ADC A,(HL)
         LD (HL),A
         JP (IY)
+
+
+
+
+; \-    a b -- [b]-a            ; decrement variable at b by a
+decr_:
+        POP HL
+        POP DE
+        LD A,(HL)
+        SUB E
+        LD (HL),A
+        INC HL
+        LD A,(HL)
+        SBC A,D
+        LD (HL),A
+        JP (IY)
+
 
 inPort_:
         POP HL
@@ -1301,11 +1303,12 @@ dots:
         JP (IY)
 
 cArrEnd:
-        _rpop D,E       ; DE = start of array
-        PUSH DE         
-        LD HL,(vHeapPtr)    ; HL = heap ptr
+        CALL rpop               ; DE = start of array
+        PUSH HL
+        EX DE,HL
+        LD HL,(vHeapPtr)        ; HL = heap ptr
         OR A
-        SBC HL,DE       ; bytes on heap 
+        SBC HL,DE               ; bytes on heap 
         JP arrEnd2                  
 
 knownVar:
@@ -1464,17 +1467,17 @@ arrDef:
         LD IY,compNEXT  
 arrDef1:      
         LD HL,(vHeapPtr)    ; HL = heap ptr
-        _rpush H,L      ; save start of array \[  \]
+        CALL rpush          ; save start of array \[  \]
         JP NEXT         ; hardwired to NEXT
-
 
 ; end a word array
 arrEnd:
-        _rpop D,E       ; DE = start of array
-        PUSH DE         
-        LD HL,(vHeapPtr)    ; HL = heap ptr
+        CALL rpop               ; DE = start of array
+        PUSH HL
+        EX DE,HL
+        LD HL,(vHeapPtr)        ; HL = heap ptr
         OR A
-        SBC HL,DE       ; bytes on heap 
+        SBC HL,DE               ; bytes on heap 
         SRL H           ; BC = m words
         RR L
 arrEnd2:
