@@ -147,6 +147,9 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | {      | shift the number to the left (2\*)        | a -- b   |
 | }      | shift the number to the right (2/)        | a -- b   |
 | \\b    | base 16 flag variable                     | -- a     |
+| \\\_   | sign of number                            | n -- b   |
+| \\M    | maximum                                   | a b -- m |
+| \\m    | minimum                                   | a b -- m |
 
 ### Logical Operators
 
@@ -184,14 +187,18 @@ Note: logical NOT can be achieved with 0=
 | \\n    | prints a newline to output                                | --          |
 | \\O    | output to an I/O port                                     | val port -- |
 | \\$    | text input pointer variable                               | -- adr      |
+| \\t    | print a string                                            | adr len --  |
 
 ### User Definitions
 
 | Symbol | Description                | Effect |
 | ------ | -------------------------- | ------ |
-| :      | define a new word DEF      |
+| :c     | define a new word DEF      |
 | ;      | end of user definition END |
-| \\:    | start defining a macro     | --     |
+| \\:c   | start defining a macro     | --     |
+| \\Ec   | edit a definition          | --     |
+
+NOTE: c is an uppercase letter which is the name of the definition
 
 ### Loops and conditional execution
 
@@ -220,6 +227,24 @@ Note: logical NOT can be achieved with 0=
 | \\]    | end a byte array definition                 | -- adr nbytes  |
 | \\\`   | define a string                             | -- adr nchars  |
 | \\h    | heap pointer variable                       | -- adr         |
+| \\$    | text input buffer pointer variable          | -- adr         |
+| \\b    | base16 flag variable                        | -- adr         |
+| \\u    | user var                                    | n -- adr       |
+
+### Constants and variables
+
+| Symbol | Description                 | Effect |
+| ------ | --------------------------- | ------ |
+| \\0    | start address of data stack | -- adr |
+| \\1    | text input buffer address   | -- adr |
+| \\2    | defs address                | -- adr |
+| \\3    | vars address                | -- adr |
+| \\4    | macros address              | -- adr |
+| \\5    | user vars                   | -- adr |
+| \\6    |                             | -- adr |
+| \\7    |                             | -- adr |
+| \\8    |                             | -- adr |
+| \\9    | temp variable               | -- adr |
 
 ### Miscellaneous
 
@@ -229,13 +254,12 @@ Note: logical NOT can be achieved with 0=
 | \\g    | execute mint code at address                  | addr -- ? |
 | \\q    | quits from Mint interpreter                   | --        |
 | \\x    | execute machine code at address               | addr -- ? |
-| \\0    | start address of data stack                   | -- adr    |
-| \\1    | text input buffer pointer variable            | -- adr    |
 
 ### Macros
 
 | Symbol | Description                     |
 | ------ | ------------------------------- |
+| ^[     | escape clears the line          |
 | ^B     | toggle base decimal/hexadecimal |
 | ^H     | backspace                       |
 | ^P     | print stack                     |
