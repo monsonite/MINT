@@ -8,7 +8,7 @@
     jr buf2%%M
 buf1%%M:
     db s1
-    ; ,$5C,"q",$0D
+    ;$5C,"q",$0D
 buf2%%M:
 .endm
 
@@ -17,8 +17,8 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (VGETCHAR),HL
 
-testInput {"\\EA"}
-JP interpret1
+testInput {"\\EA\r\b1.;\rA\r",0}
+JP interpret
 
 testGetCharImpl:
         PUSH HL

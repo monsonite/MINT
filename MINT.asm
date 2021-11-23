@@ -165,6 +165,10 @@
 ;
 ; *****************************************************************************
 
+;       vFLAGS has up to 16 flags    
+;       fEDIT       EQU $0001
+;
+
         ; ROMSTART    EQU $0
         ; RAMSTART    EQU $800
         ; EXTENDED    EQU 1
@@ -333,10 +337,10 @@ altCodes:
         DB     lsb(empty_)     ; RS  ^^
         DB     lsb(empty_)     ; US  ^_)
         DB     lsb(nop_)       ; SP  ^`
-        DB     lsb(cStore_)    ;    !            
+        DB     lsb(cStore_)    ;    !  ( b adr -- ) store a byte at adr         
         DB     lsb(nop_)       ;    "
-        DB     lsb(nop_)       ;    
-        DB     lsb(tibPtr_)    ;    $  ( -- adr ) text input ptr           
+        DB     lsb(nop_)       ;    #
+        DB     lsb(TIBPtr_)    ;    $  ( -- adr ) text input ptr           
         DB     lsb(nop_)       ;    %            
         DB     lsb(nop_)       ;    &
         DB     lsb(nop_)       ;    '
@@ -350,7 +354,7 @@ altCodes:
         DB     lsb(nop_)       ;    /
         DB     lsb(knownVar_)  ;    0  ( -- adr ) start of data stack constant         
         DB     lsb(knownVar_)  ;    1  ; returns HERE variable
-        DB     lsb(knownVar_)  ;    2  ( -- adr ) tibPtr variable          
+        DB     lsb(knownVar_)  ;    2  ( -- adr ) TIBPtr variable          
         DB     lsb(knownVar_)  ;    3  ( -- adr ) isHex variable
         DB     lsb(knownVar_)  ;    4            
         DB     lsb(knownVar_)  ;    5            
@@ -443,10 +447,10 @@ iUserVars:
 
         DW HEAP                 ; vHeapPtr
         DW FALSE                ; vBase16
-        DW TIB                  ; vTibPtr
+        DW TIB                  ; vTIBPtr
         DW getCharImpl          ; vGetChar
         DW altCodes             ; vAltCodes
-        DW 0                    ; 
+        DW $0000                ; 
         
 
 ; **********************************************************************
@@ -461,7 +465,7 @@ iUserVars:
 
 initialize:
         LD IX,RSTACK
-        LD IY,NEXT			; IY provides a faster jump to NEXT
+        LD IY,NEXT			    ; IY provides a faster jump to NEXT
         LD HL,iUserVars
         LD DE,userVars
         LD BC,16 * 2
@@ -488,10 +492,21 @@ init2:
         RET
 
 interpret:
+        LD HL,(vFlags)
+        BIT 0,L                 ; edit mode
+        JR NZ,interpret2
+        
         call ENTER
         .cstr "\\n\\n`> `"
-interpret1:
-        LD BC,0
+
+interpret1:                     ; used by tests
+        LD HL,0
+        LD (vTIBPtr),HL
+interpret2:
+        LD HL,(vFlags)
+        RES 0,L                 ; not edit mode
+        LD (vFlags),HL
+        LD BC,(vTIBPtr)
 
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
@@ -500,32 +515,18 @@ interpret1:
 ; *******************************************************************
 
 waitchar:   
-        CALL getchar        ; loop around waiting for character
-        CP $7F              ; Greater or equal to $7F
+        CALL getchar            ; loop around waiting for character
+        CP $7F                  ; Greater or equal to $7F
         JR NC, endchar             
         CP $20
         JR NC, waitchar1
-        CP $0               ; is it end of string?
+        CP $0                   ; is it end of string?
         JR Z, endchar
-        CP '\n'              ; newline?
+        CP '\n'                 ; newline?
         JR Z, waitchar2
-        CP '\r'              ; carriage return?
+        CP '\r'                 ; carriage return?
         JR Z, waitchar3
-        
-        ADD A,A
-        LD HL,MACROS
-        LD D,0
-        LD E,A
-        ADD HL,DE
-        LD (vTibPtr),BC
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        PUSH DE
-        call ENTER
-        .cstr "\\g"
-        LD BC,(vTibPtr)
-        JP waitchar
+        JP macro    
 
 waitchar1:
         LD HL,TIB
@@ -544,7 +545,7 @@ waitchar3:
         INC BC
 
 endchar:    
-        LD (vTibPtr),BC
+        LD (vTIBPtr),BC
         CALL crlf
 
         LD BC,TIB           ; Instructions stored on heap at address HERE
@@ -582,7 +583,7 @@ dispatch:
         JR NC,dispatch1
         CP 0 - ' '                  ;       expected values: 0 or '\r'
         JP Z, exit_
-        JR interpret                ;       back to OK prompt
+        JP interpret                ;       back to OK prompt
 dispatch1:
         LD E,A                      ; 4t    Index into table
         LD A,(DE)                   ; 7t    get low jump address
@@ -1035,6 +1036,19 @@ begin6:
         JR NZ,begin2
         JP (IY)
 
+dot:        
+        POP HL
+        LD A,(vBase16)
+        OR A
+        JR Z,dot1
+        CALL printhex
+        JR dot2
+dot1:
+        CALL printdec
+dot2:
+        CALL space
+        JP (IY)
+
 ; **************************************************************************
 ; Macros must end with ; 
 ; this code must not span pages
@@ -1251,7 +1265,7 @@ sign2:
         PUSH HL
         JP (IY)
 
-tibPtr_:
+TIBPtr_:
         LD HL,vTIBPtr
         PUSH HL
         JP (IY)
@@ -1302,7 +1316,6 @@ knownVar:
         LD H,0
         LD DE,knownVars
 knownVar2:
-        ; {+
         ADD HL,HL
         ADD HL,DE
         PUSH HL
@@ -1336,9 +1349,11 @@ strDef2:
 
 edit:
         LD A,":"
+        LD (TIB),A
         CALL putchar
         INC BC
         LD A,(BC)
+        LD (TIB+1),A
         CALL putchar
         LD A,(BC)
         SUB "A"
@@ -1351,7 +1366,7 @@ edit:
         INC HL
         LD D,(HL)
         EX DE,HL
-        LD DE,TIB
+        LD DE,TIB+2
         JR edit2
 edit1:
         INC HL
@@ -1364,10 +1379,13 @@ edit2:
         CP ";"
         JR NZ, edit1
         EX DE,HL
-        LD DE,TIB
+        LD DE,TIB-1
         OR A
         SBC HL,DE
-        LD (vTibPtr),HL
+        LD (vTIBPtr),HL
+        LD HL,(vFLAGS)
+        SET 0,L
+        LD (vFLAGS),HL
         JP (IY)
 
 ; ARRAY compilation routines ***********************************************
@@ -1415,6 +1433,22 @@ rpop:
         LD H,(IX+0)
         INC IX                  
         RET
+
+macro:
+        ADD A,A
+        LD HL,MACROS
+        LD D,0
+        LD E,A
+        ADD HL,DE
+        LD (vTIBPtr),BC
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        PUSH DE
+        call ENTER
+        .cstr "\\g"
+        LD BC,(vTIBPtr)
+        JP waitchar
 
 ; **************************************************************************
 
@@ -1510,25 +1544,6 @@ end_def:
         DEC BC
         JP (IY)       
 
-dot:        
-        POP HL
-        LD A,(vBase16)
-        OR A
-        JR Z,dot1
-        CALL printhex
-        JR dot2
-dot1:
-        CALL printdec
-dot2:
-        CALL space
-        JP (IY)
-
-hexp:                       ; Print HL as a hexadecimal
-        POP     HL
-        CALL    printhex
-        CALL    space
-        JP      (IY)
-
 ; **************************************************************************             
 ; Print the string between the `backticks`
 
@@ -1547,6 +1562,11 @@ stringend:
         DEC BC
         JP   (IY) 
         
+hexp:                       ; Print HL as a hexadecimal
+        POP     HL
+        CALL    printhex
+        CALL    space
+        JP      (IY)
 
 ; *********************************************************************
 ; * extensions
@@ -1824,7 +1844,7 @@ dStack:
             DS RSIZE
 rStack:        
 
-tib:        DS TIBSIZE
+TIB:        DS TIBSIZE
 
 ; ****************************************************************
 ; USER variables
@@ -1845,10 +1865,10 @@ cUserVars:  DW 0                ; 5     \05
 vTemp:      DW 0                ; 9     \09
 vHeapPtr:   DW 0                ; 10
 vBase16:    DW 0                ; 11
-vTibPtr:    DW 0                ; 12
+vTIBPtr:    DW 0                ; 12
 vGetChar:   DW 0                ; 13 
 vAltCodes:  DW 0                ; 14
-            DW 0                ; 15
+vFlags:     DW 0                ; 15
 
 ; ****************************************************************
 ; Macros Table - holds $20 ctrl key macros
