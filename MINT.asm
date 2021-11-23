@@ -176,27 +176,6 @@
         TRUE        EQU 1
         FALSE       EQU 0
 
-.macro _rpush,reghi,reglo
-
-        DEC IX                  
-        LD (IX+0),reghi
-        DEC IX
-        LD (IX+0),reglo
-
-.endm
-
-.macro _rpop, reghi, reglo
-        LD reglo,(IX+0)         
-        INC IX              
-        LD reghi,(IX+0)
-        INC IX                  
-.endm
-
-.macro _isZero, reghi, reglo
-        LD A,reglo
-        OR reghi
-.endm
-
         .ORG ROMSTART
 		
 ; **************************************************************************
@@ -1011,7 +990,8 @@ div_end:
         	        
 begin:                               ; Left parentesis begins a loop
         POP HL
-        _isZero H,L
+        LD A,L              ; zero?
+        OR H
         JR Z,begin1
         EX DE,HL
         LD HL,BC
@@ -1326,7 +1306,8 @@ knownVar2:
 
 while: 
         POP HL
-        _isZero H,L
+        LD A,L                  ; zero?
+        OR H
         JR Z,while1
         JP (IY)
 while1:
