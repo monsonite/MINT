@@ -192,7 +192,7 @@ mint:
         LD SP,DSTACK
         CALL initialize
         call ENTER
-        .cstr "`MINT V1.0 by Ken Boak, John Hardy and Craig Jones`\\n"
+        .cstr "`MINT V1.0`\\n"
         JP interpret
 
 ; **************************************************************************
@@ -337,9 +337,9 @@ altCodes:
         DB     lsb(empty_)     ; RS  ^^
         DB     lsb(empty_)     ; US  ^_)
         DB     lsb(nop_)       ; SP  ^`
-        DB     lsb(cStore_)    ;    !  ( b adr -- ) store a byte at adr         
+        DB     lsb(cStore_)    ;    !            
         DB     lsb(nop_)       ;    "
-        DB     lsb(nop_)       ;    #
+        DB     lsb(nop_)       ;    
         DB     lsb(TIBPtr_)    ;    $  ( -- adr ) text input ptr           
         DB     lsb(nop_)       ;    %            
         DB     lsb(nop_)       ;    &
@@ -1369,15 +1369,16 @@ edit:
         LD DE,TIB+2
         JR edit2
 edit1:
+        CALL putchar
         INC HL
         INC DE
 edit2:        
         LD A,(HL)
-        CALL putchar
-        LD A,(HL)
         LD (DE),A
+        LD A,(HL)
         CP ";"
         JR NZ, edit1
+        CALL putchar
         EX DE,HL
         LD DE,TIB-1
         OR A
