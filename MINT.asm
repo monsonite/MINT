@@ -439,7 +439,7 @@ iUserVars:
         DW 0                    ; \6 
         DW 0                    ; \7 
         DW 0                    ; \8 
-        DW 0                    ; \9 
+        DW 0                    ; \9 vTemp
 
         DW HEAP                 ; vHeapPtr
         DW FALSE                ; vBase16
@@ -744,14 +744,15 @@ dup_:
         PUSH    HL
         JP (IY)
 
+; $ swap                    ; a b -- b a Swap the top 2 elements of the stack
 swap_:        
-        POP     HL          ; Swap the top 2 elements of the stack
-        POP     DE
-        PUSH    HL
-        PUSH    DE
+        POP HL
+        EX (SP),HL
+        PUSH HL
         JP (IY)
         
-over_:  POP     HL          ; Duplicate 2nd element of the stack
+over_:  
+        POP     HL          ; Duplicate 2nd element of the stack
         POP     DE
         PUSH    DE
         PUSH    HL
@@ -993,14 +994,17 @@ begin:                               ; Left parentesis begins a loop
         LD A,L              ; zero?
         OR H
         JR Z,begin1
-        EX DE,HL
-        LD HL,BC
-        CALL rpush          ; push loop address
-        EX DE,HL
+        
         DEC HL
-        CALL rpush          ; push loop address
-        LD HL,0
-        CALL rpush          ; push loop var=0
+        LD DE,-6
+        ADD IX,DE
+        LD (IX+0),0                 ; loop var
+        LD (IX+1),0                 
+        LD (IX+2),L                 ; loop limit
+        LD (IX+3),H                 
+        LD (IX+4),C                 ; loop address
+        LD (IX+5),B                 
+
         JP (IY)
 begin1:
         LD E,1
@@ -1838,7 +1842,7 @@ cUserVars:  DW 0                ; 5     \05
             DW 0                ; 6     \06
             DW 0                ; 7     \07
             DW 0                ; 8     \08
-            DW 0                ; 9     \09
+vTemp:      DW 0                ; 9     \09
 vHeapPtr:   DW 0                ; 10
 vBase16:    DW 0                ; 11
 vTibPtr:    DW 0                ; 12

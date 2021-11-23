@@ -6,6 +6,7 @@
 LD SP,DSTACK
 CALL initialize
 
+; test "1(6)", 6
 ; CALL enter
 ; .cstr "`Done!!`"
 ; HALT
