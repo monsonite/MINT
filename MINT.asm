@@ -670,7 +670,18 @@ endnum:
         DEC BC
         JP (IY)                 ; and process the next character
 
-        
+; **********************************************************************			 
+
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JP putchar
+
+space:       
+        LD A, ' '           
+        JP putchar
+
 ; **********************************************************************			 
 ; Start of primitive routines 
 ; **********************************************************************
@@ -1410,16 +1421,6 @@ ccompNEXT:
         JP NEXT
 
 ; **************************************************************************
-
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JP putchar
-        
-space:       
-        LD A, ' '           
-        JP putchar
 
 rpush:
         DEC IX                  
