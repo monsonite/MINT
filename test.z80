@@ -6,7 +6,6 @@
 LD SP,DSTACK
 CALL initialize
 
-; test "\\EA",0
 ; CALL enter
 ; .cstr "`Done!!`"
 ; HALT
@@ -28,6 +27,7 @@ test "1_~",0
 test "\\0@",DSTACK
 test "\\^A",65
 test "3x! 1 x\\+ x@", 4
+test "3x! 1 x\\- x@", 2
 test ":X1; X", 1
 test "2x! x@", 2
 test ":Aa!; 3A a@", 3

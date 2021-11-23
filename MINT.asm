@@ -637,7 +637,8 @@ Num2:
         JP putchar
         
 ENTER:
-        _rpush B,C              ; save Instruction Pointer
+        LD HL,BC
+        CALL rpush              ; save Instruction Pointer
         POP BC
         DEC BC
         JP  (IY)                ; Execute code from User def
@@ -707,7 +708,8 @@ exit_:
 num_:   JP  number
 
 call_:
-        _rpush B,C              ; save Instruction Pointer
+        LD HL,BC
+        CALL rpush              ; save Instruction Pointer
         LD A,(BC)
         SUB "A"                 ; Calc index
         ADD A,A
@@ -1008,10 +1010,17 @@ begin:                               ; Left parentesis begins a loop
         POP HL
         _isZero H,L
         JR Z,begin1
-        _rpush B,C                  ; push loop address
+        EX DE,HL
+        LD HL,BC
+        CALL rpush          ; push loop address
+        EX DE,HL
+        ; _rpush B,C          ; push loop address
         DEC HL
-        _rpush H,L                  ; push loop limit
-        _rpush 0,0                  ; push loop var=0
+        CALL rpush          ; push loop address
+        ; _rpush H,L          ; push loop limit
+        LD HL,0
+        CALL rpush          ; push loop var=0
+        ; _rpush 0,0          ; push loop var=0
         JP (IY)
 begin1:
         LD E,1
@@ -1117,9 +1126,21 @@ cStore_:
         LD     (HL),E       ; 7t
         JP     (IY)         ; 8t
                             ; 48t
+        
+; \+    a b -- [b]-a            ; increment variable at b by a
 decr_:
-        call ENTER
-        .cstr "$_%@+$!"
+        ; call ENTER
+        ; .cstr "$_%@+$!"
+        ; JP (IY)
+        POP HL
+        POP DE
+        LD A,(HL)
+        SUB E
+        LD (HL),A
+        INC HL
+        LD A,(HL)
+        SBC A,D
+        LD (HL),A
         JP (IY)
 
 depth_:
@@ -1162,9 +1183,17 @@ i_:
         PUSH IX
         JP (IY)
 
+; \+    a b -- [b]+a            ; increment variable at b by a
 incr_:
-        call ENTER
-        .cstr "$%@+$!"
+        POP HL
+        POP DE
+        LD A,E
+        ADD A,(HL)
+        LD (HL),A
+        INC HL
+        LD A,D
+        ADC A,(HL)
+        LD (HL),A
         JP (IY)
 
 inPort_:
@@ -1384,6 +1413,20 @@ crlf:
 space:       
         LD A, ' '           
         JP putchar
+
+rpush:
+        DEC IX                  
+        LD (IX+0),H
+        DEC IX
+        LD (IX+0),L
+        RET
+
+rpop:
+        LD L,(IX+0)         
+        INC IX              
+        LD H,(IX+0)
+        INC IX                  
+        RET
 
 ; **************************************************************************
 
@@ -1802,22 +1845,22 @@ tib:        DS TIBSIZE
 userVars:
 knownVars:
 
-cS0:        DW 0                ; \00                   
-cTIB        DW 0                ; \01
-cDefs:      DW 0                ; \02
-cVars:      DW 0                ; \03
-cMacros:    DW 0                ; \04
-cUserVars:  DW 0                ; \05
-            DW 0                ; \06
-            DW 0                ; \07
-            DW 0                ; \08
-            DW 0                ; \09
-vHeapPtr:   DW 0                ; \10
-vBase16:    DW 0                ; \11
-vTibPtr:    DW 0                ; \12
-vGetChar:   DW 0                ; \13 
-vAltCodes:  DW 0                ; \14
-            DW 0                ; \15
+cS0:        DW 0                ; 0     \00                   
+cTIB        DW 0                ; 1     \01
+cDefs:      DW 0                ; 2     \02
+cVars:      DW 0                ; 3     \03
+cMacros:    DW 0                ; 4     \04
+cUserVars:  DW 0                ; 5     \05
+            DW 0                ; 6     \06
+            DW 0                ; 7     \07
+            DW 0                ; 8     \08
+            DW 0                ; 9     \09
+vHeapPtr:   DW 0                ; 10
+vBase16:    DW 0                ; 11
+vTibPtr:    DW 0                ; 12
+vGetChar:   DW 0                ; 13 
+vAltCodes:  DW 0                ; 14
+            DW 0                ; 15
 
 ; ****************************************************************
 ; Macros Table - holds $20 ctrl key macros
