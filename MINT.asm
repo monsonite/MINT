@@ -2,7 +2,10 @@
 ;
 ;        MINT1_18 Micro-Interpreter for the Z80
 ;
-;        Ken Boak John Hardy and Craig Jones  November 24th 2021 
+;        Ken Boak John Hardy and Craig Jones  November 24th 2021
+;
+;        Decimal entry bug fixed
+;        Division routine shortened by 13 bytes
 ;
 ;
 ;        Includes serial routines getchar and putchar
@@ -137,9 +140,9 @@
 ;       fEDIT       EQU $0001
 
 
-        ; ROMSTART    EQU $0
-        ; RAMSTART    EQU $800
-        ; EXTENDED    EQU 0
+         ;ROMSTART    EQU $0
+         ;RAMSTART    EQU $800
+         ;EXTENDED    EQU 0
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -927,47 +930,44 @@ Mul_Loop_1:
 ; *********************************************************************            
 ; This divides DE by BC, storing the result in DE, remainder in HL
 ; *********************************************************************
+
+; 1382 cycles
+; 35 bytes (reduced from 48)
+		
+
 div:  
 
         POP  DE             ; get first value
         POP  HL             ; get 2nd value
-div1:   PUSH BC             ; Preserve the IP
+        PUSH BC             ; Preserve the IP
         LD B,H              ; BC = 2nd value
-        LD C,L
-
-Div16:
-        ld hl,0
-        ld a,b
-        ld b,8
-Div16_Loop1:
-        rla
-        adc hl,hl
-        sbc hl,de
-        jr nc,Div16_NoAdd1
-        add hl,de
-Div16_NoAdd1:
-        djnz Div16_Loop1
-        rla
-        cpl
-        ld b,a
-        ld a,c
-        ld c,b
-        ld b,8
-Div16_Loop2:
-        rla
-        adc hl,hl
-        sbc hl,de
-        jr nc,Div16_NoAdd2
-        add hl,de
-Div16_NoAdd2:
-        djnz Div16_Loop2
-        rla
-        cpl
-        ld d,c
-        ld e,a
+        LD C,L		
 		
-	    EX DE,HL
+        ld hl,0    	        ; Zero the remainder
+        ld a,16    	        ; Loop counter
 
+div_loop:		            ;shift the bits from BC (numerator) into HL (accumulator)
+        sla c
+        rl b
+        adc hl,hl
+
+        sbc hl,de			;Check if remainder >= denominator (HL>=DE)
+        jr c,div_adjust
+        inc c
+        jr div_done
+
+div_adjust:		            ; remainder is not >= denominator, so we have to add DE back to HL
+        add hl,de
+
+div_done:
+        dec a
+        jr nz,div_loop
+        
+        LD D,B              ; Result from BC to DE
+        LD E,C
+        
+        EX DE,HL            ; swap them over?
+			
 mul_end:
 div_end:    
         POP  BC             ; Restore the IP
@@ -976,8 +976,13 @@ div_end:
         PUSH HL             ; Push remainder             
 
         JP       (IY)
+        
+        
+; *************************************
+; Loop Handling Code
+; *************************************
         	        
-begin:                               ; Left parentesis begins a loop
+begin:                      ; Left parentesis begins a loop
         POP HL
         LD A,L              ; zero?
         OR H
@@ -1040,12 +1045,14 @@ number:
 		LD HL,$0000				; 10t Clear HL to accept the number
 		LD A,(BC)				; 7t  Get the character which is a numeral
         
-number1:        
+number1:                        ; corrected KB 24/11/21
+
         SUB $30                 ; 7t    Form decimal digit
         ADD A,L                 ; 4t    Add into bottom of HL
         LD  L,A                 ; 4t
-        
-                                ;  15t cycles
+        LD A,00                 ; 4t    Clear A
+        ADC	A,H	                ; Add with carry H-reg
+	    LD	H,A	                ; Put result in H-reg
       
         INC BC                  ; 6t    Increment IP
         LD A, (BC)              ; 7t    and get the next character

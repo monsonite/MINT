@@ -4,49 +4,47 @@ A Minimal Interpreter in Z80 assembly language for the RC2014 Micro and other si
 
 ## What is MINT ?
 
-MINT is a tiny, stack based language inspired by Forth. On the Z80 the core of the language can be implemented in fewer than 1024 bytes of machine code - and it is relatively quick compared to other interpreted languages.
+MINT is a tiny, stack based language based on Forth. On the Z80 it can be implemented in fewer than 1024 bytes of machine code - and it is relatively quick compared to other interpreted languages.
 
 It uses reverse Polish notation (RPN) so you have to put the operands before the operator. It's just like the old HP calculators from 50 years ago.
 
 If you want to add two numbers you just type:
 
-```
 123 456 + .
-```
 
 When you hit return the result will be displayed thus
 
-```
 00579
 
 OK
-```
 
 OK confirms that the code has been executed and control has been passed back to the User.
 
 ## Fundamentals
 
-An interpreter can be reduced to a switch-case structure contained within a loop.
+Like other small interpreted languages, the intention of MINT is to create a 16-bit virtual machine by combining the mostly 8-bit operations available on the Z80, to provide 16-bit integer arithmetic and variable handling.
 
-With MINT, the instructions are just one byte long and a look-up table is used instead of a switch-case structure. When using an 8-bit microprocessor, such as the Z80, it is simpler and faster to handle 8-bit instructions, so MINT uses a bytecode system, rather than the 16-bit threaded code that is used by a conventional Forth.
+The language needs the basic arithmetic operations of ADD, SUBTRACT, MULTIPLY and DIVIDE. These are implemented as 16-bit integer operations and invoked using the familiar characters +, -, \* and /.
 
-In the example above `123 456 + .`
+These are augmented by the bitwise Boolean operators AND, OR, XOR, INVERT and 2's complement NEGATE. 
+
+With MINT, these instructions are just one byte long and a look-up table is used instead of a switch-case structure. When using an 8-bit microprocessor, such as the Z80, it is simpler and faster to handle 8-bit instructions, so MINT uses a bytecode system, rather than the 16-bit threaded code that is used by a conventional Forth.
+
+In the example above 123 456 + .
 
 The numerical strings 123 and 456 are evaluated as 16-bit binary numbers and placed on the data stack. The plus symbol is interpreted as a jump to the routine that performs a 16-bit addition of the top two elements on the data stack, placing their sum on the top of the datastack. The dot character prints out the top value of the data stack, consuming it at the same time.
 
-Any tiny language needs the basic arithmetic operations of ADD, SUBTRACT, MULTIPLY and DIVIDE. These are implemented as 16-bit integer operations and invoked using the familiar characters +, -, \* and /.
-
-These are augmented by the bitwise Boolean operators AND, OR, XOR, INVERT and 2's complement NEGATE.
-
-There are also the three comparison operators Greater Than, Less Than and Equal to, represented by symbols > < and =.
+In addition to the arithmetic and boolean operations, there are also the three comparison operators Greater Than, Less Than and Equal to, represented by symbols > < and =.
 
 The top two elements on the stack will be compared, resulting in 1 if the comparison is TRUE and 0 if the comparison is FALSE.
 
 With the comparison operators, it becomes possible to develop conditionally executed code, which forms the basis of program control words, such as IF, THEN, ELSE, and looping and branching structures.
 
+In total there are approximately 30 characters that are recognised as the internal instruction set, or primitives. From these characters the user can construct further definitions to extend the usefulness of the language.              
+
 ## How MINT Works.
 
-MINT is an interpreted language that uses printable ASCII characters as its "instructions". There are 95 such characters:
+MINT is an interpreted language that uses printable ascii characters as its "instructions". There are 95 such characters:
 
 26 Uppercase letters - used as User Commands
 26 Lowercase letters - used as User Variables
@@ -83,9 +81,9 @@ In total, MINT contains 33 primitives which are executed when the interpreter fi
 
 ## Using MINT
 
-MINT was originally developed for the RC2014 Micro Z80 Single Board Computer. This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
+MINT was developed for the RC2014 Micro Z80 Single Board Computer. This board is supplied with a comprehensive Monitor program (The Small Computer Monitor by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
 
-MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. We use TeraTerm when working within the windows environment and Serial when working on the Mac.
+MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. I use TeraTerm when working within the windows environment.
 
 Once the MINT code image is pasted into RAM you can run it using the Go command "G8100"
 
@@ -103,7 +101,6 @@ MINT turns the Z80 into a 16-bit Virtual Machine with 30 instructions, 26 Macros
 
 Spaces are shown for clarity, but only necessary to separate consecutive number strings. Most other operators can be concatenated without spaces.
 
-```
 1234 5678 + . ; ADD 1234 to 5678 and print the result
 
 1234 5678 - . ; Subtract 1234 from 5678 and print the result
@@ -117,9 +114,8 @@ b@ . ; print the value stored in b
 a@ b@ + . ; add the contents of a to b and print the sum
 
 a@ b! ; copy the contents of a into b
-```
 
-## Loops
+##Loops
 
 0(this code will not be executed but skipped)
 1(this code will be execute once)
@@ -127,138 +123,88 @@ a@ b! ; copy the contents of a into b
 
 You can use the comparison operators < = and > to compare 2 values and conditionally execute the code between the brackets.
 
-### LIST OF PRIMITIVES
+LIST OF PRIMITIVES
 
-Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ASCII characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
+Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ascii characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
 
-There are roughly 30 punctuation and arithmetical symbols available in the printable ASCII codes. These are assigned to the primitive functions, from which more complex programs can be built.
+There are roughly 32 punctuation and arithmetic symbols available in the printable ascii codes. These are assigned to the primitive functions, from which more complex programs can be built.
 
-### Maths Operators
+Maths Operators:
 
-| Symbol | Description                               | Effect   |
-| ------ | ----------------------------------------- | -------- |
-| +      | 16-bit integer addition ADD               | a b -- c |
-| -      | 16-bit integer subtraction SUB            | a b -- c |
-| \*     | 8-bit by 8-bit integer multiplication MUL | a b -- c |
-| /      | 16-bit by 8-bit division DIV              | a b -- c |
-| <      | 16-bit comparison LT                      | a b -- c |
-| =      | 16 bit comparison EQ                      | a b -- c |
-| >      | 16-bit comparison GT                      | a b -- c |
-| {      | shift the number to the left (2\*)        | a -- b   |
-| }      | shift the number to the right (2/)        | a -- b   |
-| \\b    | base 16 flag variable                     | -- a     |
-| \\\_   | sign of number                            | n -- b   |
-| \\M    | maximum                                   | a b -- m |
-| \\m    | minimum                                   | a b -- m |
+- 16-bit integer addition ADD
 
-### Logical Operators
+* 16-bit integer subtraction SUB
 
-| Symbol | Description                          | Effect   |
-| ------ | ------------------------------------ | -------- |
-| ~      | 16-bit bitwise inversion INV         | a -- b   |
-| \_     | 16-bit negation (2's complement) NEG | a -- b   |
-| &      | 16-bit bitwise AND                   | a b -- c |
-| \|     | 16-bit bitwise OR                    | a b -- c |
-| ^      | 16-bit bitwise XOR                   | a b -- c |
+- 8-bit by 8-bit integer multiplication MUL
 
-Note: logical NOT can be achieved with 0=
+/ 16-bit by 8-bit division DIV
 
-### Stack Operations
+} Perform a right shift on the TOS (2/)
 
-| Symbol | Description                                                                   | Effect       |
-| ------ | ----------------------------------------------------------------------------- | ------------ |
-| "      | duplicate the top member of the stack DUP                                     | a -- a a     |
-| '      | drop the top member of the stack DROP                                         | a a -- a     |
-| $      | swap the top 2 members of the stack SWAP                                      | a b -- b a   |
-| %      | over - take the 2nd member of the stack and copy it onto the top of the stack | a b -- a b a |
+{ Perform a left shift on the TOS (2*)
 
-### Input & Output Operations
+< 16-bit comparison LT
 
-| Symbol | Description                                               | Effect      |
-| ------ | --------------------------------------------------------- | ----------- |
-| #      | the following number is in hexadecimal                    | a --        |
-| .      | print the top member of the stack as a decimal number DOT | a --        |
-| ,      | print the number on the stack as a hexadecimal            | a --        |
-| \`     | \`Everything between ticks is printed as a string\`       | --          |
-| \\p    | non-destructively prints stack                            | --          |
-| \\e    | emits a char to output                                    | val --      |
-| \\I    | input from a I/O port                                     | port -- val |
-| \\k    | read a char from input                                    | -- val      |
-| \\n    | prints a newline to output                                | --          |
-| \\O    | output to an I/O port                                     | val port -- |
-| \\$    | text input pointer variable                               | -- adr      |
-| \\t    | print a string                                            | adr len --  |** TODO **
+= 16 bit comparison EQ
 
-### User Definitions
+> 16-bit comparison GT
 
-| Symbol | Description                | Effect |
-| ------ | -------------------------- | ------ |
-| :      | define a new word DEF      | "C"     |
-| ;      | end of user definition END |         |
-| \\:    | start defining a macro     | "C" -- |
-| \\E    | edit a definition          | "C" --  | ** TODO **
+Logical Operators:
 
-NOTE: "C" is an uppercase letter immediately following opcode which is the name of the definition
+~ 16-bit bitwise inversion INVert
 
-### Loops and conditional execution
+_ 16-bit negation (2's complement) NEGate
 
-| Symbol | Description                                       | Effect |
-| ------ | ------------------------------------------------- | ------ |
-| (      | BEGIN a loop or conditionally executed code block | --     |
-| )      | END a loop or conditionally executed code block   | --     |
-| \\i    | returns index variable of current loop            | -- val |
-| \\j    | returns index variable of outer loop              | -- val |
-| \\w    | if false then skip to end of loop                 | b --   |
+& 16-bit bitwise AND
 
-### Memory and Variable Operations
+| 16-bit bitwise OR
 
-| Symbol | Description                                 | Effect         |
-| ------ | ------------------------------------------- | -------------- |
-| @      | FETCH a value from memory                   | -- val         |
-| !      | STORE a value to memory                     | val adr --     |
-| \\+    | increments variable at address by an amount | val addr --    |
-| \\-    | decrements variable at address by an amount | val addr --    |
-| \\@    | FETCH a byte from memory                    | -- val         |
-| \\!    | STORE a byte to memory                      | val adr --     |
-| [      | begin an array definition                   | --             |
-| ]      | end an array definition                     | -- adr nwords  |
-| \\[    | begin a byte array definition               | --             |** TODO **
-| \\]    | end a byte array definition                 | -- adr nbytes  |** TODO **
-| \\\`   | define a string                             | -- adr nchars  |
-| \\h    | heap pointer variable                       | -- adr         |
-| \\$    | text input buffer pointer variable          | -- adr         |
-| \\b    | base16 flag variable                        | -- adr         |
-| \\u    | user var                                    | n -- adr       |** TODO **
+^ 16-bit bitwise XOR
 
-### Constants and variables
+Stack Operations:
 
-| Symbol | Description                 | Effect |
-| ------ | --------------------------- | ------ |
-| \\0    | start address of data stack | -- adr |
-| \\1    | text input buffer address   | -- adr |
-| \\2    | defs address                | -- adr |
-| \\3    | vars address                | -- adr |
-| \\4    | macros address              | -- adr |
-| \\5    | user vars                   | -- adr |
-| \\6    |                             | -- adr |
-| \\7    |                             | -- adr |
-| \\8    |                             | -- adr |
-| \\9    | temp variable               | -- adr |
+" Duplicate the top member of the stack DUP
 
-### Miscellaneous
+' Drop the top member of the stack DROP
 
-| Symbol | Description                                   | Effect    |
-| ------ | --------------------------------------------- | --------- |
-| \\\\   | comment text, skips reading until end of line | --        |
-| \\g    | execute mint code at address                  | addr -- ? |
-| \\q    | quits from Mint interpreter                   | --        |
-| \\x    | execute machine code at address               | addr -- ? |
+$ Swap the top 2 members of the stack SWAP
 
-### Macros
+% Over - take the 2nd member of the stack and copy it onto the top of the stack
 
-| Symbol | Description                     |
-| ------ | ------------------------------- |
-| ^[     | escape clears the line          |
-| ^B     | toggle base decimal/hexadecimal |
-| ^H     | backspace                       |
-| ^P     | print stack                     |
+. DOT Print the top member of the stack as a decimal number, and remove the top element.
+
+, HEXPRINT Print the TOS as a Hexadecimal Number
+
+"#" HEX Accept numbers in hexadecimal format
+
+Memory (and variable) Operations:
+
+@ FETCH a value from memory
+
+! STORE a value to memory
+
+User Definitions:
+
+: Define a new word DEF
+
+; End of user definition END
+
+Loops and conditional execution:
+
+( BEGIN a loop or conditionally executed code block
+
+) END a loop or conditionally executed code block
+
+[ OPEN an array
+
+] CLOSE an array
+
+Miscellaneous:
+
+`STRING` Everything between the "ticks" is printed as a string_
+
+\ ESCAPE  allows non-printable characters such as \n newline
+
+? QUERY await keyboard entry
+
+
