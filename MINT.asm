@@ -171,7 +171,7 @@
 
         ; ROMSTART    EQU $0
         ; RAMSTART    EQU $800
-        ; EXTENDED    EQU 1
+        ; EXTENDED    EQU 0
 
         ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -187,6 +187,29 @@
 ; **************************************************************************		
         JP start
 
+		.ORG ROMSTART + $180		
+
+; **************************************************************************
+; Macros must be written in Mint and end with ; 
+; this code must not span pages
+; **************************************************************************
+iMacros:
+
+empty_:
+        .cstr ";"
+
+escape_:
+        .cstr "13\\e70(` `)13\\e`> `0\\$!;"
+
+backsp_:
+        .cstr "\\$@0=0=(1\\$\\-8\\e` `8\\e);"
+
+toggleBase_:
+        .cstr "\\b@0=\\b!;"
+
+printStack_:
+        .cstr "`=> `\\p\\n\\n`> `;"        
+
 start:
 mint:
         LD SP,DSTACK
@@ -195,12 +218,216 @@ mint:
         .cstr "`MINT V1.0`\\n"
         JP interpret
 
-; **************************************************************************
-; Page 1  Jump Tables
-; **************************************************************************
-		
-		.ORG ROMSTART + $100		
+initialize:
+        LD IX,RSTACK
+        LD IY,NEXT			    ; IY provides a faster jump to NEXT
+        LD HL,iUserVars
+        LD DE,userVars
+        LD BC,16 * 2
+        LDIR
+        LD HL,defs
+        LD B,26
+init1:
+        LD (HL),lsb(empty_)
+        INC HL
+        LD (HL),msb(empty_)
+        INC HL
+        DJNZ init1
+        LD B,$20
+        LD DE,ctrlCodes
+        LD HL,macros
+init2:
+        LD A,(DE)
+        INC DE
+        LD (HL),A
+        INC HL
+        LD (HL),msb(iMacros)
+        INC HL
+        DJNZ init2
+        RET
+
+interpret:
+
+.if EXTENDED=1
+        LD HL,(vFlags)
+        BIT 0,L                 ; edit mode
+        JR NZ,interpret2
+.endif
         
+        call ENTER
+        .cstr "\\n\\n`> `"
+
+interpret1:                     ; used by tests
+        LD HL,0
+        LD (vTIBPtr),HL
+interpret2:
+.if EXTENDED=1
+        LD HL,(vFlags)
+        RES 0,L                 ; not edit mode
+        LD (vFlags),HL
+.endif
+        LD BC,(vTIBPtr)
+
+; *******************************************************************         
+; Wait for a character from the serial input (keyboard) 
+; and store it in the text buffer. Keep accepting characters,
+; increasing the instruction pointer BC - until a newline received.
+; *******************************************************************
+
+waitchar:   
+        CALL getchar            ; loop around waiting for character
+        CP $7F                  ; Greater or equal to $7F
+        JR NC, endchar             
+        CP $20
+        JR NC, waitchar1
+        CP $0                   ; is it end of string?
+        JR Z, endchar
+        CP '\n'                 ; newline?
+        JR Z, waitchar2
+        CP '\r'                 ; carriage return?
+        JR Z, waitchar3
+        JP macro    
+
+waitchar1:
+        LD HL,TIB
+        ADD HL,BC
+        LD (HL), A          ; store the character in textbuf
+        INC BC
+
+waitchar2:        
+        CALL putchar        ; echo character to screen
+        JR  waitchar        ; wait for next character
+
+waitchar3:
+        LD HL,TIB
+        ADD HL,BC
+        LD (HL), A          ; store the character in textbuf
+        INC BC
+
+endchar:    
+        LD (vTIBPtr),BC
+        CALL crlf
+
+        LD BC,TIB           ; Instructions stored on heap at address HERE
+        DEC BC
+                            ; Drop into the NEXT and dispatch routines
+
+; ********************************************************************************
+; Dispatch Routine.
+;
+; Get the next character and form a 1 byte jump address
+;
+; This target jump address is loaded into HL, and using JP (HL) to quickly 
+; jump to the selected function.
+;
+; Individual handler routines will deal with each category:
+;
+; 1. Detect characters A-Z and jump to the User Command handler routine
+;
+; 2. Detect characters a-z and jump to the variable handler routine
+;
+; 3. All other characters are punctuation and cause a jump to the associated
+; primitive code.
+;
+; Instruction Pointer IP BC is incremented
+; *********************************************************************************
+
+NEXT:   
+        INC BC                      ; 6t    Increment the IP
+        LD A, (BC)                  ; 7t    Get the next character and dispatch
+		
+dispatch:                        
+        LD H, msb(page1)            ; 7t    Load H with the 1st page address
+        LD DE, opcodes              ; 7t    Start address of jump table         
+        sub ' '                     ; 7t    remove char offset
+        JR NC,dispatch1
+        CP 0 - ' '                  ;       expected values: 0 or '\r'
+        JP Z, exit_
+        JP interpret                ;       back to OK prompt
+dispatch1:
+        LD E,A                      ; 4t    Index into table
+        LD A,(DE)                   ; 7t    get low jump address
+        LD L,A                      ; 4t    and put into L
+        JP  (HL)                    ; 4t    Jump to routine
+
+ENTER:
+        LD HL,BC
+        CALL rpush              ; save Instruction Pointer
+        POP BC
+        DEC BC
+        JP  (IY)                ; Execute code from User def
+
+printdec:
+
+;Number in hl to decimal ASCII
+
+;inputs:	hl = number to ASCII
+;example: hl=300 outputs '00300'
+;destroys: af, de, hl
+DispHL:
+        ld	de,-10000
+        call	Num1
+        ld	de,-1000
+        call	Num1
+        ld	de,-100
+        call	Num1
+        ld	e,-10
+        call	Num1
+        ld	e,-1
+Num1:	    
+        ld	a,'0'-1
+Num2:	    
+        inc	a
+        add	hl,de
+        jr	c,Num2
+        sbc	hl,de
+        JP putchar
+        
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JP putchar
+
+space:       
+        LD A, ' '           
+        JP putchar
+
+
+rpush:
+        DEC IX                  
+        LD (IX+0),H
+        DEC IX
+        LD (IX+0),L
+        RET
+
+rpop:
+        LD L,(IX+0)         
+        INC IX              
+        LD H,(IX+0)
+        INC IX                  
+        RET
+
+macro:
+        ADD A,A
+        LD HL,MACROS
+        LD D,0
+        LD E,A
+        ADD HL,DE
+        LD (vTIBPtr),BC
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        PUSH DE
+        call ENTER
+        .cstr "\\g"
+        LD BC,(vTIBPtr)
+        JP waitchar
+
+; **************************************************************************
+; Page 2  Jump Tables
+; **************************************************************************
+        .align $100
 opcodes:
         DB    lsb(nop_)    ;    SP
         DB    lsb(store_)  ;    !            
@@ -453,237 +680,8 @@ iUserVars:
         DW $0000                ; 
         
 
-; **********************************************************************
-; 
-; defs that are written in Mint - placed here to fill up zeroth page
-; Note: opcode zero (i.e. exit_) can exit Mint and go into machine code
-; Mint can be reentered from machine code by calling "enter"
-;
-; **********************************************************************
-
-
-
-initialize:
-        LD IX,RSTACK
-        LD IY,NEXT			    ; IY provides a faster jump to NEXT
-        LD HL,iUserVars
-        LD DE,userVars
-        LD BC,16 * 2
-        LDIR
-        LD HL,defs
-        LD B,26
-init1:
-        LD (HL),lsb(empty_)
-        INC HL
-        LD (HL),msb(empty_)
-        INC HL
-        DJNZ init1
-        LD B,$20
-        LD DE,ctrlCodes
-        LD HL,macros
-init2:
-        LD A,(DE)
-        INC DE
-        LD (HL),A
-        INC HL
-        LD (HL),msb(iMacros)
-        INC HL
-        DJNZ init2
-        RET
-
-interpret:
-        LD HL,(vFlags)
-        BIT 0,L                 ; edit mode
-        JR NZ,interpret2
-        
-        call ENTER
-        .cstr "\\n\\n`> `"
-
-interpret1:                     ; used by tests
-        LD HL,0
-        LD (vTIBPtr),HL
-interpret2:
-        LD HL,(vFlags)
-        RES 0,L                 ; not edit mode
-        LD (vFlags),HL
-        LD BC,(vTIBPtr)
-
-; *******************************************************************         
-; Wait for a character from the serial input (keyboard) 
-; and store it in the text buffer. Keep accepting characters,
-; increasing the instruction pointer BC - until a newline received.
-; *******************************************************************
-
-waitchar:   
-        CALL getchar            ; loop around waiting for character
-        CP $7F                  ; Greater or equal to $7F
-        JR NC, endchar             
-        CP $20
-        JR NC, waitchar1
-        CP $0                   ; is it end of string?
-        JR Z, endchar
-        CP '\n'                 ; newline?
-        JR Z, waitchar2
-        CP '\r'                 ; carriage return?
-        JR Z, waitchar3
-        JP macro    
-
-waitchar1:
-        LD HL,TIB
-        ADD HL,BC
-        LD (HL), A          ; store the character in textbuf
-        INC BC
-
-waitchar2:        
-        CALL putchar        ; echo character to screen
-        JR  waitchar        ; wait for next character
-
-waitchar3:
-        LD HL,TIB
-        ADD HL,BC
-        LD (HL), A          ; store the character in textbuf
-        INC BC
-
-endchar:    
-        LD (vTIBPtr),BC
-        CALL crlf
-
-        LD BC,TIB           ; Instructions stored on heap at address HERE
-        DEC BC
-                            ; Drop into the NEXT and dispatch routines
-
-; ********************************************************************************
-; Dispatch Routine.
-;
-; Get the next character and form a 1 byte jump address
-;
-; This target jump address is loaded into HL, and using JP (HL) to quickly 
-; jump to the selected function.
-;
-; Individual handler routines will deal with each category:
-;
-; 1. Detect characters A-Z and jump to the User Command handler routine
-;
-; 2. Detect characters a-z and jump to the variable handler routine
-;
-; 3. All other characters are punctuation and cause a jump to the associated
-; primitive code.
-;
-; Instruction Pointer IP BC is incremented
-; *********************************************************************************
-
-NEXT:   
-        INC BC                      ; 6t    Increment the IP
-        LD A, (BC)                  ; 7t    Get the next character and dispatch
-		
-dispatch:                        
-        LD H, msb(page1)            ; 7t    Load H with the 1st page address
-        LD DE, opcodes              ; 7t    Start address of jump table         
-        sub ' '                     ; 7t    remove char offset
-        JR NC,dispatch1
-        CP 0 - ' '                  ;       expected values: 0 or '\r'
-        JP Z, exit_
-        JP interpret                ;       back to OK prompt
-dispatch1:
-        LD E,A                      ; 4t    Index into table
-        LD A,(DE)                   ; 7t    get low jump address
-        LD L,A                      ; 4t    and put into L
-        JP  (HL)                    ; 4t    Jump to routine
-
-printdec:
-
-;Number in hl to decimal ASCII
-
-;inputs:	hl = number to ASCII
-;example: hl=300 outputs '00300'
-;destroys: af, de, hl
-DispHL:
-        ld	de,-10000
-        call	Num1
-        ld	de,-1000
-        call	Num1
-        ld	de,-100
-        call	Num1
-        ld	e,-10
-        call	Num1
-        ld	e,-1
-Num1:	    
-        ld	a,'0'-1
-Num2:	    
-        inc	a
-        add	hl,de
-        jr	c,Num2
-        sbc	hl,de
-        JP putchar
-        
-ENTER:
-        LD HL,BC
-        CALL rpush              ; save Instruction Pointer
-        POP BC
-        DEC BC
-        JP  (IY)                ; Execute code from User def
-
-; ********************************************************************************
-; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
-; Read the first character. 
-;			
-; Number characters ($30 to $39) are converted to digits by subtracting $30
-; and then added into the L register. (HL forms a 16-bit accumulator)
-; Fetch the next character, if it is a number, multiply contents of HL by 10
-; and then add in the next digit. Repeat this until a non-number character is 
-; detected. Add in the final digit so that HL contains the converted number.
-; Push HL onto the stack and proceed to the dispatch routine.
-; ********************************************************************************
-         
-								 
-number:
-		LD HL,$0000				; 10t Clear HL to accept the number
-		LD A,(BC)				; 7t  Get the character which is a numeral
-        
-number1:        
-        SUB $30                 ; 7t    Form decimal digit
-        ADD A,L                 ; 4t    Add into bottom of HL
-        LD  L,A                 ; 4t
-        
-                                ;  15t cycles
-      
-        INC BC                  ; 6t    Increment IP
-        LD A, (BC)              ; 7t    and get the next character
-        CP $30                  ; 7t    Less than $30
-        JR C, endnum            ; 7/12t Not a number / end of number
-        CP $3A                  ; 7t    Greater or equal to $3A
-        JR NC, endnum           ; 7/12t Not a number / end of number
-       
-times10:                        ; Multiply digit(s) in HL by 10
-        ADD HL,HL               ; 11t    2X
-        LD  E,L                 ;  4t    LD DE,HL
-        LD  D,H                 ;  4t
-        ADD HL,HL               ; 11t    4X
-        ADD HL,HL               ; 11t    8X
-        ADD HL,DE               ; 11t    2X  + 8X  = 10X
-                                ; 52t cycles
-
-        JP  number1
-                
-endnum:
-        PUSH HL                 ; 11t   Put the number on the stack
-        DEC BC
-        JP (IY)                 ; and process the next character
-
 ; **********************************************************************			 
-
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JP putchar
-
-space:       
-        LD A, ' '           
-        JP putchar
-
-; **********************************************************************			 
-; Start of primitive routines 
+; Page 4 primitive routines 
 ; **********************************************************************
         .align $100
 page1:
@@ -698,7 +696,8 @@ exit_:
         EX DE,HL
         JP (HL)
         
-num_:   JP  number
+num_:   
+        JP  number
 
 call_:
         LD HL,BC
@@ -858,19 +857,13 @@ sub_2:  AND     A               ;  4t  Entry point for NEGate
         PUSH    HL              ; 11t
         JP      (IY)            ; 8t
                                 ; 58t
-    
-; **************************************************************************
-;  Comparison Operations
-;  Put 1 on stack if condition is true and 0 if it is false
-; **************************************************************************
-
 eq_:    POP      HL
         POP      DE
-        AND      A         ; reset the carry flag
-        SBC      HL,DE     ; only equality sets HL=0 here
+        AND      A              ; reset the carry flag
+        SBC      HL,DE          ; only equality sets HL=0 here
         JR       Z, equal
         LD       HL, 0
-        JR       less       ; HL = 1    
+        JR       less           ; HL = 1    
 
        
 gt_:    POP      DE
@@ -879,24 +872,33 @@ gt_:    POP      DE
         
 lt_:    POP      HL
         POP      DE
-cmp_:   AND      A         ; reset the carry flag
-        SBC      HL,DE     ; only equality sets HL=0 here
+cmp_:   AND      A              ; reset the carry flag
+        SBC      HL,DE          ; only equality sets HL=0 here
         LD       HL, 0
         JP       M, less
-equal:  INC      L          ; HL = 1    
+equal:  INC      L              ; HL = 1    
 less:     
         PUSH     HL
         JP       (IY) 
         
-;       Trampoline Jumps to Page 2 of primitives
-
-
 hex_:   CALL     get_hex
-        JR       less      ; piggyback for ending
+        JR       less           ; piggyback for ending
+
+dot_:       
+        POP HL
+        LD A,(vBase16)
+        OR A
+        JR Z,dot1
+        CALL printhex
+        JR dot2
+dot1:
+        CALL printdec
+dot2:
+        CALL space
+        JP (IY)
 
 str_:       JP str
-dot_:       JP dot
-hexp_:      JP hexp ; Print HL as a hexadecimal
+hexp_:      JP hexp                 ; print hexadecimal
 query_:     JR query
 del_:       JR del
 mul_:       JR mul
@@ -906,11 +908,11 @@ begin_:     JR begin
 again_:     JP again
 arrDef_:    JP arrDef
 arrEnd_:    JP arrEnd
-nop_:       JP NEXT             ; hardwire white space to always go to NEXT (important for arrays)
+nop_:       JP NEXT                 ; hardwire white space to always go to NEXT (important for arrays)
+quit_:      RET                     ; exit interpreter
 
-           
 ;*******************************************************************
-; Page 2 Primitives
+; Page 5 primitive routines 
 ;*******************************************************************
         .align   $100           
 
@@ -990,7 +992,7 @@ Div16_NoAdd2:
         ld d,c
         ld e,a
 		
-	EX DE,HL
+	    EX DE,HL
 
 mul_end:
 div_end:    
@@ -1047,44 +1049,108 @@ begin6:
         JR NZ,begin2
         JP (IY)
 
-dot:        
-        POP HL
-        LD A,(vBase16)
+; ********************************************************************************
+; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
+; Read the first character. 
+;			
+; Number characters ($30 to $39) are converted to digits by subtracting $30
+; and then added into the L register. (HL forms a 16-bit accumulator)
+; Fetch the next character, if it is a number, multiply contents of HL by 10
+; and then add in the next digit. Repeat this until a non-number character is 
+; detected. Add in the final digit so that HL contains the converted number.
+; Push HL onto the stack and proceed to the dispatch routine.
+; ********************************************************************************
+         
+								 
+number:
+		LD HL,$0000				; 10t Clear HL to accept the number
+		LD A,(BC)				; 7t  Get the character which is a numeral
+        
+number1:        
+        SUB $30                 ; 7t    Form decimal digit
+        ADD A,L                 ; 4t    Add into bottom of HL
+        LD  L,A                 ; 4t
+        
+                                ;  15t cycles
+      
+        INC BC                  ; 6t    Increment IP
+        LD A, (BC)              ; 7t    and get the next character
+        CP $30                  ; 7t    Less than $30
+        JR C, endnum            ; 7/12t Not a number / end of number
+        CP $3A                  ; 7t    Greater or equal to $3A
+        JR NC, endnum           ; 7/12t Not a number / end of number
+       
+times10:                        ; Multiply digit(s) in HL by 10
+        ADD HL,HL               ; 11t    2X
+        LD  E,L                 ;  4t    LD DE,HL
+        LD  D,H                 ;  4t
+        ADD HL,HL               ; 11t    4X
+        ADD HL,HL               ; 11t    8X
+        ADD HL,DE               ; 11t    2X  + 8X  = 10X
+                                ; 52t cycles
+
+        JP  number1
+                
+endnum:
+        PUSH HL                 ; 11t   Put the number on the stack
+        DEC BC
+        JP (IY)                 ; and process the next character
+
+again:
+        LD E,(IX+0)                 ; peek loop var
+        LD D,(IX+1)                 
+        LD L,(IX+2)                 ; peek loop limit
+        LD H,(IX+3)                 
         OR A
-        JR Z,dot1
-        CALL printhex
-        JR dot2
-dot1:
-        CALL printdec
-dot2:
-        CALL space
+        SBC HL,DE
+        JR Z,again1
+        INC DE
+        LD (IX+0),E                 ; poke loop var
+        LD (IX+1),D                 
+        LD C,(IX+4)                 ; peek loop address
+        LD B,(IX+5)                 
+        JP (IY)
+again1:   
+        LD DE,6                     ; drop loop frame
+        ADD IX,DE
         JP (IY)
 
+alt:
+        INC BC
+        LD A,(BC)
+        LD HL,(vAltCodes)
+        ADD A,L
+        LD L,A
+        LD L,(HL)           ; 7t    get low jump address
+        LD H, msb(page5)    ; Load H with the 5th page address
+        JP  (HL)                    ; 4t    Jump to routine
+        
+; **************************************************************************             
+; Print the string between the `backticks`
+
+str:                       
+        INC BC
+        
+nextchar:            
+        LD A, (BC)
+        INC BC
+        CP "`"              ; ` is the string terminator
+        JR Z,stringend
+        CALL putchar
+        JR   nextchar
+
+stringend:  
+        DEC BC
+        JP   (IY) 
+
+hexp:                       ; Print HL as a hexadecimal
+        POP     HL
+        CALL    printhex
+        CALL    space
+        JP      (IY)
+
 ; **************************************************************************
-; Macros must end with ; 
-; this code must not span pages
-; **************************************************************************
-iMacros:
-
-empty_:
-        .cstr ";"
-
-escape_:
-        .cstr "13\\e70(` `)13\\e`> `0\\$!;"
-
-backsp_:
-        .cstr "\\$@0=0=(1\\$\\-8\\e` `8\\e);"
-
-toggleBase_:
-        .cstr "\\b@0=\\b!;"
-
-printStack_:
-        .cstr "`=> `\\p\\n\\n`> `;"        
-
-
-
-; **************************************************************************
-; Page 5  Extended (C)
+; Page 6 Alt primitives
 ; **************************************************************************
         .align $100
 page5:
@@ -1102,10 +1168,6 @@ base16_:
         PUSH HL
         JP (IY)
 
-cArrDef_:                   ; define a character array
-        LD IY,ccompNEXT 
-        JP arrDef1
-
 cFetch_:
         POP     HL          ; 10t
         LD      E,(HL)      ; 7t
@@ -1122,10 +1184,11 @@ charCode_:
         JP (IY)
 
 comment_:
+comment:
         INC BC              ; point to next char
         LD A,(BC)
         CP "\r"             ; terminate at newline 
-        JR NZ,comment_
+        JR NZ,comment
         DEC BC
         JP   (IY) 
 
@@ -1148,9 +1211,6 @@ depth_:
         PUSH HL
         JP (IY)
 
-edit_:
-        JP edit
-        
 emit_:
         POP HL
         LD A,L
@@ -1189,9 +1249,6 @@ incr_:
         ADC A,(HL)
         LD (HL),A
         JP (IY)
-
-
-
 
 ; \-    a b -- [b]-a            ; decrement variable at b by a
 decr_:
@@ -1263,9 +1320,6 @@ outPort_:
         OUT (C),L
         JP (IY)        
 
-quit_:
-        RET                     ; display OK and exit interpreter
-
 sign_:
         POP HL
         BIT 7,H
@@ -1280,45 +1334,51 @@ TIBPtr_:
         LD HL,vTIBPtr
         PUSH HL
         JP (IY)
+dots_:
+        JP dots
+knownVar_:
+        JP knownVar 
+while_:
+        JP while
+
+.if EXTENDED = 1
+
+cArrDef_:                   
+        JP cArrDef
+cArrEnd_:
+        JP cArrEnd
+
+edit_:
+        JP edit
+        
+strDef_:
+        JP strDef
 type_:
-        call ENTER
-        .cstr "(",$22,"\\@\\e1+)"
-        JP (IY)
+        JP type
 
 userVar_:
-        LD DE,userVars
-        POP HL
-        JP knownVar2
-        JP      (IY)
+        JP userVar
 
+.else
+
+cArrDef_:                   
 cArrEnd_:
-        JR cArrEnd
-dots_:
-        JR dots
-knownVar_:
-        JR knownVar 
+edit_:
 strDef_:
-        JR strDef
-while_:
-        JR while
+type_:
+userVar_:
+        JP   (IY) 
+
+.endif
         
-; ; **************************************************************************
-; ; Page 6  Extended (D)
-; ; **************************************************************************
+; **************************************************************************
+; Page 6 primitive routines 
+; **************************************************************************
 
 dots:
         call ENTER
         DB "\\0@2-\\d1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
         JP (IY)
-
-cArrEnd:
-        CALL rpop               ; DE = start of array
-        PUSH HL
-        EX DE,HL
-        LD HL,(vHeapPtr)        ; HL = heap ptr
-        OR A
-        SBC HL,DE               ; bytes on heap 
-        JP arrEnd2                  
 
 knownVar:
         LD A,(BC)
@@ -1343,20 +1403,37 @@ while1:
         ADD IX,DE
         JP begin1                   ; skip to end of loop        
 
-strDef:
-        INC BC                  ; point to next char
-        PUSH BC                 ; push string address
-        LD DE,0                 ; count = 0
-        JR strDef2
-strDef1:
-        INC BC                  ; point to next char
-        INC DE                  ; increase count
-strDef2:
-        LD A,(BC)
-        CP "`"                  ; ` is the string terminator
-        JR NZ,strDef1
-        PUSH DE                 ; push count
-        JP   (IY) 
+; *********************************************************************
+; * extended or non-core routines
+; *********************************************************************
+
+.if EXTENDED = 1
+
+; ARRAY compilation routines ***********************************************
+
+
+ccompNEXT:
+        POP DE          ; DE = return address
+        LD HL,(vHeapPtr)    ; load heap ptr
+        LD (HL),E       ; store lsb
+        INC HL          
+        LD (vHeapPtr),HL    ; save heap ptr
+        JP NEXT
+
+; **************************************************************************
+
+cArrDef:                   ; define a character array
+        LD IY,ccompNEXT 
+        JP arrDef1
+
+cArrEnd:
+        CALL rpop               ; DE = start of array
+        PUSH HL
+        EX DE,HL
+        LD HL,(vHeapPtr)        ; HL = heap ptr
+        OR A
+        SBC HL,DE               ; bytes on heap 
+        JP arrEnd2                  
 
 edit:
         LD A,":"
@@ -1400,7 +1477,36 @@ edit2:
         LD (vFLAGS),HL
         JP (IY)
 
-; ARRAY compilation routines ***********************************************
+strDef:
+        INC BC                  ; point to next char
+        PUSH BC                 ; push string address
+        LD DE,0                 ; count = 0
+        JR strDef2
+strDef1:
+        INC BC                  ; point to next char
+        INC DE                  ; increase count
+strDef2:
+        LD A,(BC)
+        CP "`"                  ; ` is the string terminator
+        JR NZ,strDef1
+        PUSH DE                 ; push count
+        JP   (IY) 
+type:
+        call ENTER
+        .cstr "(",$22,"\\@\\e1+)"
+        JP (IY)
+
+userVar:
+        LD DE,userVars
+        POP HL
+        JP knownVar2
+        JP      (IY)
+
+.endif
+
+;*******************************************************************
+; Page 5 primitive routines continued
+;*******************************************************************
 
 compNEXT:
         POP DE          ; DE = return address
@@ -1411,77 +1517,6 @@ compNEXT:
         INC HL
         LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
-
-ccompNEXT:
-        POP DE          ; DE = return address
-        LD HL,(vHeapPtr)    ; load heap ptr
-        LD (HL),E       ; store lsb
-        INC HL          
-        LD (vHeapPtr),HL    ; save heap ptr
-        JP NEXT
-
-; **************************************************************************
-
-rpush:
-        DEC IX                  
-        LD (IX+0),H
-        DEC IX
-        LD (IX+0),L
-        RET
-
-rpop:
-        LD L,(IX+0)         
-        INC IX              
-        LD H,(IX+0)
-        INC IX                  
-        RET
-
-macro:
-        ADD A,A
-        LD HL,MACROS
-        LD D,0
-        LD E,A
-        ADD HL,DE
-        LD (vTIBPtr),BC
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        PUSH DE
-        call ENTER
-        .cstr "\\g"
-        LD BC,(vTIBPtr)
-        JP waitchar
-
-; **************************************************************************
-
-again:
-        LD E,(IX+0)                 ; peek loop var
-        LD D,(IX+1)                 
-        LD L,(IX+2)                 ; peek loop limit
-        LD H,(IX+3)                 
-        OR A
-        SBC HL,DE
-        JR Z,again1
-        INC DE
-        LD (IX+0),E                 ; poke loop var
-        LD (IX+1),D                 
-        LD C,(IX+4)                 ; peek loop address
-        LD B,(IX+5)                 
-        JP (IY)
-again1:   
-        LD DE,6                     ; drop loop frame
-        ADD IX,DE
-        JP (IY)
-
-alt:
-        INC BC
-        LD A,(BC)
-        LD HL,(vAltCodes)
-        ADD A,L
-        LD L,A
-        LD L,(HL)           ; 7t    get low jump address
-        LD H, msb(page5)    ; Load H with the 5th page address
-        JP  (HL)                    ; 4t    Jump to routine
 
 ; define a word array
 arrDef:      
@@ -1546,50 +1581,13 @@ end_def:
         DEC BC
         JP (IY)       
 
-; **************************************************************************             
-; Print the string between the `backticks`
 
-str:                       
-        INC BC
         
-nextchar:            
-        LD A, (BC)
-        INC BC
-        CP "`"              ; ` is the string terminator
-        JR Z,stringend
-        CALL putchar
-        JR   nextchar
-
-stringend:  
-        DEC BC
-        JP   (IY) 
-        
-hexp:                       ; Print HL as a hexadecimal
-        POP     HL
-        CALL    printhex
-        CALL    space
-        JP      (IY)
-
-; *********************************************************************
-; * extensions
-; *********************************************************************
-.if EXTENDED = 1
-
-
-.else
-
-        JP   (IY) 
-
-.endif
-
 
 ; **************************************************************************
-; Page 7  Serial Handling Etc
+; Serial Handling Etc
 ; **************************************************************************
 	
-
-
-
 ; ************************SERIAL HANDLING ROUTINES**********************        
 ;
 ;        Includes drivers for 68B50 ACIA 
@@ -1823,7 +1821,8 @@ Print_Hex8:
 			RRA 
 		
 
-conv:		AND	0x0F
+conv:		
+            AND	0x0F
 			ADD	A,0x90
 			DAA
 			ADC	A,0x40
@@ -1871,6 +1870,8 @@ vTIBPtr:    DW 0                ; 12
 vGetChar:   DW 0                ; 13 
 vAltCodes:  DW 0                ; 14
 vFlags:     DW 0                ; 15
+            DS 16*2             ; unitialised variables
+
 
 ; ****************************************************************
 ; Macros Table - holds $20 ctrl key macros
