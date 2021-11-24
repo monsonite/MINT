@@ -1,41 +1,9 @@
 ; *************************************************************************
 ;
-;        MINT1_17 Micro-Interpreter for the Z80
+;        MINT1_18 Micro-Interpreter for the Z80
 ;
-;        Ken Boak John Hardy and Craig Jones  November 22nd 2021 
+;        Ken Boak John Hardy and Craig Jones  November 24th 2021 
 ;
-;	     Interim snapshot file to be merged later when confirmed  
-;
-;        New in this version
-;
-; 		 Alt codes table reduced to bytewide
-;
-;        Page 0 reserved for initialisation and serial code
-;
-;
-;        Macros and new loop code
-;
-;		 Invert inv and Negate neg now use the Subtraction routine.
-;
-;        Shift Left { and shift right } operations added
-;
-;        Over reverted to %
-;
-;        Additional commands available using backslash prefix \
-;  
-;        Mod operator removed, / is now /mod
-;
-;        Division routine now working
-;
-;        Hexadecimal number entry routine #ABCD
-;
-;        Comma , is used to output in hexadecimal format
-;
-;		 Invert inv is ~ and Negate neg is _ now use the Subtraction routine.
-;
-;        Grave is now used to enclose  `text strings`
-;
-;        
 ;
 ;        Includes serial routines getchar and putchar
 ;        printstring
@@ -167,7 +135,7 @@
 
 ;       vFLAGS has up to 16 flags    
 ;       fEDIT       EQU $0001
-;
+
 
         ; ROMSTART    EQU $0
         ; RAMSTART    EQU $800
@@ -249,9 +217,11 @@ init2:
 interpret:
 
 .if EXTENDED=1
+
         LD HL,(vFlags)
         BIT 0,L                 ; edit mode
         JR NZ,interpret2
+
 .endif
         
         call ENTER
@@ -260,12 +230,16 @@ interpret:
 interpret1:                     ; used by tests
         LD HL,0
         LD (vTIBPtr),HL
-interpret2:
+
 .if EXTENDED=1
+
+interpret2:
         LD HL,(vFlags)
         RES 0,L                 ; not edit mode
         LD (vFlags),HL
+
 .endif
+
         LD BC,(vTIBPtr)
 
 ; *******************************************************************         

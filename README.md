@@ -187,18 +187,18 @@ Note: logical NOT can be achieved with 0=
 | \\n    | prints a newline to output                                | --          |
 | \\O    | output to an I/O port                                     | val port -- |
 | \\$    | text input pointer variable                               | -- adr      |
-| \\t    | print a string                                            | adr len --  |
+| \\t    | print a string                                            | adr len --  |** TODO **
 
 ### User Definitions
 
 | Symbol | Description                | Effect |
 | ------ | -------------------------- | ------ |
-| :c     | define a new word DEF      |
-| ;      | end of user definition END |
-| \\:c   | start defining a macro     | --     |
-| \\Ec   | edit a definition          | --     |
+| :      | define a new word DEF      | "C"     |
+| ;      | end of user definition END |         |
+| \\:    | start defining a macro     | "C" -- |
+| \\E    | edit a definition          | "C" --  | ** TODO **
 
-NOTE: c is an uppercase letter which is the name of the definition
+NOTE: "C" is an uppercase letter immediately following opcode which is the name of the definition
 
 ### Loops and conditional execution
 
@@ -222,14 +222,13 @@ NOTE: c is an uppercase letter which is the name of the definition
 | \\!    | STORE a byte to memory                      | val adr --     |
 | [      | begin an array definition                   | --             |
 | ]      | end an array definition                     | -- adr nwords  |
-| \\#    | calcs address of index in an array          | idx adr -- adr |
-| \\[    | begin a byte array definition               | --             |
-| \\]    | end a byte array definition                 | -- adr nbytes  |
+| \\[    | begin a byte array definition               | --             |** TODO **
+| \\]    | end a byte array definition                 | -- adr nbytes  |** TODO **
 | \\\`   | define a string                             | -- adr nchars  |
 | \\h    | heap pointer variable                       | -- adr         |
 | \\$    | text input buffer pointer variable          | -- adr         |
 | \\b    | base16 flag variable                        | -- adr         |
-| \\u    | user var                                    | n -- adr       |
+| \\u    | user var                                    | n -- adr       |** TODO **
 
 ### Constants and variables
 
