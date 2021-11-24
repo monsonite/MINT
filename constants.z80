@@ -1,7 +1,7 @@
 ; Configuration for RC2014
 
 ROMSTART    EQU $8000
-RAMSTART    EQU $8400
+RAMSTART    EQU $8800
         
 ; Configuration for TEC-1
 
