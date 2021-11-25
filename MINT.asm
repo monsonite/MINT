@@ -2,10 +2,14 @@
 ;
 ;        MINT1_18 Micro-Interpreter for the Z80
 ;
-;        Ken Boak John Hardy and Craig Jones  November 24th 2021
+;        Ken Boak John Hardy and Craig Jones  November 25th 2021
 ;
-;        Decimal entry bug fixed
-;        Division routine shortened by 13 bytes
+;        Comparison Operators < and > return 0 (false) when equality is detected
+;        Printhex routine shortened
+;        Getchar and Putchar hooks into Small Computer Monitor added
+;
+;        Decimal entry bug fixed  24/11
+;        Division routine shortened by 13 bytes 24/11
 ;
 ;
 ;        Includes serial routines getchar and putchar
@@ -855,6 +859,7 @@ lt_:    POP      HL
         POP      DE
 cmp_:   AND      A              ; reset the carry flag
         SBC      HL,DE          ; only equality sets HL=0 here
+		JR       Z, less        ; equality returns 0  KB 25/11/21
         LD       HL, 0
         JP       M, less
 equal:  INC      L              ; HL = 1    
@@ -1795,7 +1800,7 @@ printhex:
 			POP BC
 			RET
 
-; Print an 8-bit HEX number
+; Print an 8-bit HEX number  - shortened KB 25/11/21
 ; A: Number to print
 ;
 Print_Hex8:		
@@ -1804,23 +1809,16 @@ Print_Hex8:
 			RRA 
 			RRA 
 			RRA 
-		
+		    CALL conv
+		    LD A,C
 
-conv:		
-            AND	0x0F
+conv:		AND	0x0F
 			ADD	A,0x90
 			DAA
 			ADC	A,0x40
 			DAA
 			CALL putchar
-			LD A,C
-			AND	0x0F
-			ADD	A,0x90
-			DAA
-			ADC	A,0x40
-			DAA
-			CALL putchar
-            RET                
+			RET            
 
         .ORG RAMSTART
         
