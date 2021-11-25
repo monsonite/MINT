@@ -2,17 +2,6 @@
 
 .include "constants.z80"
 
-LD SP,DSTACK
-CALL initialize
-
-CALL enter
-.cstr "_Mint_"
-
-CALL interp
-
-CALL enter
-.cstr "_quit_"
-
-HALT
+JP start
 
 .include "MINT.asm"
