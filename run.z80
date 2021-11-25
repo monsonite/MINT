@@ -1,7 +1,0 @@
-.engine mycomputer
-
-.include "constants.asm"
-
-JP start
-
-.include "MINT.asm"

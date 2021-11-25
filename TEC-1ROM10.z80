@@ -4,4 +4,6 @@
 
 .include "IOSerial.asm"
 
+        jp   start
+
 .include "MINT.asm"

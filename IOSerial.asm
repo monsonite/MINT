@@ -1,5 +1,3 @@
-.engine mycomputer
-
         ; ROM code
         ; Targets:
         ; TEC-1,TEC-1D,TEC-1F,Southern Cross,RC2014
@@ -227,57 +225,6 @@ IntRet:
         LD	HL,(NMIVEC)
         JP	(HL)
 
-RESET:   
-        ld   SP,stack
-
-.if BITBANG = 0
-
-        ld    a,MRESET
-        out   (CONTROL),a           ;reset the ACIA
-
-.endif
-
-        call PWRUP
-        IM  1
-        EI
-
-.if BITBANG
-
-;inline serial initialisation
-        LD    A,$40
-        LD    C,SCAN
-        OUT   (C),A
-        LD    HL,B4800
-        LD    (BAUD),HL
-
-.else ;6850      
-
-        ld     a,RTSLID+F8N2+DIV_64
-        out   (CONTROL),a           ;initialise ACIA  8 bit word, No parity 2 stop divide by 64 for 115200 baud
-
-.endif
-
-; in this example code just wait for an INTEL Hex file download
-;just going to send a char to let you know I'm here
-.if LOADER
-
-Load:  
-        ld     a,'L'  ; L for load
-        call   TxChar
-        call INTELH
-        jp   z,RAMSTART          ;assume the downloaded code starts here
-        ld   a,'0'   ;0 is false
-        call TxChar
-        jr   load    ;if at first you don't succeed...
-
-.else
-        jp   start
-;demo:
-;        CALL getchar
-;        CALL putchar
-;        jr demo
-
-.endif
 
 .if  BITBANG
 
@@ -506,3 +453,46 @@ GETBT2	AND	0FH
 	RET
 .endif
 
+RESET:   
+        ld   SP,stack
+
+.if BITBANG = 0
+
+        ld    a,MRESET
+        out   (CONTROL),a           ;reset the ACIA
+
+.endif
+
+        call PWRUP
+        IM  1
+        EI
+
+.if BITBANG
+
+;inline serial initialisation
+        LD    A,$40
+        LD    C,SCAN
+        OUT   (C),A
+        LD    HL,B4800
+        LD    (BAUD),HL
+
+.else ;6850      
+
+        ld     a,RTSLID+F8N2+DIV_64
+        out   (CONTROL),a           ;initialise ACIA  8 bit word, No parity 2 stop divide by 64 for 115200 baud
+
+.endif
+
+; in this example code just wait for an INTEL Hex file download
+;just going to send a char to let you know I'm here
+.if LOADER
+
+Load:  
+        ld     a,'L'  ; L for load
+        call   TxChar
+        call INTELH
+        jp   z,RAMSTART          ;assume the downloaded code starts here
+        ld   a,'0'   ;0 is false
+        call TxChar
+        jr   load    ;if at first you don't succeed...
+.endif
