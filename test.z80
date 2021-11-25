@@ -1,6 +1,6 @@
-.engine mycomputer
+; .engine mycomputer
 
-.include "constants.z80"
+.include "constants.asm"
 .include "test.mac.asm"
 
 LD SP,DSTACK
@@ -11,6 +11,7 @@ CALL initialize
 ; .cstr "`Done!!`"
 ; HALT
 
+test "3 3<", 0
 test "0", 0
 test "1", 1
 test "1 2+", 3

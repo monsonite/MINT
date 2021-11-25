@@ -144,19 +144,19 @@
          ;RAMSTART    EQU $800
          ;EXTENDED    EQU 0
 
-        ROMSIZE     EQU $800
+        ;ROMSIZE     EQU $800
         DSIZE       EQU $100
         RSIZE       EQU $100
         TIBSIZE     EQU $100
         TRUE        EQU 1
         FALSE       EQU 0
 
-        .ORG ROMSTART
+;        .ORG ROMSTART
 		
 ; **************************************************************************
 ; Page 0  Initialisation
 ; **************************************************************************		
-        JP start
+;        JP start
 
 		.ORG ROMSTART + $180		
 
@@ -652,7 +652,11 @@ iUserVars:
         DW HEAP                 ; vHeapPtr
         DW FALSE                ; vBase16
         DW TIB                  ; vTIBPtr
+.if RC2014        
         DW getCharImpl          ; vGetChar
+.else
+        DW GetChar
+.endif
         DW altCodes             ; vAltCodes
         DW $0000                ; 
         
@@ -1563,7 +1567,7 @@ end_def:
         JP (IY)       
 
 
-        
+.if RC2014        
 
 ; **************************************************************************
 ; Serial Handling Etc
@@ -1740,7 +1744,7 @@ putchar:
         OUT  (kACIA1Data),A ;Write data byte
         OR   0xFF           ;Return success A=0xFF and NZ flagged
         RET
-        
+.endif        
         
 get_hex:
 		LD HL,$0000				; 10t Clear HL to accept the number

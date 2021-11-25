@@ -1,6 +1,6 @@
 .engine mycomputer
 
-.include "constants.z80"
+.include "constants.asm"
 
 JP start
 

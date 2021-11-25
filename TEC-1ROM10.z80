@@ -1,7 +1,7 @@
 .engine mycomputer
 
-.include "constants.z80"
+.include "constants.asm"
 
-.include "IOSerialA.z80"
+.include "IOSerial.asm"
 
 .include "MINT.asm"

@@ -1,6 +1,6 @@
 ; .engine mycomputer
 
-.include "constants.z80"
+.include "constants.asm"
 
 .macro testInput,s1
     ld HL,buf1%%M
