@@ -16,9 +16,7 @@ When you hit return the result will be displayed thus
 
 00579
 
-OK
-
-OK confirms that the code has been executed and control has been passed back to the User.
+>  This is the cursor / prompt that confirms that the code has been executed and control has been passed back to the User.
 
 ## Fundamentals
 
@@ -128,6 +126,12 @@ a@ b! ; copy the contents of a into b
 10(this code will execute 10 times)
 
 You can use the comparison operators < = and > to compare 2 values and conditionally execute the code between the brackets.
+
+ARRAYS
+
+An array of 16-bit numbers can be defined by enclosing them within square brackets:
+
+|[1 2 3 4 5 6 7 8 9 0]| 
 
 LIST OF PRIMITIVES
 
