@@ -7,3 +7,4 @@
         jp   start
 
 .include "MINT.asm"
+.include "ram.asm"

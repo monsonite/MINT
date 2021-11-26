@@ -23,4 +23,10 @@ RAMSTART    EQU $0800
 ROMSIZE     EQU $0800
 RAMSIZE     EQU $0800
 
+;TEC-1D SC 8k rom/ram 
+; ROMSTART .equ $0000
+; RAMSTART .equ $2000
+; ROMSIZE  .equ 8192
+; RAMSIZE  .equ 8192
+
 .endif
