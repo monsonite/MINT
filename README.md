@@ -131,7 +131,20 @@ ARRAYS
 
 An array of 16-bit numbers can be defined by enclosing them within square brackets:
 
-| [1 2 3 4 5 6 7 8 9 0] | 
+[1 2 3 4 5 6 7 8 9 0]
+
+Defining an array puts its start address and length onto the stack 
+
+These can then be allocated to a variable, which acts as a pointer to the array in memory
+
+[1 2 3 4 5 6 7 8 9 0] $ a!
+
+The swap $ is used to get the starting address onto the top of the stack and then store that into the variable a.
+
+To fetch the Nth member of the array, we can create a colon definition N
+
+:N @ $ {+ @. ;
+
 
 LIST OF PRIMITIVES
 
