@@ -170,20 +170,7 @@
 ; **************************************************************************
 iMacros:
 
-empty_:
-        .cstr ";"
-
-escape_:
-        .cstr "13\\e70(` `)13\\e`> `0\\$!;"
-
-backsp_:
-        .cstr "\\$@0=0=(1\\$\\-8\\e` `8\\e);"
-
-toggleBase_:
-        .cstr "\\b@0=\\b!;"
-
-printStack_:
-        .cstr "`=> `\\p\\n\\n`> `;"        
+.include "MINT-macros.asm"
 
 start:
 mint:
@@ -232,12 +219,12 @@ interpret:
 .endif
         
         call ENTER
-        .cstr "\\n\\n`> `"
+        .cstr "\\n`> `"
 
 interpret1:                     ; used by tests
         LD HL,0
         LD (vTIBPtr),HL
-
+        LD (vNesting),HL
 .if EXTENDED=1
 
 interpret2:
@@ -248,6 +235,7 @@ interpret2:
 .endif
 
         LD BC,(vTIBPtr)
+        LD DE,(vNesting)        ; E 
 
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
@@ -257,43 +245,49 @@ interpret2:
 
 waitchar:   
         CALL getchar            ; loop around waiting for character
-        CP $7F                  ; Greater or equal to $7F
-        JR NC, endchar             
         CP $20
         JR NC, waitchar1
         CP $0                   ; is it end of string?
         JR Z, endchar
-        CP '\n'                 ; newline?
-        JR Z, waitchar2
         CP '\r'                 ; carriage return?
         JR Z, waitchar3
+        LD D,0
+        LD (vNesting),DE
         JP macro    
 
 waitchar1:
         LD HL,TIB
         ADD HL,BC
-        LD (HL), A          ; store the character in textbuf
+        LD (HL),A               ; store the character in textbuf
         INC BC
-
-waitchar2:        
-        CALL putchar        ; echo character to screen
-        JR  waitchar        ; wait for next character
+        CALL putchar            ; echo character to screen
+        CALL nesting
+        JR  waitchar            ; wait for next character
 
 waitchar3:
         LD HL,TIB
         ADD HL,BC
-        LD (HL), A          ; store the character in textbuf
+        LD (HL),"\r"            ; store the crlf in textbuf
+        INC BC
+        INC HL
+        LD (HL),"\n"            
+        INC BC
+        CALL crlf               ; echo character to screen
+        LD A,E                  ; if zero nesting append and ETX after \r
+        OR A
+        JR NZ,waitchar
+        LD (HL),$03             ; store end of text ETX in text buffer 
         INC BC
 
 endchar:    
         LD (vTIBPtr),BC
-        CALL crlf
-
-        LD BC,TIB           ; Instructions stored on heap at address HERE
+        ; CALL crlf
+        LD BC,TIB               ; Instructions stored on heap at address HERE
         DEC BC
-                            ; Drop into the NEXT and dispatch routines
+                                ; Drop into the NEXT and dispatch routines
 
 ; ********************************************************************************
+;
 ; Dispatch Routine.
 ;
 ; Get the next character and form a 1 byte jump address
@@ -311,6 +305,7 @@ endchar:
 ; primitive code.
 ;
 ; Instruction Pointer IP BC is incremented
+;
 ; *********************************************************************************
 
 NEXT:   
@@ -318,18 +313,18 @@ NEXT:
         LD A, (BC)                  ; 7t    Get the next character and dispatch
 		
 dispatch:                        
-        LD H, msb(page1)            ; 7t    Load H with the 1st page address
-        LD DE, opcodes              ; 7t    Start address of jump table         
-        sub ' '                     ; 7t    remove char offset
-        JR NC,dispatch1
-        CP 0 - ' '                  ;       expected values: 0 or '\r'
+        CP 0                        ;       NULL? exit Mint
         JP Z, exit_
-        JP interpret                ;       back to OK prompt
-dispatch1:
+        CP $03                      ;       ETX? interpret next line       
+        JP Z,interpret
+        SUB ' '                     ; 7t    remove char offset
+        JR C,NEXT                   ;       ignore char 
+        LD DE,opcodes               ; 7t    Start address of jump table         
         LD E,A                      ; 4t    Index into table
         LD A,(DE)                   ; 7t    get low jump address
+        LD H,msb(page1)             ; 7t    Load H with the 1st page address
         LD L,A                      ; 4t    and put into L
-        JP  (HL)                    ; 4t    Jump to routine
+        JP (HL)                     ; 4t    Jump to routine
 
 ENTER:
         LD HL,BC
@@ -388,22 +383,6 @@ rpop:
         LD H,(IX+0)
         INC IX                  
         RET
-
-macro:
-        ADD A,A
-        LD HL,MACROS
-        LD D,0
-        LD E,A
-        ADD HL,DE
-        LD (vTIBPtr),BC
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        PUSH DE
-        call ENTER
-        .cstr "\\g"
-        LD BC,(vTIBPtr)
-        JP waitchar
 
 ; **************************************************************************
 ; Page 2  Jump Tables
@@ -517,7 +496,7 @@ altCodes:
         DB     lsb(toggleBase_); STX ^B
         DB     lsb(empty_)     ; ETX ^C
         DB     lsb(empty_)     ; EOT ^D
-        DB     lsb(empty_)     ; ENQ ^E
+        DB     lsb(editt_)     ; ENQ ^E
         DB     lsb(empty_)     ; ACK ^F
         DB     lsb(empty_)     ; BEL ^G
         DB     lsb(backsp_)    ; BS  ^H
@@ -657,8 +636,8 @@ iUserVars:
         DW FALSE                ; vBase16
         DW TIB                  ; vTIBPtr
         DW altCodes             ; vAltCodes
-        DW $0000                ; 
-        DW $0000                ; 
+        DW $0                   ; 
+        DW $0                   ; vNesting
         
 
 ; **********************************************************************			 
@@ -1009,27 +988,30 @@ begin1:
 begin2:
         INC BC
         LD A,(BC)
-        CP '_'
-        JR NZ,begin3
-        LD A,$80
-        XOR E
-        LD E,A
-        JR begin2
-begin3:
-        CP '['
-        JR Z,begin4
-        CP '('
-        JR NZ,begin5
-begin4:
-        INC E
-        JR begin2
-begin5:
-        CP ']'
-        JR Z,begin6
-        CP ')'
-        JR NZ,begin2
-begin6:
-        DEC E
+        CALL nesting
+;         CP '`'
+;         JR NZ,begin3
+;         LD A,$80
+;         XOR E
+;         LD E,A
+;         JR begin2
+; begin3:
+;         CP '['
+;         JR Z,begin4
+;         CP '('
+;         JR NZ,begin5
+; begin4:
+;         INC E
+;         JR begin2
+; begin5:
+;         CP ']'
+;         JR Z,begin6
+;         CP ')'
+;         JR NZ,begin2
+; begin6:
+;         DEC E
+        XOR A
+        OR E
         JR NZ,begin2
         JP (IY)
 
@@ -1608,31 +1590,82 @@ endhex:
 printhex:       
 
                                 ; Display HL as a 16-bit number in hex.
-            PUSH BC             ; preserve the IP
-            LD	A,H
-			CALL	Print_Hex8
-			LD	A,L
-			CALL	Print_Hex8
-			POP BC
-			RET
+        PUSH BC                 ; preserve the IP
+        LD	A,H
+		CALL	Print_Hex8
+		LD	A,L
+		CALL	Print_Hex8
+		POP BC
+		RET
 
 ; Print an 8-bit HEX number  - shortened KB 25/11/21
 ; A: Number to print
 ;
 Print_Hex8:		
-            LD	C,A
-			RRA 
-			RRA 
-			RRA 
-			RRA 
-		    CALL conv
-		    LD A,C
+        LD	C,A
+		RRA 
+		RRA 
+		RRA 
+		RRA 
+	    CALL conv
+	    LD A,C
 
-conv:		AND	0x0F
-			ADD	A,0x90
-			DAA
-			ADC	A,0x40
-			DAA
-			CALL putchar
-			RET            
+conv:		
+        AND	0x0F
+		ADD	A,0x90
+		DAA
+		ADC	A,0x40
+		DAA
+		CALL putchar
+		RET            
+
+macro:
+        ADD A,A
+        LD HL,MACROS
+        LD D,0
+        LD E,A
+        ADD HL,DE
+        LD (vTIBPtr),BC
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        PUSH DE
+        call ENTER
+        .cstr "\\g"
+        LD BC,(vTIBPtr)
+        JP waitchar
+
+; calculate nesting value
+; A is char to be tested, 
+; E is the nesting value (initially 0)
+; E is increased by ( and [ 
+; E is decreased by ) and ]
+; E has its bit 7 toggled by `
+; limited to 127 levels
+nesting:
+        CP '`'
+        JR NZ,nesting1
+        BIT 7,E
+        JR Z,nesting1a
+        RES 7,E
+        RET
+nesting1a: 
+        SET 7,E
+        RET
+nesting1:
+        CP '['
+        JR Z,nesting2
+        CP '('
+        JR NZ,nesting3
+nesting2:
+        INC E
+        RET
+nesting3:
+        CP ']'
+        JR Z,nesting4
+        CP ')'
+        RET NZ
+nesting4:
+        DEC E
+        RET 
 
