@@ -33,7 +33,7 @@ vBase16:    DW 0                ; 11
 vTIBPtr:    DW 0                ; 12
 vAltCodes:  DW 0                ; 13
 vFlags:     DW 0                ; 14
-            DW 0                ; 15
+vNesting:   DW 0                ; 15
 
 GETCVEC:    DW 0                ; 16  
 PUTCVEC:    DW 0                ; 17  

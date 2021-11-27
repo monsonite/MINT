@@ -219,12 +219,12 @@ interpret:
 .endif
         
         call ENTER
-        .cstr "\\n\\n`> `"
+        .cstr "\\n`> `"
 
 interpret1:                     ; used by tests
         LD HL,0
         LD (vTIBPtr),HL
-
+        LD (vNesting),HL
 .if EXTENDED=1
 
 interpret2:
@@ -235,6 +235,7 @@ interpret2:
 .endif
 
         LD BC,(vTIBPtr)
+        LD DE,(vNesting)        ; E 
 
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
@@ -244,45 +245,49 @@ interpret2:
 
 waitchar:   
         CALL getchar            ; loop around waiting for character
-        CP $7F                  ; Greater or equal to $7F
-        JR NC, endchar             
         CP $20
         JR NC, waitchar1
         CP $0                   ; is it end of string?
         JR Z, endchar
-        CP '\n'                 ; newline?
-        JR Z, waitchar2
         CP '\r'                 ; carriage return?
         JR Z, waitchar3
+        LD D,0
+        LD (vNesting),DE
         JP macro    
 
 waitchar1:
         LD HL,TIB
         ADD HL,BC
-        LD (HL), A          ; store the character in textbuf
+        LD (HL),A               ; store the character in textbuf
         INC BC
-
-waitchar2:        
-        CALL putchar        ; echo character to screen
-        JR  waitchar        ; wait for next character
+        CALL putchar            ; echo character to screen
+        CALL nesting
+        JR  waitchar            ; wait for next character
 
 waitchar3:
         LD HL,TIB
         ADD HL,BC
-        LD (HL),A           ; store the character in textbuf
+        LD (HL),"\r"            ; store the crlf in textbuf
         INC BC
-        LD (HL),$03         ; store end of text ETX in text buffer 
+        INC HL
+        LD (HL),"\n"            
+        INC BC
+        CALL crlf               ; echo character to screen
+        LD A,E                  ; if zero nesting append and ETX after \r
+        OR A
+        JR NZ,waitchar
+        LD (HL),$03             ; store end of text ETX in text buffer 
         INC BC
 
 endchar:    
         LD (vTIBPtr),BC
-        CALL crlf
-
-        LD BC,TIB           ; Instructions stored on heap at address HERE
+        ; CALL crlf
+        LD BC,TIB               ; Instructions stored on heap at address HERE
         DEC BC
-                            ; Drop into the NEXT and dispatch routines
+                                ; Drop into the NEXT and dispatch routines
 
 ; ********************************************************************************
+;
 ; Dispatch Routine.
 ;
 ; Get the next character and form a 1 byte jump address
@@ -300,6 +305,7 @@ endchar:
 ; primitive code.
 ;
 ; Instruction Pointer IP BC is incremented
+;
 ; *********************************************************************************
 
 NEXT:   
@@ -630,8 +636,8 @@ iUserVars:
         DW FALSE                ; vBase16
         DW TIB                  ; vTIBPtr
         DW altCodes             ; vAltCodes
-        DW $0000                ; 
-        DW $0000                ; 
+        DW $0                   ; 
+        DW $0                   ; vNesting
         
 
 ; **********************************************************************			 
@@ -982,27 +988,30 @@ begin1:
 begin2:
         INC BC
         LD A,(BC)
-        CP '_'
-        JR NZ,begin3
-        LD A,$80
-        XOR E
-        LD E,A
-        JR begin2
-begin3:
-        CP '['
-        JR Z,begin4
-        CP '('
-        JR NZ,begin5
-begin4:
-        INC E
-        JR begin2
-begin5:
-        CP ']'
-        JR Z,begin6
-        CP ')'
-        JR NZ,begin2
-begin6:
-        DEC E
+        CALL nesting
+;         CP '`'
+;         JR NZ,begin3
+;         LD A,$80
+;         XOR E
+;         LD E,A
+;         JR begin2
+; begin3:
+;         CP '['
+;         JR Z,begin4
+;         CP '('
+;         JR NZ,begin5
+; begin4:
+;         INC E
+;         JR begin2
+; begin5:
+;         CP ']'
+;         JR Z,begin6
+;         CP ')'
+;         JR NZ,begin2
+; begin6:
+;         DEC E
+        XOR A
+        OR E
         JR NZ,begin2
         JP (IY)
 
@@ -1625,4 +1634,38 @@ macro:
         .cstr "\\g"
         LD BC,(vTIBPtr)
         JP waitchar
+
+; calculate nesting value
+; A is char to be tested, 
+; E is the nesting value (initially 0)
+; E is increased by ( and [ 
+; E is decreased by ) and ]
+; E has its bit 7 toggled by `
+; limited to 127 levels
+nesting:
+        CP '`'
+        JR NZ,nesting1
+        BIT 7,E
+        JR Z,nesting1a
+        RES 7,E
+        RET
+nesting1a: 
+        SET 7,E
+        RET
+nesting1:
+        CP '['
+        JR Z,nesting2
+        CP '('
+        JR NZ,nesting3
+nesting2:
+        INC E
+        RET
+nesting3:
+        CP ']'
+        JR Z,nesting4
+        CP ')'
+        RET NZ
+nesting4:
+        DEC E
+        RET 
 
