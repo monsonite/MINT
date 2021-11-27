@@ -1,6 +1,7 @@
 ; .engine mycomputer
 
 .include "constants.asm"
+.include "IOSerial.asm"
 
 .macro testInput,s1
     ld HL,buf1%%M
@@ -15,9 +16,9 @@ buf2%%M:
 LD SP,DSTACK
 CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
-LD (VGETCHAR),HL
+LD (GETCVEC),HL
 
-testInput {"\\EA\r\b1.;\rA\r",0}
+testInput {"1.\r"}
 JP interpret
 
 testGetCharImpl:
@@ -30,3 +31,4 @@ testGetCharImpl:
         RET                 ;NZ flagged if character input
 
 .include "MINT.asm"
+.include "ram.asm"

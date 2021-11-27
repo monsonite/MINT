@@ -170,20 +170,7 @@
 ; **************************************************************************
 iMacros:
 
-empty_:
-        .cstr ";"
-
-escape_:
-        .cstr "13\\e70(` `)13\\e`> `0\\$!;"
-
-backsp_:
-        .cstr "\\$@0=0=(1\\$\\-8\\e` `8\\e);"
-
-toggleBase_:
-        .cstr "\\b@0=\\b!;"
-
-printStack_:
-        .cstr "`=> `\\p\\n\\n`> `;"        
+.include "MINT-macros.asm"
 
 start:
 mint:
@@ -282,7 +269,9 @@ waitchar2:
 waitchar3:
         LD HL,TIB
         ADD HL,BC
-        LD (HL), A          ; store the character in textbuf
+        LD (HL),A           ; store the character in textbuf
+        INC BC
+        LD (HL),$03         ; store end of text ETX in text buffer 
         INC BC
 
 endchar:    
@@ -318,18 +307,18 @@ NEXT:
         LD A, (BC)                  ; 7t    Get the next character and dispatch
 		
 dispatch:                        
-        LD H, msb(page1)            ; 7t    Load H with the 1st page address
-        LD DE, opcodes              ; 7t    Start address of jump table         
-        sub ' '                     ; 7t    remove char offset
-        JR NC,dispatch1
-        CP 0 - ' '                  ;       expected values: 0 or '\r'
+        CP 0                        ;       NULL? exit Mint
         JP Z, exit_
-        JP interpret                ;       back to OK prompt
-dispatch1:
+        CP $03                      ;       ETX? interpret next line       
+        JP Z,interpret
+        SUB ' '                     ; 7t    remove char offset
+        JR C,NEXT                   ;       ignore char 
+        LD DE,opcodes               ; 7t    Start address of jump table         
         LD E,A                      ; 4t    Index into table
         LD A,(DE)                   ; 7t    get low jump address
+        LD H,msb(page1)             ; 7t    Load H with the 1st page address
         LD L,A                      ; 4t    and put into L
-        JP  (HL)                    ; 4t    Jump to routine
+        JP (HL)                     ; 4t    Jump to routine
 
 ENTER:
         LD HL,BC
@@ -388,22 +377,6 @@ rpop:
         LD H,(IX+0)
         INC IX                  
         RET
-
-macro:
-        ADD A,A
-        LD HL,MACROS
-        LD D,0
-        LD E,A
-        ADD HL,DE
-        LD (vTIBPtr),BC
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        PUSH DE
-        call ENTER
-        .cstr "\\g"
-        LD BC,(vTIBPtr)
-        JP waitchar
 
 ; **************************************************************************
 ; Page 2  Jump Tables
@@ -517,7 +490,7 @@ altCodes:
         DB     lsb(toggleBase_); STX ^B
         DB     lsb(empty_)     ; ETX ^C
         DB     lsb(empty_)     ; EOT ^D
-        DB     lsb(empty_)     ; ENQ ^E
+        DB     lsb(editt_)     ; ENQ ^E
         DB     lsb(empty_)     ; ACK ^F
         DB     lsb(empty_)     ; BEL ^G
         DB     lsb(backsp_)    ; BS  ^H
@@ -1608,31 +1581,48 @@ endhex:
 printhex:       
 
                                 ; Display HL as a 16-bit number in hex.
-            PUSH BC             ; preserve the IP
-            LD	A,H
-			CALL	Print_Hex8
-			LD	A,L
-			CALL	Print_Hex8
-			POP BC
-			RET
+        PUSH BC                 ; preserve the IP
+        LD	A,H
+		CALL	Print_Hex8
+		LD	A,L
+		CALL	Print_Hex8
+		POP BC
+		RET
 
 ; Print an 8-bit HEX number  - shortened KB 25/11/21
 ; A: Number to print
 ;
 Print_Hex8:		
-            LD	C,A
-			RRA 
-			RRA 
-			RRA 
-			RRA 
-		    CALL conv
-		    LD A,C
+        LD	C,A
+		RRA 
+		RRA 
+		RRA 
+		RRA 
+	    CALL conv
+	    LD A,C
 
-conv:		AND	0x0F
-			ADD	A,0x90
-			DAA
-			ADC	A,0x40
-			DAA
-			CALL putchar
-			RET            
+conv:		
+        AND	0x0F
+		ADD	A,0x90
+		DAA
+		ADC	A,0x40
+		DAA
+		CALL putchar
+		RET            
+
+macro:
+        ADD A,A
+        LD HL,MACROS
+        LD D,0
+        LD E,A
+        ADD HL,DE
+        LD (vTIBPtr),BC
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        PUSH DE
+        call ENTER
+        .cstr "\\g"
+        LD BC,(vTIBPtr)
+        JP waitchar
 
