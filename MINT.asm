@@ -140,10 +140,6 @@
 ;
 ; *****************************************************************************
 
-;       vFLAGS has up to 16 flags    
-;       fEDIT       EQU $0001
-
-
          ;ROMSTART    EQU $0
          ;RAMSTART    EQU $800
          ;EXTENDED    EQU 0
@@ -365,13 +361,7 @@ rpop:
         LD H,(IX+0)
         INC IX                  
         RET
-
-; crlf:       
-;         LD A, '\r'
-;         CALL putchar
-;         LD A, '\n'           
-;         JP putchar
-        
+   
 ; **************************************************************************
 ; Page 2  Jump Tables
 ; **************************************************************************
@@ -977,27 +967,6 @@ begin2:
         INC BC
         LD A,(BC)
         CALL nesting
-;         CP '`'
-;         JR NZ,begin3
-;         LD A,$80
-;         XOR E
-;         LD E,A
-;         JR begin2
-; begin3:
-;         CP '['
-;         JR Z,begin4
-;         CP '('
-;         JR NZ,begin5
-; begin4:
-;         INC E
-;         JR begin2
-; begin5:
-;         CP ']'
-;         JR Z,begin6
-;         CP ')'
-;         JR NZ,begin2
-; begin6:
-;         DEC E
         XOR A
         OR E
         JR NZ,begin2
