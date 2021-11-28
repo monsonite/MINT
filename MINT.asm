@@ -348,20 +348,6 @@ Num2:
         sbc	hl,de
         JP putchar
 
-rpush:
-        DEC IX                  
-        LD (IX+0),H
-        DEC IX
-        LD (IX+0),L
-        RET
-
-rpop:
-        LD L,(IX+0)         
-        INC IX              
-        LD H,(IX+0)
-        INC IX                  
-        RET
-   
 ; **************************************************************************
 ; Page 2  Jump Tables
 ; **************************************************************************
@@ -474,7 +460,7 @@ altCodes:
         DB     lsb(toggleBase_); STX ^B
         DB     lsb(empty_)     ; ETX ^C
         DB     lsb(empty_)     ; EOT ^D
-        DB     lsb(editt_)     ; ENQ ^E
+        DB     lsb(empty_)     ; ENQ ^E
         DB     lsb(empty_)     ; ACK ^F
         DB     lsb(empty_)     ; BEL ^G
         DB     lsb(backsp_)    ; BS  ^H
@@ -491,7 +477,7 @@ altCodes:
         DB     lsb(empty_)     ; DC3 ^S
         DB     lsb(empty_)     ; DC4 ^T
         DB     lsb(empty_)     ; NAK ^U
-        DB     lsb(empty_)     ; SYN ^V
+        DB     lsb(viewDefs_)  ; SYN ^V
         DB     lsb(empty_)     ; ETB ^W
         DB     lsb(empty_)     ; CAN ^X
         DB     lsb(empty_)     ; EM  ^Y
@@ -557,15 +543,15 @@ altCodes:
         DB     lsb(nop_)       ;    U
         DB     lsb(nop_)       ;    V
         DB     lsb(nop_)       ;    W
-        DB     lsb(exec_)      ;    X
+        DB     lsb(nop_)       ;    X
         DB     lsb(nop_)       ;    Y
         DB     lsb(nop_)       ;    Z
         DB     lsb(cArrDef_)   ;    [
         DB     lsb(comment_)   ;    \  comment text, skips reading until end of line
-        DB     lsb(nop_)   ;    ]
+        DB     lsb(nop_)       ;    ]
         DB     lsb(charCode_)  ;    ^
         DB     lsb(sign_)      ;    _)  ( n -- b ) returns true if -ve 
-        DB     lsb(strDef_)    ;    `            
+        DB     lsb(nop_)       ;    `            
         DB     lsb(nop_)       ;    a
         DB     lsb(base16_)    ;    b
         DB     lsb(nop_)       ;    c
@@ -585,8 +571,8 @@ altCodes:
         DB     lsb(quit_)      ;    q  ; quits from Mint REPL         
         DB     lsb(nop_)       ;    r
         DB     lsb(nop_)       ;    s 
-        DB     lsb(type_)      ;    t
-        DB     lsb(userVar_)   ;    u
+        DB     lsb(nop_)       ;    t
+        DB     lsb(nop_)       ;    u
         DB     lsb(nop_)       ;    v   
         DB     lsb(while_)     ;    w  ; ( b -- ) if false, skip to end of loop 
         DB     lsb(exec_)      ;    x
@@ -1175,7 +1161,11 @@ emit_:
         JP (IY)
 
 exec_:
-        POP HL              
+        CALL exec1
+        JP (IY)
+exec1:
+        POP HL
+        EX (SP),HL
         JP (HL)
 
 go_:
@@ -1296,28 +1286,16 @@ dots_:
 knownVar_:
         JP knownVar 
 while_:
-        JP while
+        POP HL
+        LD A,L                      ; zero?
+        OR H
+        JR Z,while1
+        JP (IY)
+while1:
+        LD DE,6                     ; drop loop frame
+        ADD IX,DE
+        JP begin1                   ; skip to end of loop        
 
-
-.if EXTENDED = 1
-
-strDef_:
-        JP strDef
-type_:
-        JP type
-
-userVar_:
-        JP userVar
-
-.else
-
-strDef_:
-type_:
-userVar_:
-        JP   (IY) 
-
-.endif
-        
 ; **************************************************************************
 ; Page 6 primitive routines 
 ; **************************************************************************
@@ -1338,52 +1316,6 @@ knownVar2:
         ADD HL,DE
         PUSH HL
         JP (IY)
-
-while: 
-        POP HL
-        LD A,L                  ; zero?
-        OR H
-        JR Z,while1
-        JP (IY)
-while1:
-        LD DE,6                     ; drop loop frame
-        ADD IX,DE
-        JP begin1                   ; skip to end of loop        
-
-
-
-; *********************************************************************
-; * extended or non-core routines
-; *********************************************************************
-
-.if EXTENDED = 1
-
-strDef:
-        INC BC                  ; point to next char
-        PUSH BC                 ; push string address
-        LD DE,0                 ; count = 0
-        JR strDef2
-strDef1:
-        INC BC                  ; point to next char
-        INC DE                  ; increase count
-strDef2:
-        LD A,(BC)
-        CP "`"                  ; ` is the string terminator
-        JR NZ,strDef1
-        PUSH DE                 ; push count
-        JP   (IY) 
-type:
-        call ENTER
-        .cstr "(",$22,"\\@\\e1+)"
-        JP (IY)
-
-userVar:
-        LD DE,userVars
-        POP HL
-        JP knownVar2
-        JP      (IY)
-
-.endif
 
 ;*******************************************************************
 ; Page 5 primitive routines continued
@@ -1578,4 +1510,51 @@ nesting4:
         DEC E
         RET 
 
+rpush:
+        DEC IX                  
+        LD (IX+0),H
+        DEC IX
+        LD (IX+0),L
+        RET
+
+rpop:
+        LD L,(IX+0)         
+        INC IX              
+        LD H,(IX+0)
+        INC IX                  
+        RET
+   
+
+; ; *********************************************************************
+; ; * extended or non-core routines
+; ; *********************************************************************
+
+; .if EXTENDED = 1
+
+; strDef:
+;         INC BC                  ; point to next char
+;         PUSH BC                 ; push string address
+;         LD DE,0                 ; count = 0
+;         JR strDef2
+; strDef1:
+;         INC BC                  ; point to next char
+;         INC DE                  ; increase count
+; strDef2:
+;         LD A,(BC)
+;         CP "`"                  ; ` is the string terminator
+;         JR NZ,strDef1
+;         PUSH DE                 ; push count
+;         JP   (IY) 
+; type:
+;         call ENTER
+;         .cstr "(",$22,"\\@\\e1+)"
+;         JP (IY)
+
+; userVar:
+;         LD DE,userVars
+;         POP HL
+;         JP knownVar2
+;         JP      (IY)
+
+; .endif
 

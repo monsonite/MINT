@@ -326,9 +326,8 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | \\!    | STORE a byte to memory                      | val adr --     |
 | [      | begin an array definition                   | --             |
 | ]      | end an array definition                     | -- adr nwords  |
-| \\[    | begin a byte array definition               | --             |** TODO **
-| \\]    | end a byte array definition                 | -- adr nbytes  |** TODO **
-| \\\`   | define a string                             | -- adr nchars  |
+| \\[    | begin a byte array definition               | --             |
+| \\\`   | define a string                             | -- adr nchars  |** TODO **
 | \\h    | heap pointer variable                       | -- adr         |
 | \\$    | text input buffer pointer variable          | -- adr         |
 | \\b    | base16 flag variable                        | -- adr         |
