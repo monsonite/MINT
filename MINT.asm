@@ -209,34 +209,31 @@ init2:
         RET
 
 interpret:
-
-.if EXTENDED=1
-
-        LD HL,(vFlags)
-        BIT 0,L                 ; edit mode
-        JR NZ,interpret2
-
-.endif
-        
         call ENTER
         .cstr "\\n`> `"
 
 interpret1:                     ; used by tests
-        LD HL,0
-        LD (vTIBPtr),HL
-        LD (vNesting),HL
-.if EXTENDED=1
+        LD BC,0                 ; load BC with offset into TIB         
+        LD (vTIBPtr),BC
 
-interpret2:
-        LD HL,(vFlags)
-        RES 0,L                 ; not edit mode
-        LD (vFlags),HL
+interpret2:                     ; calc nesting (a macro might have changed it)
+        LD E,0                  ; initilize nesting value
+        PUSH BC                 ; save offset into TIB, 
+                                ; BC is also the count of chars in TIB
+        LD HL,TIB               ; HL is start of TIB
+        JR interpret4
 
-.endif
+interpret3:
+        LD A,(HL)               ; A = char in TIB
+        INC HL                  ; inc pointer into TIB
+        DEC BC                  ; dec count of chars in TIB
+        call nesting            ; update nesting value
 
-        LD BC,(vTIBPtr)
-        LD DE,(vNesting)        ; E 
-
+interpret4:
+        LD A,C                  ; is count zero?
+        OR B
+        JR NZ, interpret3          ; if not loop
+        POP BC                  ; restore offset into TIB
 ; *******************************************************************         
 ; Wait for a character from the serial input (keyboard) 
 ; and store it in the text buffer. Keep accepting characters,
@@ -252,7 +249,6 @@ waitchar:
         CP '\r'                 ; carriage return?
         JR Z, waitchar3
         LD D,0
-        LD (vNesting),DE
         JP macro    
 
 waitchar1:
@@ -268,9 +264,6 @@ waitchar3:
         LD HL,TIB
         ADD HL,BC
         LD (HL),"\r"            ; store the crlf in textbuf
-        INC BC
-        INC HL
-        LD (HL),"\n"            
         INC BC
         CALL crlf               ; echo character to screen
         LD A,E                  ; if zero nesting append and ETX after \r
@@ -359,31 +352,6 @@ Num2:
         sbc	hl,de
         JP putchar
         
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JP putchar
-
-space:       
-        LD A, ' '           
-        JP putchar
-
-
-rpush:
-        DEC IX                  
-        LD (IX+0),H
-        DEC IX
-        LD (IX+0),L
-        RET
-
-rpop:
-        LD L,(IX+0)         
-        INC IX              
-        LD H,(IX+0)
-        INC IX                  
-        RET
-
 ; **************************************************************************
 ; Page 2  Jump Tables
 ; **************************************************************************
@@ -637,7 +605,7 @@ iUserVars:
         DW TIB                  ; vTIBPtr
         DW altCodes             ; vAltCodes
         DW $0                   ; 
-        DW $0                   ; vNesting
+        DW $0                   ;
         
 
 ; **********************************************************************			 
@@ -1116,6 +1084,25 @@ hexp:                       ; Print HL as a hexadecimal
         CALL    printhex
         CALL    space
         JP      (IY)
+
+; Miscellaneous ************************************************************           
+
+
+rpush:
+        DEC IX                  
+        LD (IX+0),H
+        DEC IX
+        LD (IX+0),L
+        RET
+
+rpop:
+        LD L,(IX+0)         
+        INC IX              
+        LD H,(IX+0)
+        INC IX                  
+        RET
+
+
 
 ; **************************************************************************
 ; Page 6 Alt primitives
@@ -1633,7 +1620,7 @@ macro:
         call ENTER
         .cstr "\\g"
         LD BC,(vTIBPtr)
-        JP waitchar
+        JP interpret2
 
 ; calculate nesting value
 ; A is char to be tested, 
@@ -1668,4 +1655,15 @@ nesting3:
 nesting4:
         DEC E
         RET 
+
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JP putchar
+
+space:       
+        LD A, ' '           
+        JP putchar
+
 
