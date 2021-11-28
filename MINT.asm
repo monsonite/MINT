@@ -538,7 +538,7 @@ altCodes:
         DB     lsb(nop_)       ;    B
         DB     lsb(nop_)       ;    C
         DB     lsb(nop_)       ;    D    
-        DB     lsb(edit_)      ;    E  
+        DB     lsb(nop_)       ;    E  
         DB     lsb(nop_)       ;    F
         DB     lsb(nop_)       ;    G
         DB     lsb(nop_)       ;    H  
@@ -562,7 +562,7 @@ altCodes:
         DB     lsb(nop_)       ;    Z
         DB     lsb(cArrDef_)   ;    [
         DB     lsb(comment_)   ;    \  comment text, skips reading until end of line
-        DB     lsb(cArrEnd_)   ;    ]
+        DB     lsb(nop_)   ;    ]
         DB     lsb(charCode_)  ;    ^
         DB     lsb(sign_)      ;    _)  ( n -- b ) returns true if -ve 
         DB     lsb(strDef_)    ;    `            
@@ -1086,14 +1086,21 @@ crlf:
         LD A, '\n'           
         JP putchar
 
-; Byte ARRAY compilation routine ***********************************************
-ccompNEXT:
+; ARRAY compilation routine
+compNEXT:
         POP DE          ; DE = return address
         LD HL,(vHeapPtr)    ; load heap ptr
         LD (HL),E       ; store lsb
+        LD A,(vByteMode)
         INC HL          
+        OR A
+        JR NZ,compNext1
+        LD (HL),D
+        INC HL
+compNext1:
         LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
+
 
 ; **************************************************************************
 ; Page 6 Alt primitives
@@ -1113,6 +1120,10 @@ base16_:
         LD HL,vBase16
         PUSH HL
         JP (IY)
+
+cArrDef_:                   ; define a byte array
+        LD A,TRUE
+        JP arrDef1
 
 cFetch_:
         POP     HL          ; 10t
@@ -1286,17 +1297,10 @@ knownVar_:
         JP knownVar 
 while_:
         JP while
-cArrDef_:                   
-        JP cArrDef
-cArrEnd_:
-        JP cArrEnd
+
 
 .if EXTENDED = 1
 
-
-edit_:
-        JP edit
-        
 strDef_:
         JP strDef
 type_:
@@ -1307,7 +1311,6 @@ userVar_:
 
 .else
 
-edit_:
 strDef_:
 type_:
 userVar_:
@@ -1318,19 +1321,6 @@ userVar_:
 ; **************************************************************************
 ; Page 6 primitive routines 
 ; **************************************************************************
-
-cArrDef:                        ; define a character array
-        LD IY,ccompNEXT 
-        JP arrDef1
-
-cArrEnd:
-        CALL rpop               ; DE = start of array
-        PUSH HL
-        EX DE,HL
-        LD HL,(vHeapPtr)        ; HL = heap ptr
-        OR A
-        SBC HL,DE               ; bytes on heap 
-        JP arrEnd2                  
 
 dots:
         call ENTER
@@ -1368,49 +1358,6 @@ while1:
 
 .if EXTENDED = 1
 
-
-edit:
-        LD A,":"
-        LD (TIB),A
-        CALL putchar
-        INC BC
-        LD A,(BC)
-        LD (TIB+1),A
-        CALL putchar
-        LD A,(BC)
-        SUB "A"
-        ADD A,A
-        LD HL,defs
-        LD E,A
-        LD D,0
-        ADD HL,DE
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        EX DE,HL
-        LD DE,TIB+2
-        JR edit2
-edit1:
-        CALL putchar
-        INC HL
-        INC DE
-edit2:        
-        LD A,(HL)
-        LD (DE),A
-        LD A,(HL)
-        CP ";"
-        JR NZ, edit1
-        CALL putchar
-        EX DE,HL
-        LD DE,TIB-1
-        OR A
-        SBC HL,DE
-        LD (vTIBPtr),HL
-        LD HL,(vFLAGS)
-        SET 0,L
-        LD (vFLAGS),HL
-        JP (IY)
-
 strDef:
         INC BC                  ; point to next char
         PUSH BC                 ; push string address
@@ -1442,21 +1389,12 @@ userVar:
 ; Page 5 primitive routines continued
 ;*******************************************************************
 
-; ARRAY compilation routine ***********************************************
-compNEXT:
-        POP DE          ; DE = return address
-        LD HL,(vHeapPtr)    ; load heap ptr
-        LD (HL),E       ; store lsb
-        INC HL          
-        LD (HL),D
-        INC HL
-        LD (vHeapPtr),HL    ; save heap ptr
-        JP NEXT
-
 ; define a word array
 arrDef:      
-        LD IY,compNEXT  
+        LD A,FALSE
 arrDef1:      
+        LD IY,compNEXT
+        LD (vByteMode),A
         LD HL,(vHeapPtr)    ; HL = heap ptr
         CALL rpush          ; save start of array \[  \]
         JP NEXT         ; hardwired to NEXT
@@ -1469,6 +1407,9 @@ arrEnd:
         LD HL,(vHeapPtr)        ; HL = heap ptr
         OR A
         SBC HL,DE               ; bytes on heap 
+        LD A,(vByteMode)
+        OR A
+        JR NZ,arrEnd2
         SRL H           ; BC = m words
         RR L
 arrEnd2:
@@ -1609,6 +1550,7 @@ macro:
 ; E is decreased by ) and ]
 ; E has its bit 7 toggled by `
 ; limited to 127 levels
+
 nesting:
         CP '`'
         JR NZ,nesting1
@@ -1635,7 +1577,5 @@ nesting3:
 nesting4:
         DEC E
         RET 
-
-
 
 

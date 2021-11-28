@@ -32,7 +32,7 @@ vHeapPtr:   DW 0                ; 10
 vBase16:    DW 0                ; 11
 vTIBPtr:    DW 0                ; 12
 vAltCodes:  DW 0                ; 13
-vFlags:     DW 0                ; 14
+vByteMode:  DW 0                ; 14
             DW 0                ; 15
 
 GETCVEC:    DW 0                ; 16  
