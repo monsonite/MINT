@@ -284,14 +284,13 @@ Note: logical NOT can be achieved with 0=
 | .      | print the top member of the stack as a decimal number DOT | a --        |
 | ,      | print the number on the stack as a hexadecimal            | a --        |
 | \`     | \`Everything between ticks is printed as a string\`       | --          |
-| \\p    | non-destructively prints stack                            | --          |
-| \\e    | emits a char to output                                    | val --      |
+| \\P    | non-destructively prints stack                            | --          |
+| \\E    | emits a char to output                                    | val --      |
 | \\I    | input from a I/O port                                     | port -- val |
-| \\k    | read a char from input                                    | -- val      |
-| \\n    | prints a newline to output                                | --          |
+| \\K    | read a char from input                                    | -- val      |
+| \\C    | prints a CRLF to output                                   | --          |
 | \\O    | output to an I/O port                                     | val port -- |
 | \\$    | text input pointer variable                               | -- adr      |
-| \\t    | print a string                                            | adr len --  |** TODO **
 
 ### User Definitions
 
@@ -300,7 +299,6 @@ Note: logical NOT can be achieved with 0=
 | :      | define a new word DEF      | "C"     |
 | ;      | end of user definition END |         |
 | \\:    | start defining a macro     | "C" -- |
-| \\E    | edit a definition          | "C" --  | ** TODO **
 
 NOTE: "C" is an uppercase letter immediately following opcode which is the name of the definition
 
@@ -312,7 +310,7 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | )      | END a loop or conditionally executed code block   | --     |
 | \\i    | returns index variable of current loop            | -- val |
 | \\j    | returns index variable of outer loop              | -- val |
-| \\w    | if false then skip to end of loop                 | b --   |
+| \\W    | if false then skip to end of loop                 | b --   |
 
 ### Memory and Variable Operations
 
@@ -327,11 +325,9 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | [      | begin an array definition                   | --             |
 | ]      | end an array definition                     | -- adr nwords  |
 | \\[    | begin a byte array definition               | --             |
-| \\\`   | define a string                             | -- adr nchars  |** TODO **
 | \\h    | heap pointer variable                       | -- adr         |
 | \\$    | text input buffer pointer variable          | -- adr         |
-| \\b    | base16 flag variable                        | -- adr         |
-| \\u    | user var                                    | n -- adr       |** TODO **
+| \\B    | base16 flag variable                        | -- adr         |
 
 ### Constants and variables
 
@@ -353,9 +349,9 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | Symbol | Description                                   | Effect    |
 | ------ | --------------------------------------------- | --------- |
 | \\\\   | comment text, skips reading until end of line | --        |
-| \\g    | execute mint code at address                  | addr -- ? |
-| \\q    | quits from Mint interpreter                   | --        |
-| \\x    | execute machine code at address               | addr -- ? |
+| \\G    | execute mint code at address                  | addr -- ? |
+| \\Q    | quits from Mint interpreter                   | --        |
+| \\X    | execute machine code at address               | addr -- ? |
 
 ### Macros
 

@@ -58,7 +58,7 @@ testsStart:
     test "1(1(\\i@ \\j@+))", 0
     test "2(2(\\i@ \\j@))+++++++", 4
     test "0t! 10(1t\\+) t@",10
-    test "0t! 10(\\i@ 5< \\w 1t\\+) t@",5
+    test "0t! 10(\\i@ 5< \\W 1t\\+) t@",5
     test "100a! 1 a\\+ a@", 101
 
     test "[3] '@", 3
@@ -86,13 +86,6 @@ testsStart:
     DB 0
     expect "sum over array",15
     
-    ; .if EXTENDED = 1
-    
-    ; test "\\`abc` $ ' ",3
-    ; test "\\`abc` ' \\@ ",$61
-    
-    ; .endif
-
     CALL enter
     .cstr "`Done!`"
     HALT

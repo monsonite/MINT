@@ -173,7 +173,7 @@ mint:
         LD SP,DSTACK
         CALL initialize
         call ENTER
-        .cstr "`MINT V1.0`\\n"
+        .cstr "`MINT V1.0`\\C"
         JP interpret
 
 initialize:
@@ -206,7 +206,7 @@ init2:
 
 interpret:
         call ENTER
-        .cstr "\\n`> `"
+        .cstr "\\C`> `"
 
 interpret1:                     ; used by tests
         LD BC,0                 ; load BC with offset into TIB         
@@ -521,29 +521,29 @@ altCodes:
         DB     lsb(nop_)       ;    ?
         DB     lsb(cFetch_)    ;    @      
         DB     lsb(nop_)       ;    A    
-        DB     lsb(nop_)       ;    B
-        DB     lsb(nop_)       ;    C
-        DB     lsb(nop_)       ;    D    
-        DB     lsb(nop_)       ;    E  
+        DB     lsb(base16_)    ;    B
+        DB     lsb(newln_)     ;    C
+        DB     lsb(depth_)     ;    D    
+        DB     lsb(emit_)      ;    E  
         DB     lsb(nop_)       ;    F
-        DB     lsb(nop_)       ;    G
+        DB     lsb(go_)        ;    G
         DB     lsb(nop_)       ;    H  
         DB     lsb(inPort_)    ;    I  ( port -- val )   
         DB     lsb(nop_)       ;    J
-        DB     lsb(nop_)       ;    K  
+        DB     lsb(key_)       ;    K  
         DB     lsb(nop_)       ;    L
         DB     lsb(max_)       ;    M  ( a b -- c ) return the maximum value
-        DB     lsb(nop_)       ;    N
+        DB     lsb(newln_)     ;    N
         DB     lsb(outPort_)   ;    O  ( val port -- )
-        DB     lsb(nop_)       ;    P
-        DB     lsb(nop_)       ;    Q
+        DB     lsb(dots_)      ;    P
+        DB     lsb(quit_)      ;    Q
         DB     lsb(nop_)       ;    R
         DB     lsb(nop_)       ;    S
         DB     lsb(nop_)       ;    T
         DB     lsb(nop_)       ;    U
         DB     lsb(nop_)       ;    V
-        DB     lsb(nop_)       ;    W
-        DB     lsb(nop_)       ;    X
+        DB     lsb(while_)     ;    W
+        DB     lsb(exec_)      ;    X
         DB     lsb(nop_)       ;    Y
         DB     lsb(nop_)       ;    Z
         DB     lsb(cArrDef_)   ;    [
@@ -553,29 +553,29 @@ altCodes:
         DB     lsb(sign_)      ;    _)  ( n -- b ) returns true if -ve 
         DB     lsb(nop_)       ;    `            
         DB     lsb(nop_)       ;    a
-        DB     lsb(base16_)    ;    b
+        DB     lsb(nop_)       ;    b
         DB     lsb(nop_)       ;    c
-        DB     lsb(depth_)     ;    d  ( -- val ) depth of data stack
-        DB     lsb(emit_)      ;    e  ( val -- ) emits a char to output
+        DB     lsb(nop_)       ;    d  ( -- val ) depth of data stack
+        DB     lsb(nop_)       ;    e  ( val -- ) emits a char to output
         DB     lsb(nop_)       ;    f
-        DB     lsb(go_)        ;    g  ( -- ? ) execute mint definition
+        DB     lsb(nop_)       ;    g  ( -- ? ) execute mint definition
         DB     lsb(heapPtr_)   ;    h  ; returns heap ptr variable
         DB     lsb(i_)         ;    i  ; returns index variable of current loop          
         DB     lsb(j_)         ;    j  ; returns index variable of outer loop
-        DB     lsb(key_)       ;    k  ( -- val )  read a char from input
+        DB     lsb(nop_)       ;    k  ( -- val )  read a char from input
         DB     lsb(nop_)       ;    l
         DB     lsb(min_)       ;    m  ( a b -- c ) return the minimum value
-        DB     lsb(newln_)     ;    n  ; prints a newline to output
+        DB     lsb(nop_)       ;    n  ; prints a newline to output
         DB     lsb(nop_)       ;    o
-        DB     lsb(dots_)      ;    p  ( -- ) non-destructively prints stack
-        DB     lsb(quit_)      ;    q  ; quits from Mint REPL         
+        DB     lsb(nop_)       ;    p  ( -- ) non-destructively prints stack
+        DB     lsb(nop_)       ;    q  ; quits from Mint REPL         
         DB     lsb(nop_)       ;    r
         DB     lsb(nop_)       ;    s 
         DB     lsb(nop_)       ;    t
         DB     lsb(nop_)       ;    u
         DB     lsb(nop_)       ;    v   
-        DB     lsb(while_)     ;    w  ; ( b -- ) if false, skip to end of loop 
-        DB     lsb(exec_)      ;    x
+        DB     lsb(nop_)       ;    w  ; ( b -- ) if false, skip to end of loop 
+        DB     lsb(nop_)       ;    x
         DB     lsb(nop_)       ;    y
         DB     lsb(nop_)       ;    z
         DB     lsb(nop_)       ;    {
@@ -1302,7 +1302,7 @@ while1:
 
 dots:
         call ENTER
-        DB "\\0@2-\\d1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
+        DB "\\0@2-\\D1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
         JP (IY)
 
 knownVar:
@@ -1471,7 +1471,7 @@ macro:
         LD D,(HL)
         PUSH DE
         call ENTER
-        .cstr "\\g"
+        .cstr "\\G"
         LD BC,(vTIBPtr)
         JP interpret2
 
@@ -1547,7 +1547,7 @@ rpop:
 ;         JP   (IY) 
 ; type:
 ;         call ENTER
-;         .cstr "(",$22,"\\@\\e1+)"
+;         .cstr "(",$22,"\\@\\E1+)"
 ;         JP (IY)
 
 ; userVar:
