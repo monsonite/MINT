@@ -1,4 +1,4 @@
-; .engine mycomputer
+.engine mycomputer
 
     .include "constants.asm"
     .include "test.mac.asm"
@@ -16,10 +16,9 @@
 
 testsStart:
     
-    test "1.", 1
-    CALL enter
-    .cstr "`Done!!`"
-    HALT
+    ; CALL enter
+    ; .cstr "`Done!!`"
+    ; HALT
     
     test "2 3<", 1
     test "3 3<", 0
