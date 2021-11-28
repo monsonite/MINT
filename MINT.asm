@@ -2,13 +2,14 @@
 ;
 ;        MINT1_18 Micro-Interpreter for the Z80
 ;
-;        Ken Boak John Hardy and Craig Jones  November 25th 2021
+;        Ken Boak John Hardy and Craig Jones  November 28th 2021
 ;
 ;        Comparison Operators < and > return 0 (false) when equality is detected
 ;        Printhex routine shortened
-;        Getchar and Putchar hooks into Small Computer Monitor added
+;        Getchar and Putchar hooks into Small Computer Monitor added in page 2 28-11-21
 ;
-;        Decimal entry bug fixed  24/11
+;        Hex entry bug fixed 28-11-21
+;        Decimal entry bug fixed  24-11-21
 ;        Division routine shortened by 13 bytes 24/11
 ;
 ;
@@ -347,6 +348,26 @@ Num2:
         jr	c,Num2
         sbc	hl,de
         JP putchar
+		
+		
+;  *************************************************************************		
+;  Getchar and putchar hooks into SCM for RC2014
+;  *************************************************************************
+
+getchar:    PUSH BC
+            LD C, $01
+            RST $30
+            POP BC
+            RET
+
+putchar:    PUSH BC
+            PUSH HL
+            LD C, $02
+            RST $30
+            OR $FF
+            POP HL
+            POP BC
+            RET		
 
 ; **************************************************************************
 ; Page 2  Jump Tables
@@ -1000,7 +1021,7 @@ times10:                        ; Multiply digit(s) in HL by 10
         ADD HL,DE               ; 11t    2X  + 8X  = 10X
                                 ; 52t cycles
 
-        JP  number1
+        JR  number1
                 
 endnum:
         PUSH HL                 ; 11t   Put the number on the stack
@@ -1391,41 +1412,35 @@ end_def:
 
 get_hex:
 		LD HL,$0000				; 10t Clear HL to accept the number
-		LD A,(BC)				; 7t  Get the character which is a numeral
+        INC BC
+        LD A,(BC)				; 7t  Get the character which is a numeral
         
-get_hex1:        
-        BIT 6,A                ; 7t    is it alpha?
-        JR Z, ASCHX1           ; no 
-        ADD A,$09              ; add 9 to make $A - $F
+get_hex1:
+        BIT 6,A                 ; 7t    is it uppercase alpha?
+        JR Z, ASCHX1            ; no a decimal
+        SUB 7                   ; sub 7  to make $A - $F
 aschx1:
-        AND $0F                 ; form hex nybble
+        SUB $30                 ; 7t    Form decimal digit
         ADD A,L                 ; 4t    Add into bottom of HL
         LD  L,A                 ; 4t
-        
-                                ;  15t cycles
-      
+;        LD A,00                 ; 4t    Clear A
+;        ADC	A,H	                ; Add with carry H-reg
+;	     LD	H,A	                ; Put result in H-reg
+                           
         INC BC                  ; 6t    Increment IP
         LD A, (BC)              ; 7t    and get the next character
-        CP $30                  ; 7t    Is it a space terminator?
-        JR C, endhex            ; 7/12t Not a number / end of number
-        
-        
-       
+        CP $20                  ; 7t    is a terminating space?
+        JR Z, endhex            ; 7/12t Not a number / end of number
+
 times16:                        ; Multiply digit(s) in HL by 16
         ADD HL,HL               ; 11t    2X
         ADD HL,HL               ; 11t    4X
         ADD HL,HL               ; 11t    8X
         ADD HL,HL               ; 11t   16X     
-                                ; 44t cycles
-
+ 
         JR  get_hex1
                 
-endhex:
-;        PUSH HL                ; 11t   Put the number on the stack
-        
-;        JR dispatch            ; and process the next character
-
-        RET
+endhex: RET
         
 printhex:       
 
