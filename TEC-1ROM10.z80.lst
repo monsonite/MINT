@@ -871,15 +871,15 @@
 0180                EMPTY_:      
 0180   3B 00                  .CSTR   ";"   
 0182                ESCAPE_:      
-0182   31 33 5C 65 37 30 28 60 20 60 29 31 33 5C 65 60 3E 20 60 30 5C 24 21 3B 00 .CSTR   "13\\e70(` `)13\\e`> `0\\$!;"   
+0182   31 33 5C 45 37 30 28 60 20 60 29 31 33 5C 45 60 3E 20 60 30 5C 24 21 3B 00 .CSTR   "13\\E70(` `)13\\E`> `0\\$!;"   
 019B                BACKSP_:      
-019B   5C 24 40 30 3D 30 3D 28 31 5C 24 5C 2D 38 5C 65 60 20 60 38 5C 65 29 3B 00 .CSTR   "\\$@0=0=(1\\$\\-8\\e` `8\\e);"   
+019B   5C 24 40 30 3D 30 3D 28 31 5C 24 5C 2D 38 5C 45 60 20 60 38 5C 45 29 3B 00 .CSTR   "\\$@0=0=(1\\$\\-8\\E` `8\\E);"   
 01B4                TOGGLEBASE_:      
 01B4   5C 62 40 30 3D 5C 62 21 3B 00 .CSTR   "\\b@0=\\b!;"   
 01BE                PRINTSTACK_:      
-01BE   60 3D 3E 20 60 5C 70 5C 6E 5C 6E 60 3E 20 60 3B 00 .CSTR   "`=> `\\p\\n\\n`> `;"   
+01BE   60 3D 3E 20 60 5C 50 5C 43 5C 43 60 3E 20 60 3B 00 .CSTR   "`=> `\\P\\C\\C`> `;"   
 01CF                             ; editt_:
-01CF                             ;         .cstr "\\1@\\@\\9! \\9@\\^A< \\9@\\^Z> |0= (0\\1! 13\\e);"
+01CF                             ;         .cstr "\\1@\\@\\9! \\9@\\^A< \\9@\\^Z> |0= (0\\1! 13\\E);"
 01CF                VIEWDEFS_:      
 01CF                             ; .cstr "26(\\2\\i@{+.);"
 01CF   5C 32 40 40 5C 40 5C 3B 00 .CSTR   "\\2@@\\@\\;"   
@@ -888,7 +888,7 @@
 01D8   31 00 09               LD   SP,DSTACK   
 01DB   CD F2 01               CALL   initialize   
 01DE   CD 9C 02               CALL   ENTER   
-01E1   60 4D 49 4E 54 20 56 31 2E 30 60 5C 6E 00 .CSTR   "`MINT V1.0`\\n"   
+01E1   60 4D 49 4E 54 20 56 31 2E 30 60 5C 43 00 .CSTR   "`MINT V1.0`\\C"   
 01EF   C3 24 02               JP   interpret   
 01F2                INITIALIZE:      
 01F2   DD 21 00 0A            LD   IX,RSTACK   
@@ -919,7 +919,7 @@
 0223   C9                     RET      
 0224                INTERPRET:      
 0224   CD 9C 02               CALL   ENTER   
-0227   5C 6E 60 3E 20 60 00   .CSTR   "\\n`> `"   
+0227   5C 43 60 3E 20 60 00   .CSTR   "\\C`> `"   
 022E                INTERPRET1:      ; used by tests
 022E   01 00 00               LD   BC,0   ; load BC with offset into TIB
 0231   ED 43 18 0B            LD   (vTIBPtr),BC   
@@ -1219,29 +1219,29 @@
 039F   FA                     DB   lsb(nop_)   ;    ?
 03A0   17                     DB   lsb(cFetch_)   ;    @
 03A1   FA                     DB   lsb(nop_)   ;    A
-03A2   FA                     DB   lsb(nop_)   ;    B
-03A3   FA                     DB   lsb(nop_)   ;    C
-03A4   FA                     DB   lsb(nop_)   ;    D
-03A5   FA                     DB   lsb(nop_)   ;    E
+03A2   0C                     DB   lsb(base16_)   ;    B
+03A3   B2                     DB   lsb(newln_)   ;    C
+03A4   34                     DB   lsb(depth_)   ;    D
+03A5   46                     DB   lsb(emit_)   ;    E
 03A6   FA                     DB   lsb(nop_)   ;    F
-03A7   FA                     DB   lsb(nop_)   ;    G
+03A7   55                     DB   lsb(go_)   ;    G
 03A8   FA                     DB   lsb(nop_)   ;    H
 03A9   7E                     DB   lsb(inPort_)   ;    I  ( port -- val )
 03AA   FA                     DB   lsb(nop_)   ;    J
-03AB   FA                     DB   lsb(nop_)   ;    K
+03AB   91                     DB   lsb(key_)   ;    K
 03AC   FA                     DB   lsb(nop_)   ;    L
 03AD   A4                     DB   lsb(max_)   ;    M  ( a b -- c ) return the maximum value
-03AE   FA                     DB   lsb(nop_)   ;    N
+03AE   B2                     DB   lsb(newln_)   ;    N
 03AF   B7                     DB   lsb(outPort_)   ;    O  ( val port -- )
-03B0   FA                     DB   lsb(nop_)   ;    P
-03B1   FA                     DB   lsb(nop_)   ;    Q
+03B0   D0                     DB   lsb(dots_)   ;    P
+03B1   FD                     DB   lsb(quit_)   ;    Q
 03B2   FA                     DB   lsb(nop_)   ;    R
 03B3   FA                     DB   lsb(nop_)   ;    S
 03B4   FA                     DB   lsb(nop_)   ;    T
 03B5   FA                     DB   lsb(nop_)   ;    U
 03B6   FA                     DB   lsb(nop_)   ;    V
-03B7   FA                     DB   lsb(nop_)   ;    W
-03B8   FA                     DB   lsb(nop_)   ;    X
+03B7   D6                     DB   lsb(while_)   ;    W
+03B8   4D                     DB   lsb(exec_)   ;    X
 03B9   FA                     DB   lsb(nop_)   ;    Y
 03BA   FA                     DB   lsb(nop_)   ;    Z
 03BB   12                     DB   lsb(cArrDef_)   ;    [
@@ -1251,29 +1251,29 @@
 03BF   BE                     DB   lsb(sign_)   ;    _)  ( n -- b ) returns true if -ve
 03C0   FA                     DB   lsb(nop_)   ;    `
 03C1   FA                     DB   lsb(nop_)   ;    a
-03C2   0C                     DB   lsb(base16_)   ;    b
+03C2   FA                     DB   lsb(nop_)   ;    b
 03C3   FA                     DB   lsb(nop_)   ;    c
-03C4   34                     DB   lsb(depth_)   ;    d  ( -- val ) depth of data stack
-03C5   46                     DB   lsb(emit_)   ;    e  ( val -- ) emits a char to output
+03C4   FA                     DB   lsb(nop_)   ;    d  ( -- val ) depth of data stack
+03C5   FA                     DB   lsb(nop_)   ;    e  ( val -- ) emits a char to output
 03C6   FA                     DB   lsb(nop_)   ;    f
-03C7   55                     DB   lsb(go_)   ;    g  ( -- ? ) execute mint definition
+03C7   FA                     DB   lsb(nop_)   ;    g  ( -- ? ) execute mint definition
 03C8   5E                     DB   lsb(heapPtr_)   ;    h  ; returns heap ptr variable
 03C9   64                     DB   lsb(i_)   ;    i  ; returns index variable of current loop
 03CA   87                     DB   lsb(j_)   ;    j  ; returns index variable of outer loop
-03CB   91                     DB   lsb(key_)   ;    k  ( -- val )  read a char from input
+03CB   FA                     DB   lsb(nop_)   ;    k  ( -- val )  read a char from input
 03CC   FA                     DB   lsb(nop_)   ;    l
 03CD   9A                     DB   lsb(min_)   ;    m  ( a b -- c ) return the minimum value
-03CE   B2                     DB   lsb(newln_)   ;    n  ; prints a newline to output
+03CE   FA                     DB   lsb(nop_)   ;    n  ; prints a newline to output
 03CF   FA                     DB   lsb(nop_)   ;    o
-03D0   D0                     DB   lsb(dots_)   ;    p  ( -- ) non-destructively prints stack
-03D1   FD                     DB   lsb(quit_)   ;    q  ; quits from Mint REPL
+03D0   FA                     DB   lsb(nop_)   ;    p  ( -- ) non-destructively prints stack
+03D1   FA                     DB   lsb(nop_)   ;    q  ; quits from Mint REPL
 03D2   FA                     DB   lsb(nop_)   ;    r
 03D3   FA                     DB   lsb(nop_)   ;    s
 03D4   FA                     DB   lsb(nop_)   ;    t
 03D5   FA                     DB   lsb(nop_)   ;    u
 03D6   FA                     DB   lsb(nop_)   ;    v
-03D7   D6                     DB   lsb(while_)   ;    w  ; ( b -- ) if false, skip to end of loop
-03D8   4D                     DB   lsb(exec_)   ;    x
+03D7   FA                     DB   lsb(nop_)   ;    w  ; ( b -- ) if false, skip to end of loop
+03D8   FA                     DB   lsb(nop_)   ;    x
 03D9   FA                     DB   lsb(nop_)   ;    y
 03DA   FA                     DB   lsb(nop_)   ;    z
 03DB   FA                     DB   lsb(nop_)   ;    {
@@ -1896,7 +1896,7 @@
 06E5                             ; **************************************************************************
 06E5                DOTS:        
 06E5   CD 9C 02               CALL   ENTER   
-06E8   5C 30 40 32 2D 5C 64 31 2D 5C 39 21 5C 39 40 5C 5F 30 3D 28 5C 39 40 28 22 40 2E 32 2D 29 29 27 00 DB   "\\0@2-\\d1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0   
+06E8   5C 30 40 32 2D 5C 44 31 2D 5C 39 21 5C 39 40 5C 5F 30 3D 28 5C 39 40 28 22 40 2E 32 2D 29 29 27 00 DB   "\\0@2-\\D1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0   
 0709   FD E9                  JP   (IY)   
 070B                KNOWNVAR:      
 070B   0A                     LD   A,(BC)   
@@ -2042,7 +2042,7 @@
 07B7   56                     LD   D,(HL)   
 07B8   D5                     PUSH   DE   
 07B9   CD 9C 02               CALL   ENTER   
-07BC   5C 67 00               .CSTR   "\\g"   
+07BC   5C 47 00               .CSTR   "\\G"   
 07BF   ED 4B 18 0B            LD   BC,(vTIBPtr)   
 07C3   C3 35 02               JP   interpret2   
 07C6                             ; calculate nesting value
@@ -2110,7 +2110,7 @@
 07FD                             ;         JP   (IY)
 07FD                             ; type:
 07FD                             ;         call ENTER
-07FD                             ;         .cstr "(",$22,"\\@\\e1+)"
+07FD                             ;         .cstr "(",$22,"\\@\\E1+)"
 07FD                             ;         JP (IY)
 07FD                             ; userVar:
 07FD                             ;         LD DE,userVars
