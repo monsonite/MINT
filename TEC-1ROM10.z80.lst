@@ -704,7 +704,7 @@
 00C3                          ENDIF      
 00C3                             ; 
 00C3                             ; 
-00C3   C3 D8 01               JP   start   
+00C3   C3 D1 01               JP   start   
 00C6                             ; 
 00C6                             ; *************************************************************************
 00C6                             ; 
@@ -871,185 +871,195 @@
 0180                EMPTY_:      
 0180   3B 00                  .CSTR   ";"   
 0182                ESCAPE_:      
+0182                             ; .cstr ";"
 0182   31 33 5C 45 37 30 28 60 20 60 29 31 33 5C 45 60 3E 20 60 30 5C 24 21 3B 00 .CSTR   "13\\E70(` `)13\\E`> `0\\$!;"   
 019B                BACKSP_:      
 019B   5C 24 40 30 3D 30 3D 28 31 5C 24 5C 2D 38 5C 45 60 20 60 38 5C 45 29 3B 00 .CSTR   "\\$@0=0=(1\\$\\-8\\E` `8\\E);"   
 01B4                TOGGLEBASE_:      
 01B4   5C 62 40 30 3D 5C 62 21 3B 00 .CSTR   "\\b@0=\\b!;"   
 01BE                PRINTSTACK_:      
-01BE   60 3D 3E 20 60 5C 50 5C 43 5C 43 60 3E 20 60 3B 00 .CSTR   "`=> `\\P\\C\\C`> `;"   
+01BE   60 3D 3E 20 60 5C 50 5C 4E 5C 4E 60 3E 20 60 3B 00 .CSTR   "`=> `\\P\\N\\N`> `;"   
 01CF                             ; editt_:
 01CF                             ;         .cstr "\\1@\\@\\9! \\9@\\^A< \\9@\\^Z> |0= (0\\1! 13\\E);"
 01CF                VIEWDEFS_:      
-01CF                             ; .cstr "26(\\2\\i@{+.);"
-01CF   5C 32 40 40 5C 40 5C 3B 00 .CSTR   "\\2@@\\@\\;"   
-01D8                START:       
-01D8                MINT:        
-01D8   31 00 09               LD   SP,DSTACK   
-01DB   CD F2 01               CALL   initialize   
-01DE   CD 9C 02               CALL   ENTER   
-01E1   60 4D 49 4E 54 20 56 31 2E 30 60 5C 43 00 .CSTR   "`MINT V1.0`\\C"   
-01EF   C3 24 02               JP   interpret   
-01F2                INITIALIZE:      
-01F2   DD 21 00 0A            LD   IX,RSTACK   
-01F6   FD 21 83 02            LD   IY,NEXT   ; IY provides a faster jump to NEXT
-01FA   21 E0 03               LD   HL,iUserVars   
-01FD   11 00 0B               LD   DE,userVars   
-0200   01 20 00               LD   BC,16 * 2   
-0203   ED B0                  LDIR      
-0205   21 34 0C               LD   HL,defs   
-0208   06 1A                  LD   B,26   
-020A                INIT1:       
-020A   36 80                  LD   (HL),lsb(empty_)   
-020C   23                     INC   HL   
-020D   36 01                  LD   (HL),msb(empty_)   
-020F   23                     INC   HL   
-0210   10 F8                  DJNZ   init1   
-0212   06 20                  LD   B,$20   
-0214   11 60 03               LD   DE,ctrlCodes   
-0217   21 C0 0B               LD   HL,macros   
-021A                INIT2:       
-021A   1A                     LD   A,(DE)   
-021B   13                     INC   DE   
-021C   77                     LD   (HL),A   
-021D   23                     INC   HL   
-021E   36 01                  LD   (HL),msb(iMacros)   
-0220   23                     INC   HL   
-0221   10 F7                  DJNZ   init2   
-0223   C9                     RET      
-0224                INTERPRET:      
-0224   CD 9C 02               CALL   ENTER   
-0227   5C 43 60 3E 20 60 00   .CSTR   "\\C`> `"   
-022E                INTERPRET1:      ; used by tests
-022E   01 00 00               LD   BC,0   ; load BC with offset into TIB
-0231   ED 43 18 0B            LD   (vTIBPtr),BC   
-0235                INTERPRET2:      ; calc nesting (a macro might have changed it)
-0235   1E 00                  LD   E,0   ; initilize nesting value
-0237   C5                     PUSH   BC   ; save offset into TIB,
-0238                             ; BC is also the count of chars in TIB
-0238   21 00 0A               LD   HL,TIB   ; HL is start of TIB
-023B   18 06                  JR   interpret4   
-023D                INTERPRET3:      
-023D   7E                     LD   A,(HL)   ; A = char in TIB
-023E   23                     INC   HL   ; inc pointer into TIB
-023F   0B                     DEC   BC   ; dec count of chars in TIB
-0240   CD C6 07               CALL   nesting   ; update nesting value
-0243                INTERPRET4:      
-0243   79                     LD   A,C   ; is count zero?
-0244   B0                     OR   B   
-0245   20 F6                  JR   NZ,interpret3   ; if not loop
-0247   C1                     POP   BC   ; restore offset into TIB
-0248                             ; *******************************************************************
-0248                             ; Wait for a character from the serial input (keyboard)
-0248                             ; and store it in the text buffer. Keep accepting characters,
-0248                             ; increasing the instruction pointer BC - until a newline received.
-0248                             ; *******************************************************************
-0248                WAITCHAR:      
-0248   CD 81 00               CALL   getchar   ; loop around waiting for character
-024B   FE 20                  CP   $20   
-024D   30 0D                  JR   NC,waitchar1   
-024F   FE 00                  CP   $0   ; is it end of string?
-0251   28 28                  JR   Z,endchar   
-0253   FE 0D                  CP   "\r"   ; carriage return?
-0255   28 13                  JR   Z,waitchar3   
-0257   16 00                  LD   D,0   
-0259   C3 A9 07               JP   macro   
-025C                WAITCHAR1:      
-025C   21 00 0A               LD   HL,TIB   
-025F   09                     ADD   HL,BC   
-0260   77                     LD   (HL),A   ; store the character in textbuf
-0261   03                     INC   BC   
-0262   CD 85 00               CALL   putchar   ; echo character to screen
-0265   CD C6 07               CALL   nesting   
-0268   18 DE                  JR   waitchar   ; wait for next character
-026A                WAITCHAR3:      
-026A   21 00 0A               LD   HL,TIB   
-026D   09                     ADD   HL,BC   
-026E   36 0D                  LD   (HL),"\r"   ; store the crlf in textbuf
-0270   03                     INC   BC   
-0271   CD E1 05               CALL   crlf   ; echo character to screen
-0274   7B                     LD   A,E   ; if zero nesting append and ETX after \r
-0275   B7                     OR   A   
-0276   20 D0                  JR   NZ,waitchar   
-0278   36 03                  LD   (HL),$03   ; store end of text ETX in text buffer
-027A   03                     INC   BC   
-027B                ENDCHAR:      
-027B   ED 43 18 0B            LD   (vTIBPtr),BC   
-027F                             ; CALL crlf
-027F   01 00 0A               LD   BC,TIB   ; Instructions stored on heap at address HERE
-0282   0B                     DEC   BC   
-0283                             ; Drop into the NEXT and dispatch routines
-0283                             ; ********************************************************************************
-0283                             ; 
-0283                             ; Dispatch Routine.
-0283                             ; 
-0283                             ; Get the next character and form a 1 byte jump address
-0283                             ; 
-0283                             ; This target jump address is loaded into HL, and using JP (HL) to quickly
-0283                             ; jump to the selected function.
-0283                             ; 
-0283                             ; Individual handler routines will deal with each category:
-0283                             ; 
-0283                             ; 1. Detect characters A-Z and jump to the User Command handler routine
-0283                             ; 
-0283                             ; 2. Detect characters a-z and jump to the variable handler routine
-0283                             ; 
-0283                             ; 3. All other characters are punctuation and cause a jump to the associated
-0283                             ; primitive code.
-0283                             ; 
-0283                             ; Instruction Pointer IP BC is incremented
-0283                             ; 
-0283                             ; *********************************************************************************
-0283                NEXT:        
-0283   03                     INC   BC   ; 6t    Increment the IP
-0284   0A                     LD   A,(BC)   ; 7t    Get the next character and dispatch
-0285                             ; 
-0285                DISPATCH:      
-0285   FE 00                  CP   0   ;       NULL? exit Mint
-0287   CA 03 04               JP   Z,exit_   
-028A   FE 03                  CP   $03   ;       ETX? interpret next line
-028C   CA 24 02               JP   Z,interpret   
-028F   D6 20                  SUB   " "   ; 7t    remove char offset
-0291   38 F0                  JR   C,NEXT   ;       ignore char
-0293   11 00 03               LD   DE,opcodes   ; 7t    Start address of jump table
-0296   5F                     LD   E,A   ; 4t    Index into table
-0297   1A                     LD   A,(DE)   ; 7t    get low jump address
-0298   26 04                  LD   H,msb(page1)   ; 7t    Load H with the 1st page address
-029A   6F                     LD   L,A   ; 4t    and put into L
-029B   E9                     JP   (HL)   ; 4t    Jump to routine
-029C                ENTER:       
-029C   60 69                  LD   HL,BC   
-029E   CD E7 07               CALL   rpush   ; save Instruction Pointer
-02A1   C1                     POP   BC   
-02A2   0B                     DEC   BC   
-02A3   FD E9                  JP   (IY)   ; Execute code from User def
-02A5                PRINTDEC:      
-02A5                             ;Number in hl to decimal ASCII
-02A5                             ;inputs:	hl = number to ASCII
-02A5                             ;example: hl=300 outputs "00300"
-02A5                             ;destroys: af, de, hl
-02A5                DISPHL:      
-02A5   11 F0 D8               LD   de,-10000   
-02A8   CD BE 02               CALL   Num1   
-02AB   11 18 FC               LD   de,-1000   
-02AE   CD BE 02               CALL   Num1   
-02B1   11 9C FF               LD   de,-100   
-02B4   CD BE 02               CALL   Num1   
-02B7   1E F6                  LD   e,-10   
-02B9   CD BE 02               CALL   Num1   
-02BC   1E FF                  LD   e,-1   
-02BE                NUM1:        
-02BE   3E 2F                  LD   a,"0"-1   
-02C0                NUM2:        
-02C0   3C                     INC   a   
-02C1   19                     ADD   hl,de   
-02C2   38 FC                  JR   c,Num2   
-02C4   ED 52                  SBC   hl,de   
-02C6   C3 85 00               JP   putchar   
-02C9                             ; **************************************************************************
-02C9                             ; Page 2  Jump Tables
-02C9                             ; **************************************************************************
-02C9                          ALIGN   $100   
+01CF   3B 00                  .CSTR   ";"   
+01D1                             ; DB "\\N26("
+01D1                             ; DB      "\\2@\\i@{+@",$22
+01D1                             ; DB      "\\@\\^;=0=("
+01D1                             ; DB          "`:`\\^A\\j@+\\E"
+01D1                             ; DB          "100("
+01D1                             ; DB              $22,"\\i@+\\@"
+01D1                             ; DB              $22,"\\E\\^;=0=\\W"
+01D1                             ; DB          ")\\N"
+01D1                             ; DB      ")"
+01D1                             ; DB ");"
+01D1                START:       
+01D1                MINT:        
+01D1   31 00 09               LD   SP,DSTACK   
+01D4   CD EB 01               CALL   initialize   
+01D7   CD 95 02               CALL   ENTER   
+01DA   60 4D 49 4E 54 20 56 31 2E 30 60 5C 4E 00 .CSTR   "`MINT V1.0`\\N"   
+01E8   C3 1D 02               JP   interpret   
+01EB                INITIALIZE:      
+01EB   DD 21 00 0A            LD   IX,RSTACK   
+01EF   FD 21 7C 02            LD   IY,NEXT   ; IY provides a faster jump to NEXT
+01F3   21 E0 03               LD   HL,iUserVars   
+01F6   11 00 0B               LD   DE,userVars   
+01F9   01 20 00               LD   BC,16 * 2   
+01FC   ED B0                  LDIR      
+01FE   21 34 0C               LD   HL,defs   
+0201   06 1A                  LD   B,26   
+0203                INIT1:       
+0203   36 80                  LD   (HL),lsb(empty_)   
+0205   23                     INC   HL   
+0206   36 01                  LD   (HL),msb(empty_)   
+0208   23                     INC   HL   
+0209   10 F8                  DJNZ   init1   
+020B   06 20                  LD   B,$20   
+020D   11 60 03               LD   DE,ctrlCodes   
+0210   21 C0 0B               LD   HL,macros   
+0213                INIT2:       
+0213   1A                     LD   A,(DE)   
+0214   13                     INC   DE   
+0215   77                     LD   (HL),A   
+0216   23                     INC   HL   
+0217   36 01                  LD   (HL),msb(iMacros)   
+0219   23                     INC   HL   
+021A   10 F7                  DJNZ   init2   
+021C   C9                     RET      
+021D                INTERPRET:      
+021D   CD 95 02               CALL   ENTER   
+0220   5C 4E 60 3E 20 60 00   .CSTR   "\\N`> `"   
+0227                INTERPRET1:      ; used by tests
+0227   01 00 00               LD   BC,0   ; load BC with offset into TIB
+022A   ED 43 18 0B            LD   (vTIBPtr),BC   
+022E                INTERPRET2:      ; calc nesting (a macro might have changed it)
+022E   1E 00                  LD   E,0   ; initilize nesting value
+0230   C5                     PUSH   BC   ; save offset into TIB,
+0231                             ; BC is also the count of chars in TIB
+0231   21 00 0A               LD   HL,TIB   ; HL is start of TIB
+0234   18 06                  JR   interpret4   
+0236                INTERPRET3:      
+0236   7E                     LD   A,(HL)   ; A = char in TIB
+0237   23                     INC   HL   ; inc pointer into TIB
+0238   0B                     DEC   BC   ; dec count of chars in TIB
+0239   CD C6 07               CALL   nesting   ; update nesting value
+023C                INTERPRET4:      
+023C   79                     LD   A,C   ; is count zero?
+023D   B0                     OR   B   
+023E   20 F6                  JR   NZ,interpret3   ; if not loop
+0240   C1                     POP   BC   ; restore offset into TIB
+0241                             ; *******************************************************************
+0241                             ; Wait for a character from the serial input (keyboard)
+0241                             ; and store it in the text buffer. Keep accepting characters,
+0241                             ; increasing the instruction pointer BC - until a newline received.
+0241                             ; *******************************************************************
+0241                WAITCHAR:      
+0241   CD 81 00               CALL   getchar   ; loop around waiting for character
+0244   FE 20                  CP   $20   
+0246   30 0D                  JR   NC,waitchar1   
+0248   FE 00                  CP   $0   ; is it end of string?
+024A   28 28                  JR   Z,endchar   
+024C   FE 0D                  CP   "\r"   ; carriage return?
+024E   28 13                  JR   Z,waitchar3   
+0250   16 00                  LD   D,0   
+0252   C3 A9 07               JP   macro   
+0255                WAITCHAR1:      
+0255   21 00 0A               LD   HL,TIB   
+0258   09                     ADD   HL,BC   
+0259   77                     LD   (HL),A   ; store the character in textbuf
+025A   03                     INC   BC   
+025B   CD 85 00               CALL   putchar   ; echo character to screen
+025E   CD C6 07               CALL   nesting   
+0261   18 DE                  JR   waitchar   ; wait for next character
+0263                WAITCHAR3:      
+0263   21 00 0A               LD   HL,TIB   
+0266   09                     ADD   HL,BC   
+0267   36 0D                  LD   (HL),"\r"   ; store the crlf in textbuf
+0269   03                     INC   BC   
+026A   CD E1 05               CALL   crlf   ; echo character to screen
+026D   7B                     LD   A,E   ; if zero nesting append and ETX after \r
+026E   B7                     OR   A   
+026F   20 D0                  JR   NZ,waitchar   
+0271   36 03                  LD   (HL),$03   ; store end of text ETX in text buffer
+0273   03                     INC   BC   
+0274                ENDCHAR:      
+0274   ED 43 18 0B            LD   (vTIBPtr),BC   
+0278                             ; CALL crlf
+0278   01 00 0A               LD   BC,TIB   ; Instructions stored on heap at address HERE
+027B   0B                     DEC   BC   
+027C                             ; Drop into the NEXT and dispatch routines
+027C                             ; ********************************************************************************
+027C                             ; 
+027C                             ; Dispatch Routine.
+027C                             ; 
+027C                             ; Get the next character and form a 1 byte jump address
+027C                             ; 
+027C                             ; This target jump address is loaded into HL, and using JP (HL) to quickly
+027C                             ; jump to the selected function.
+027C                             ; 
+027C                             ; Individual handler routines will deal with each category:
+027C                             ; 
+027C                             ; 1. Detect characters A-Z and jump to the User Command handler routine
+027C                             ; 
+027C                             ; 2. Detect characters a-z and jump to the variable handler routine
+027C                             ; 
+027C                             ; 3. All other characters are punctuation and cause a jump to the associated
+027C                             ; primitive code.
+027C                             ; 
+027C                             ; Instruction Pointer IP BC is incremented
+027C                             ; 
+027C                             ; *********************************************************************************
+027C                NEXT:        
+027C   03                     INC   BC   ; 6t    Increment the IP
+027D   0A                     LD   A,(BC)   ; 7t    Get the next character and dispatch
+027E                             ; 
+027E                DISPATCH:      
+027E   FE 00                  CP   0   ;       NULL? exit Mint
+0280   CA 03 04               JP   Z,exit_   
+0283   FE 03                  CP   $03   ;       ETX? interpret next line
+0285   CA 1D 02               JP   Z,interpret   
+0288   D6 20                  SUB   " "   ; 7t    remove char offset
+028A   38 F0                  JR   C,NEXT   ;       ignore char
+028C   11 00 03               LD   DE,opcodes   ; 7t    Start address of jump table
+028F   5F                     LD   E,A   ; 4t    Index into table
+0290   1A                     LD   A,(DE)   ; 7t    get low jump address
+0291   26 04                  LD   H,msb(page1)   ; 7t    Load H with the 1st page address
+0293   6F                     LD   L,A   ; 4t    and put into L
+0294   E9                     JP   (HL)   ; 4t    Jump to routine
+0295                ENTER:       
+0295   60 69                  LD   HL,BC   
+0297   CD E7 07               CALL   rpush   ; save Instruction Pointer
+029A   C1                     POP   BC   
+029B   0B                     DEC   BC   
+029C   FD E9                  JP   (IY)   ; Execute code from User def
+029E                PRINTDEC:      
+029E                             ;Number in hl to decimal ASCII
+029E                             ;inputs:	hl = number to ASCII
+029E                             ;example: hl=300 outputs "00300"
+029E                             ;destroys: af, de, hl
+029E                DISPHL:      
+029E   11 F0 D8               LD   de,-10000   
+02A1   CD B7 02               CALL   Num1   
+02A4   11 18 FC               LD   de,-1000   
+02A7   CD B7 02               CALL   Num1   
+02AA   11 9C FF               LD   de,-100   
+02AD   CD B7 02               CALL   Num1   
+02B0   1E F6                  LD   e,-10   
+02B2   CD B7 02               CALL   Num1   
+02B5   1E FF                  LD   e,-1   
+02B7                NUM1:        
+02B7   3E 2F                  LD   a,"0"-1   
+02B9                NUM2:        
+02B9   3C                     INC   a   
+02BA   19                     ADD   hl,de   
+02BB   38 FC                  JR   c,Num2   
+02BD   ED 52                  SBC   hl,de   
+02BF   C3 85 00               JP   putchar   
+02C2                             ; **************************************************************************
+02C2                             ; Page 2  Jump Tables
+02C2                             ; **************************************************************************
+02C2                          ALIGN   $100   
 0300                OPCODES:      
 0300   FA                     DB   lsb(nop_)   ;    SP
 0301   42                     DB   lsb(store_)   ;    !
@@ -1220,7 +1230,7 @@
 03A0   17                     DB   lsb(cFetch_)   ;    @
 03A1   FA                     DB   lsb(nop_)   ;    A
 03A2   0C                     DB   lsb(base16_)   ;    B
-03A3   B2                     DB   lsb(newln_)   ;    C
+03A3   FA                     DB   lsb(nop_)   ;    C
 03A4   34                     DB   lsb(depth_)   ;    D
 03A5   46                     DB   lsb(emit_)   ;    E
 03A6   FA                     DB   lsb(nop_)   ;    F
@@ -1481,7 +1491,7 @@
 04D1   CD 89 07               CALL   printhex   
 04D4   18 03                  JR   dot2   
 04D6                DOT1:        
-04D6   CD A5 02               CALL   printdec   
+04D6   CD 9E 02               CALL   printdec   
 04D9                DOT2:        
 04D9   CD DC 05               CALL   space   
 04DC   FD E9                  JP   (IY)   
@@ -1496,7 +1506,7 @@
 04F1   C3 92 05     AGAIN_:   JP   again   
 04F4   C3 19 07     ARRDEF_:   JP   arrDef   
 04F7   C3 2B 07     ARREND_:   JP   arrEnd   
-04FA   C3 83 02     NOP_:     JP   NEXT   ; hardwire white space to always go to NEXT (important for arrays)
+04FA   C3 7C 02     NOP_:     JP   NEXT   ; hardwire white space to always go to NEXT (important for arrays)
 04FD   C9           QUIT_:    RET      ; exit interpreter
 04FE                             ;*******************************************************************
 04FE                             ; Page 5 primitive routines
@@ -1706,7 +1716,7 @@
 05F8   23                     INC   HL   
 05F9                COMPNEXT1:      
 05F9   22 14 0B               LD   (vHeapPtr),HL   ; save heap ptr
-05FC   C3 83 02               JP   NEXT   
+05FC   C3 7C 02               JP   NEXT   
 05FF                             ; **************************************************************************
 05FF                             ; Page 6 Alt primitives
 05FF                             ; **************************************************************************
@@ -1895,7 +1905,7 @@
 06E5                             ; Page 6 primitive routines
 06E5                             ; **************************************************************************
 06E5                DOTS:        
-06E5   CD 9C 02               CALL   ENTER   
+06E5   CD 95 02               CALL   ENTER   
 06E8   5C 30 40 32 2D 5C 44 31 2D 5C 39 21 5C 39 40 5C 5F 30 3D 28 5C 39 40 28 22 40 2E 32 2D 29 29 27 00 DB   "\\0@2-\\D1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0   
 0709   FD E9                  JP   (IY)   
 070B                KNOWNVAR:      
@@ -1920,7 +1930,7 @@
 071F   32 1C 0B               LD   (vByteMode),A   
 0722   2A 14 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
 0725   CD E7 07               CALL   rpush   ; save start of array \[  \]
-0728   C3 83 02               JP   NEXT   ; hardwired to NEXT
+0728   C3 7C 02               JP   NEXT   ; hardwired to NEXT
 072B                             ; end a word array
 072B                ARREND:      
 072B   CD F2 07               CALL   rpop   ; DE = start of array
@@ -1936,7 +1946,7 @@
 073E   CB 1D                  RR   L   
 0740                ARREND2:      
 0740   E5                     PUSH   HL   
-0741   FD 21 83 02            LD   IY,NEXT   
+0741   FD 21 7C 02            LD   IY,NEXT   
 0745   FD E9                  JP   (IY)   ; hardwired to NEXT
 0747                             ; **************************************************************************
 0747                             ; def is used to create a colon definition
@@ -2041,10 +2051,10 @@
 07B6   23                     INC   HL   
 07B7   56                     LD   D,(HL)   
 07B8   D5                     PUSH   DE   
-07B9   CD 9C 02               CALL   ENTER   
+07B9   CD 95 02               CALL   ENTER   
 07BC   5C 47 00               .CSTR   "\\G"   
 07BF   ED 4B 18 0B            LD   BC,(vTIBPtr)   
-07C3   C3 35 02               JP   interpret2   
+07C3   C3 2E 02               JP   interpret2   
 07C6                             ; calculate nesting value
 07C6                             ; A is char to be tested,
 07C6                             ; E is the nesting value (initially 0)
@@ -2295,60 +2305,60 @@ FALSE:              0000 DEFINED AT LINE 152 IN MINT.asm
 IMACROS:            0180 DEFINED AT LINE 167 IN MINT.asm
 EMPTY_:             0180 DEFINED AT LINE 1 IN MINT.asm
 ESCAPE_:            0182 DEFINED AT LINE 4 IN MINT.asm
-BACKSP_:            019B DEFINED AT LINE 7 IN MINT.asm
-TOGGLEBASE_:        01B4 DEFINED AT LINE 10 IN MINT.asm
-PRINTSTACK_:        01BE DEFINED AT LINE 13 IN MINT.asm
-VIEWDEFS_:          01CF DEFINED AT LINE 19 IN MINT.asm
-START:              01D8 DEFINED AT LINE 171 IN MINT.asm
+BACKSP_:            019B DEFINED AT LINE 8 IN MINT.asm
+TOGGLEBASE_:        01B4 DEFINED AT LINE 11 IN MINT.asm
+PRINTSTACK_:        01BE DEFINED AT LINE 14 IN MINT.asm
+VIEWDEFS_:          01CF DEFINED AT LINE 20 IN MINT.asm
+START:              01D1 DEFINED AT LINE 171 IN MINT.asm
                     > USED AT LINE 6
-MINT:               01D8 DEFINED AT LINE 172 IN MINT.asm
-INITIALIZE:         01F2 DEFINED AT LINE 179 IN MINT.asm
+MINT:               01D1 DEFINED AT LINE 172 IN MINT.asm
+INITIALIZE:         01EB DEFINED AT LINE 179 IN MINT.asm
                     > USED AT LINE 174 IN MINT.asm
-INIT1:              020A DEFINED AT LINE 188 IN MINT.asm
+INIT1:              0203 DEFINED AT LINE 188 IN MINT.asm
                     > USED AT LINE 193 IN MINT.asm
-INIT2:              021A DEFINED AT LINE 197 IN MINT.asm
+INIT2:              0213 DEFINED AT LINE 197 IN MINT.asm
                     > USED AT LINE 204 IN MINT.asm
-INTERPRET:          0224 DEFINED AT LINE 207 IN MINT.asm
+INTERPRET:          021D DEFINED AT LINE 207 IN MINT.asm
                     > USED AT LINE 177 IN MINT.asm
                     > USED AT LINE 308 IN MINT.asm
-INTERPRET1:         022E DEFINED AT LINE 211 IN MINT.asm
-INTERPRET2:         0235 DEFINED AT LINE 215 IN MINT.asm
+INTERPRET1:         0227 DEFINED AT LINE 211 IN MINT.asm
+INTERPRET2:         022E DEFINED AT LINE 215 IN MINT.asm
                     > USED AT LINE 1476 IN MINT.asm
-INTERPRET3:         023D DEFINED AT LINE 222 IN MINT.asm
+INTERPRET3:         0236 DEFINED AT LINE 222 IN MINT.asm
                     > USED AT LINE 231 IN MINT.asm
-INTERPRET4:         0243 DEFINED AT LINE 228 IN MINT.asm
+INTERPRET4:         023C DEFINED AT LINE 228 IN MINT.asm
                     > USED AT LINE 220 IN MINT.asm
-WAITCHAR:           0248 DEFINED AT LINE 239 IN MINT.asm
+WAITCHAR:           0241 DEFINED AT LINE 239 IN MINT.asm
                     > USED AT LINE 257 IN MINT.asm
                     > USED AT LINE 267 IN MINT.asm
-WAITCHAR1:          025C DEFINED AT LINE 250 IN MINT.asm
+WAITCHAR1:          0255 DEFINED AT LINE 250 IN MINT.asm
                     > USED AT LINE 242 IN MINT.asm
-WAITCHAR3:          026A DEFINED AT LINE 259 IN MINT.asm
+WAITCHAR3:          0263 DEFINED AT LINE 259 IN MINT.asm
                     > USED AT LINE 246 IN MINT.asm
-ENDCHAR:            027B DEFINED AT LINE 271 IN MINT.asm
+ENDCHAR:            0274 DEFINED AT LINE 271 IN MINT.asm
                     > USED AT LINE 244 IN MINT.asm
-NEXT:               0283 DEFINED AT LINE 300 IN MINT.asm
+NEXT:               027C DEFINED AT LINE 300 IN MINT.asm
                     > USED AT LINE 181 IN MINT.asm
                     > USED AT LINE 310 IN MINT.asm
                     > USED AT LINE 836 IN MINT.asm
                     > USED AT LINE 1088 IN MINT.asm
                     > USED AT LINE 1332 IN MINT.asm
                     > USED AT LINE 1349 IN MINT.asm
-DISPATCH:           0285 DEFINED AT LINE 304 IN MINT.asm
-ENTER:              029C DEFINED AT LINE 318 IN MINT.asm
+DISPATCH:           027E DEFINED AT LINE 304 IN MINT.asm
+ENTER:              0295 DEFINED AT LINE 318 IN MINT.asm
                     > USED AT LINE 175 IN MINT.asm
                     > USED AT LINE 208 IN MINT.asm
                     > USED AT LINE 1304 IN MINT.asm
                     > USED AT LINE 1473 IN MINT.asm
-PRINTDEC:           02A5 DEFINED AT LINE 325 IN MINT.asm
+PRINTDEC:           029E DEFINED AT LINE 325 IN MINT.asm
                     > USED AT LINE 820 IN MINT.asm
-DISPHL:             02A5 DEFINED AT LINE 332 IN MINT.asm
-NUM1:               02BE DEFINED AT LINE 342 IN MINT.asm
+DISPHL:             029E DEFINED AT LINE 332 IN MINT.asm
+NUM1:               02B7 DEFINED AT LINE 342 IN MINT.asm
                     > USED AT LINE 334 IN MINT.asm
                     > USED AT LINE 336 IN MINT.asm
                     > USED AT LINE 338 IN MINT.asm
                     > USED AT LINE 340 IN MINT.asm
-NUM2:               02C0 DEFINED AT LINE 344 IN MINT.asm
+NUM2:               02B9 DEFINED AT LINE 344 IN MINT.asm
                     > USED AT LINE 347 IN MINT.asm
 OPCODES:            0300 DEFINED AT LINE 355 IN MINT.asm
                     > USED AT LINE 311 IN MINT.asm
