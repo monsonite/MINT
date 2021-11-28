@@ -351,6 +351,26 @@ Num2:
         jr	c,Num2
         sbc	hl,de
         JP putchar
+
+rpush:
+        DEC IX                  
+        LD (IX+0),H
+        DEC IX
+        LD (IX+0),L
+        RET
+
+rpop:
+        LD L,(IX+0)         
+        INC IX              
+        LD H,(IX+0)
+        INC IX                  
+        RET
+
+; crlf:       
+;         LD A, '\r'
+;         CALL putchar
+;         LD A, '\n'           
+;         JP putchar
         
 ; **************************************************************************
 ; Page 2  Jump Tables
@@ -1087,22 +1107,24 @@ hexp:                       ; Print HL as a hexadecimal
 
 ; Miscellaneous ************************************************************           
 
+space:       
+        LD A, ' '           
+        JP putchar
 
-rpush:
-        DEC IX                  
-        LD (IX+0),H
-        DEC IX
-        LD (IX+0),L
-        RET
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JP putchar
 
-rpop:
-        LD L,(IX+0)         
-        INC IX              
-        LD H,(IX+0)
-        INC IX                  
-        RET
-
-
+; Byte ARRAY compilation routine ***********************************************
+ccompNEXT:
+        POP DE          ; DE = return address
+        LD HL,(vHeapPtr)    ; load heap ptr
+        LD (HL),E       ; store lsb
+        INC HL          
+        LD (vHeapPtr),HL    ; save heap ptr
+        JP NEXT
 
 ; **************************************************************************
 ; Page 6 Alt primitives
@@ -1295,13 +1317,13 @@ knownVar_:
         JP knownVar 
 while_:
         JP while
-
-.if EXTENDED = 1
-
 cArrDef_:                   
         JP cArrDef
 cArrEnd_:
         JP cArrEnd
+
+.if EXTENDED = 1
+
 
 edit_:
         JP edit
@@ -1316,8 +1338,6 @@ userVar_:
 
 .else
 
-cArrDef_:                   
-cArrEnd_:
 edit_:
 strDef_:
 type_:
@@ -1329,6 +1349,19 @@ userVar_:
 ; **************************************************************************
 ; Page 6 primitive routines 
 ; **************************************************************************
+
+cArrDef:                        ; define a character array
+        LD IY,ccompNEXT 
+        JP arrDef1
+
+cArrEnd:
+        CALL rpop               ; DE = start of array
+        PUSH HL
+        EX DE,HL
+        LD HL,(vHeapPtr)        ; HL = heap ptr
+        OR A
+        SBC HL,DE               ; bytes on heap 
+        JP arrEnd2                  
 
 dots:
         call ENTER
@@ -1358,37 +1391,14 @@ while1:
         ADD IX,DE
         JP begin1                   ; skip to end of loop        
 
+
+
 ; *********************************************************************
 ; * extended or non-core routines
 ; *********************************************************************
 
 .if EXTENDED = 1
 
-; ARRAY compilation routines ***********************************************
-
-
-ccompNEXT:
-        POP DE          ; DE = return address
-        LD HL,(vHeapPtr)    ; load heap ptr
-        LD (HL),E       ; store lsb
-        INC HL          
-        LD (vHeapPtr),HL    ; save heap ptr
-        JP NEXT
-
-; **************************************************************************
-
-cArrDef:                   ; define a character array
-        LD IY,ccompNEXT 
-        JP arrDef1
-
-cArrEnd:
-        CALL rpop               ; DE = start of array
-        PUSH HL
-        EX DE,HL
-        LD HL,(vHeapPtr)        ; HL = heap ptr
-        OR A
-        SBC HL,DE               ; bytes on heap 
-        JP arrEnd2                  
 
 edit:
         LD A,":"
@@ -1463,6 +1473,7 @@ userVar:
 ; Page 5 primitive routines continued
 ;*******************************************************************
 
+; ARRAY compilation routine ***********************************************
 compNEXT:
         POP DE          ; DE = return address
         LD HL,(vHeapPtr)    ; load heap ptr
@@ -1527,12 +1538,12 @@ nextbyte:                   ; Skip to end of definition
         INC BC              ; Point to next character
         LD (DE),A
         INC DE
-        CP ";"              ; Is it a semicolon 
-        JR z, end_def       ; end the definition
-        JR  nextbyte        ; get the next element
+        CP ";"                  ; Is it a semicolon 
+        JR z, end_def           ; end the definition
+        JR  nextbyte            ; get the next element
 
 end_def:    
-        LD (vHeapPtr),DE    ; bump heap ptr to after definiton
+        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
         DEC BC
         JP (IY)       
 
@@ -1656,14 +1667,6 @@ nesting4:
         DEC E
         RET 
 
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JP putchar
 
-space:       
-        LD A, ' '           
-        JP putchar
 
 
