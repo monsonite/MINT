@@ -173,7 +173,7 @@ mint:
         LD SP,DSTACK
         CALL initialize
         call ENTER
-        .cstr "`MINT V1.0`\\C"
+        .cstr "`MINT V1.0`\\N"
         JP interpret
 
 initialize:
@@ -206,7 +206,7 @@ init2:
 
 interpret:
         call ENTER
-        .cstr "\\C`> `"
+        .cstr "\\N`> `"
 
 interpret1:                     ; used by tests
         LD BC,0                 ; load BC with offset into TIB         
@@ -522,7 +522,7 @@ altCodes:
         DB     lsb(cFetch_)    ;    @      
         DB     lsb(nop_)       ;    A    
         DB     lsb(base16_)    ;    B
-        DB     lsb(newln_)     ;    C
+        DB     lsb(nop_)       ;    C
         DB     lsb(depth_)     ;    D    
         DB     lsb(emit_)      ;    E  
         DB     lsb(nop_)       ;    F

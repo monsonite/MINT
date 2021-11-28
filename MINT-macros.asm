@@ -11,7 +11,7 @@ toggleBase_:
         .cstr "\\b@0=\\b!;"
 
 printStack_:
-        .cstr "`=> `\\P\\C\\C`> `;"        
+        .cstr "`=> `\\P\\N\\N`> `;"        
 
 ; editt_:
 ;         .cstr "\\1@\\@\\9! \\9@\\^A< \\9@\\^Z> |0= (0\\1! 13\\E);"
