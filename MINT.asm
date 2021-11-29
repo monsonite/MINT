@@ -352,6 +352,37 @@ compNext1:
         LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
 
+listDef:                    ; lookup up def based on number
+        LD A,"A"
+        POP DE
+        ADD A,E
+        EX AF,AF'
+        LD HL,defs
+        ADD HL,DE
+        ADD HL,DE
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        EX DE,HL
+        LD A,(HL)
+        CP ";"
+        JR Z,listDef3
+        LD A,":"
+        CALL putchar
+        EX AF,AF'
+        CALL putchar
+        JR listDef2
+listDef1:
+        INC HL
+listDef2:        
+        LD A,(HL)
+        CALL putchar
+        CP ";"
+        JR NZ, listDef1
+        CALL crlf
+listDef3:        
+        JP (IY)
+
 ; **************************************************************************
 ; Page 2  Jump Tables
 ; **************************************************************************
@@ -481,11 +512,11 @@ altCodes:
         DB     lsb(empty_)     ; DC3 ^S
         DB     lsb(empty_)     ; DC4 ^T
         DB     lsb(empty_)     ; NAK ^U
-        DB     lsb(viewDefs_)  ; SYN ^V
+        DB     lsb(empty_)     ; SYN ^V
         DB     lsb(empty_)     ; ETB ^W
         DB     lsb(empty_)     ; CAN ^X
         DB     lsb(empty_)     ; EM  ^Y
-        DB     lsb(empty_)     ; SUB ^Z
+        DB     lsb(list_)      ; SUB ^Z
         DB     lsb(escape_)    ; ESC ^[
         DB     lsb(empty_)     ; FS  ^\
         DB     lsb(empty_)     ; GS  ^]
@@ -539,7 +570,7 @@ altCodes:
         DB     lsb(max_)       ;    M  ( a b -- c ) return the maximum value
         DB     lsb(newln_)     ;    N
         DB     lsb(outPort_)   ;    O  ( val port -- )
-        DB     lsb(dots_)      ;    P
+        DB     lsb(printStk_)  ;    P
         DB     lsb(quit_)      ;    Q
         DB     lsb(nop_)       ;    R
         DB     lsb(nop_)       ;    S
@@ -549,7 +580,7 @@ altCodes:
         DB     lsb(while_)     ;    W
         DB     lsb(exec_)      ;    X
         DB     lsb(nop_)       ;    Y
-        DB     lsb(nop_)       ;    Z
+        DB     lsb(listDef_)   ;    Z
         DB     lsb(cArrDef_)   ;    [
         DB     lsb(comment_)   ;    \  comment text, skips reading until end of line
         DB     lsb(nop_)       ;    ]
@@ -1272,8 +1303,8 @@ TIBPtr_:
         LD HL,vTIBPtr
         PUSH HL
         JP (IY)
-dots_:
-        JP dots
+printStk_:
+        JP printStk
 knownVar_:
         JP knownVar 
 while_:
@@ -1287,14 +1318,12 @@ while1:
         ADD IX,DE
         JP begin1                   ; skip to end of loop        
 
+listDef_:
+        JP listDef
+        
 ; **************************************************************************
 ; Page 6 primitive routines 
 ; **************************************************************************
-
-dots:
-        call ENTER
-        DB "\\0@2-\\D1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
-        JP (IY)
 
 else:
         LD HL,vFlags
@@ -1312,10 +1341,16 @@ knownVar:
         LD L,A
         LD H,0
         LD DE,knownVars
+
 knownVar2:
         ADD HL,HL
         ADD HL,DE
         PUSH HL
+        JP (IY)
+
+printStk:
+        call ENTER
+        DB "\\0@2-\\D1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
         JP (IY)
 
 ;*******************************************************************

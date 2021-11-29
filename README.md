@@ -16,7 +16,7 @@ When you hit return the result will be displayed thus
 
 00579
 
->  This is the cursor / prompt that confirms that the code has been executed and control has been passed back to the User.
+> This is the cursor / prompt that confirms that the code has been executed and control has been passed back to the User.
 
 ## Fundamentals
 
@@ -24,7 +24,7 @@ Like other small interpreted languages, the intention of MINT is to create a 16-
 
 The language needs the basic arithmetic operations of ADD, SUBTRACT, MULTIPLY and DIVIDE. These are implemented as 16-bit integer operations and invoked using the familiar characters +, -, \* and /.
 
-These are augmented by the bitwise Boolean operators AND, OR, XOR, INVERT and 2's complement NEGATE. 
+These are augmented by the bitwise Boolean operators AND, OR, XOR, INVERT and 2's complement NEGATE.
 
 With MINT, these instructions are just one byte long and a look-up table is used instead of a switch-case structure. When using an 8-bit microprocessor, such as the Z80, it is simpler and faster to handle 8-bit instructions, so MINT uses a bytecode system, rather than the 16-bit threaded code that is used by a conventional Forth.
 
@@ -38,7 +38,7 @@ The top two elements on the stack will be compared, resulting in 1 if the compar
 
 With the comparison operators, it becomes possible to develop conditionally executed code, which forms the basis of program control words, such as IF, THEN, ELSE, and looping and branching structures.
 
-In total there are approximately 30 characters that are recognised as the internal instruction set, or primitives. From these characters the user can construct further definitions to extend the usefulness of the language.              
+In total there are approximately 30 characters that are recognised as the internal instruction set, or primitives. From these characters the user can construct further definitions to extend the usefulness of the language.
 
 ## How MINT Works.
 
@@ -133,7 +133,7 @@ An array of 16-bit numbers can be defined by enclosing them within square bracke
 
 [1 2 3 4 5 6 7 8 9 0]
 
-Defining an array puts its start address and length onto the stack 
+Defining an array puts its start address and length onto the stack
 
 These can then be allocated to a variable, which acts as a pointer to the array in memory
 
@@ -144,7 +144,6 @@ The swap $ is used to get the starting address onto the top of the stack and the
 To fetch the Nth member of the array, we can create a colon definition N
 
 :N @ $ {+ @. ;
-
 
 LIST OF PRIMITIVES
 
@@ -164,7 +163,7 @@ Maths Operators:
 
 } Perform a right shift on the TOS (2/)
 
-{ Perform a left shift on the TOS (2*)
+{ Perform a left shift on the TOS (2\*)
 
 < 16-bit comparison LT
 
@@ -176,7 +175,7 @@ Logical Operators:
 
 ~ 16-bit bitwise inversion INVert
 
-_ 16-bit negation (2's complement) NEGate
+\_ 16-bit negation (2's complement) NEGate
 
 & 16-bit bitwise AND
 
@@ -224,13 +223,14 @@ Loops and conditional execution:
 
 Miscellaneous:
 
-`STRING` Everything between the "ticks" is printed as a string_
+`STRING` Everything between the "ticks" is printed as a string\_
 
-\ ESCAPE  allows non-printable characters such as \n newline
+\ ESCAPE allows non-printable characters such as \n newline
 
 ? QUERY await keyboard entry
 
 =======
+
 ### LIST OF PRIMITIVES
 
 Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ASCII characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
@@ -284,20 +284,21 @@ Note: logical NOT can be achieved with 0=
 | .      | print the top member of the stack as a decimal number DOT | a --        |
 | ,      | print the number on the stack as a hexadecimal            | a --        |
 | \`     | \`Everything between ticks is printed as a string\`       | --          |
-| \\P    | non-destructively prints stack                            | --          |
+| \\$    | text input pointer variable                               | -- adr      |
 | \\E    | emits a char to output                                    | val --      |
 | \\I    | input from a I/O port                                     | port -- val |
 | \\K    | read a char from input                                    | -- val      |
 | \\C    | prints a CRLF to output                                   | --          |
 | \\O    | output to an I/O port                                     | val port -- |
-| \\$    | text input pointer variable                               | -- adr      |
+| \\P    | non-destructively prints stack                            | --          |
+| \\Z    | print definition by number                                | n --        |
 
 ### User Definitions
 
 | Symbol | Description                | Effect |
 | ------ | -------------------------- | ------ |
-| :      | define a new word DEF      | "C"     |
-| ;      | end of user definition END |         |
+| :      | define a new word DEF      | "C"    |
+| ;      | end of user definition END |        |
 | \\:    | start defining a macro     | "C" -- |
 
 NOTE: "C" is an uppercase letter immediately following opcode which is the name of the definition
@@ -306,28 +307,29 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 
 | Symbol | Description                                       | Effect |
 | ------ | ------------------------------------------------- | ------ |
-| (      | BEGIN a loop or conditionally executed code block | --     |
+| (      | BEGIN a loop or conditionally executed code block | n --   |
 | )      | END a loop or conditionally executed code block   | --     |
+| \\(    | Execute if false, preserves condition             | n -- n |
 | \\i    | returns index variable of current loop            | -- val |
 | \\j    | returns index variable of outer loop              | -- val |
 | \\W    | if false then skip to end of loop                 | b --   |
 
 ### Memory and Variable Operations
 
-| Symbol | Description                                 | Effect         |
-| ------ | ------------------------------------------- | -------------- |
-| @      | FETCH a value from memory                   | -- val         |
-| !      | STORE a value to memory                     | val adr --     |
-| \\+    | increments variable at address by an amount | val addr --    |
-| \\-    | decrements variable at address by an amount | val addr --    |
-| \\@    | FETCH a byte from memory                    | -- val         |
-| \\!    | STORE a byte to memory                      | val adr --     |
-| [      | begin an array definition                   | --             |
-| ]      | end an array definition                     | -- adr nwords  |
-| \\[    | begin a byte array definition               | --             |
-| \\h    | heap pointer variable                       | -- adr         |
-| \\$    | text input buffer pointer variable          | -- adr         |
-| \\B    | base16 flag variable                        | -- adr         |
+| Symbol | Description                                 | Effect        |
+| ------ | ------------------------------------------- | ------------- |
+| @      | FETCH a value from memory                   | -- val        |
+| !      | STORE a value to memory                     | val adr --    |
+| \\+    | increments variable at address by an amount | val addr --   |
+| \\-    | decrements variable at address by an amount | val addr --   |
+| \\@    | FETCH a byte from memory                    | -- val        |
+| \\!    | STORE a byte to memory                      | val adr --    |
+| [      | begin an array definition                   | --            |
+| ]      | end an array definition                     | -- adr nwords |
+| \\[    | begin a byte array definition               | --            |
+| \\h    | heap pointer variable                       | -- adr        |
+| \\$    | text input buffer pointer variable          | -- adr        |
+| \\B    | base16 flag variable                        | -- adr        |
 
 ### Constants and variables
 
@@ -361,5 +363,4 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | ^B     | toggle base decimal/hexadecimal |
 | ^H     | backspace                       |
 | ^P     | print stack                     |
-
-
+| ^Z     | list definitions                |
