@@ -634,7 +634,7 @@ iUserVars:
         DW HEAP                 ; vHeapPtr
         DW FALSE                ; vBase16
         DW TIB                  ; vTIBPtr
-        DW altCodes             ; vAltCodes
+        DW alt1                 ; vAltCodes
         DW $0                   ; 
         DW $0                   ;
         
@@ -1069,15 +1069,19 @@ again2:
         JP (IY)
 
 alt:
+        LD HL,(vAlt)
+        JP (HL)
+
+alt1:
         INC BC
         LD A,(BC)
-        LD HL,(vAltCodes)
+        LD HL,altCodes
         ADD A,L
         LD L,A
         LD L,(HL)           ; 7t    get low jump address
         LD H, msb(page5)    ; Load H with the 5th page address
         JP  (HL)                    ; 4t    Jump to routine
-        
+         
 ; **************************************************************************             
 ; Print the string between the `backticks`
 

@@ -31,7 +31,7 @@ vTemp:      DW 0                ; 9     \09
 vHeapPtr:   DW 0                ; 10
 vBase16:    DW 0                ; 11
 vTIBPtr:    DW 0                ; 12
-vAltCodes:  DW 0                ; 13
+vAlt:       DW 0                ; 13
 vByteMode:  DW 0                ; 14
 vFlags      DW 0                ; 15
 

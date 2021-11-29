@@ -16,11 +16,11 @@
 
 testsStart:
     
-    test "1:A1;:Z2;\\N26(\\i@\\Z)", 1
+    ; test "1:A1;:Z2;\\N26(\\i@\\Z)", 1
 
-    CALL enter
-    .cstr "`Done!!`"
-    HALT
+    ; CALL enter
+    ; .cstr "`Done!!`"
+    ; HALT
     
     test "2 3<", 1
     test "3 3<", 0
