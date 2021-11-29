@@ -21,8 +21,8 @@ cS0:        DW 0                ; 0     \00
 cTIB        DW 0                ; 1     \01
 cDefs:      DW 0                ; 2     \02
 cVars:      DW 0                ; 3     \03
-cMacros:    DW 0                ; 4     \04
-cUserVars:  DW 0                ; 5     \05
+cUserVars:  DW 0                ; 4     \04
+            DW 0                ; 5     \05
             DW 0                ; 6     \06
             DW 0                ; 7     \07
             DW 0                ; 8     \08
@@ -33,7 +33,7 @@ vBase16:    DW 0                ; 11
 vTIBPtr:    DW 0                ; 12
 vAltCodes:  DW 0                ; 13
 vByteMode:  DW 0                ; 14
-            DW 0                ; 15
+vFlags      DW 0                ; 15
 
 GETCVEC:    DW 0                ; 16  
 PUTCVEC:    DW 0                ; 17  
@@ -54,12 +54,6 @@ RST30:      DW 0                ; 26
 
 BUF:        DS $80
 
-
-; ****************************************************************
-; Macros Table - holds $20 ctrl key macros
-; ****************************************************************
-macros:     DS $20 * 2
-
 ; ****************************************************************
 ; VARS Table - holds 26 16-bit user variables
 ; ****************************************************************
@@ -69,7 +63,6 @@ vars:       DS 26 * 2
 ; DEFS Table - holds 26 addresses of user routines
 ; ****************************************************************
 defs:       DS 26 * 2
-
 
 tbPtr:      DW 0                ; reserved for tests
 

@@ -18,7 +18,7 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (GETCVEC),HL
 
-testInput {"[[\r\b\r"}
+testInput {"[\b"}
 JP interpret
 
 testGetCharImpl:

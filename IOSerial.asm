@@ -4,6 +4,7 @@
         ; Memory Map: 2k ROM/RAM, 8K ROM/RAM, RC2014
         ; Serial: Bit Bang, 6850 ACIA
         
+.if  TEC_1
 .if  BITBANG
 
         ; bit bang baud rate constants @ 4MHz
@@ -67,8 +68,7 @@
         IRQ    .EQU   7          ;interrupt request
 
 .endif
-
-
+.endif
 
 ; I/O port addresses
 
@@ -91,18 +91,6 @@
         KEYBUF:      .EQU 86H             ;KEYBOARD BUFFER
         IO7:         .EQU 87H             ;ENABLE/DISABLE SINGLE STEPPER (IF INSTALLED)
 .endif
-
-; INTVEC:  .equ   RAMSTART + RAMSIZE - 2
-; NMIVEC:  .equ   RAMSTART + RAMSIZE - 4
-; BAUD     .equ   RAMSTART + RAMSIZE - 6
-; RST08:   .equ   RAMSTART + RAMSIZE - 8
-; RST10:   .equ   RAMSTART + RAMSIZE - 10
-; RST18:   .equ   RAMSTART + RAMSIZE - 12
-; RST20:   .equ   RAMSTART + RAMSIZE - 14
-; RST28:   .equ   RAMSTART + RAMSIZE - 16
-; RST30:   .equ   RAMSTART + RAMSIZE - 18
-; BUF:     .equ   RAMSTART + RAMSIZE - 128
-; stack:   .equ   RAMSTART + RAMSIZE - 130
 
 ; ASCII codes
 ESC:     .EQU   1BH
@@ -652,17 +640,20 @@ RESET:
         LD HL,TXDATA
         LD (PUTCVEC),HL
 
+.if TEC_1
 .if BITBANG = 0
 
         ld    a,MRESET
         out   (CONTROL),a           ;reset the ACIA
 
 .endif
+.endif
 
         call PWRUP
         IM  1
         EI
 
+.if TEC_1
 .if BITBANG
 
 ;inline serial initialisation
@@ -678,5 +669,27 @@ RESET:
         out   (CONTROL),a           ;initialise ACIA  8 bit word, No parity 2 stop divide by 64 for 115200 baud
 
 .endif
+.endif
         
+.if RC2014
+
+;  *************************************************************************		
+;  Getchar and putchar hooks into SCM for RC2014
+;  *************************************************************************
+
+getchar:    PUSH BC
+            LD C, $01
+            RST $30
+            POP BC
+            RET
+
+putchar:    PUSH BC
+            PUSH HL
+            LD C, $02
+            RST $30
+            OR $FF
+            POP HL
+            POP BC
+            RET		
+.endif 
         

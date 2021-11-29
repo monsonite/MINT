@@ -141,9 +141,9 @@
 ;
 ; *****************************************************************************
 
-         ;ROMSTART    EQU $0
-         ;RAMSTART    EQU $800
-         ;EXTENDED    EQU 0
+        ;ROMSTART    EQU $0
+        ;RAMSTART    EQU $800
+        ;EXTENDED    EQU 0
 
         ;ROMSIZE     EQU $800
         DSIZE       EQU $100
@@ -165,7 +165,7 @@
 ; Macros must be written in Mint and end with ; 
 ; this code must not span pages
 ; **************************************************************************
-iMacros:
+macros:
 
 .include "MINT-macros.asm"
 
@@ -192,17 +192,6 @@ init1:
         LD (HL),msb(empty_)
         INC HL
         DJNZ init1
-        LD B,$20
-        LD DE,ctrlCodes
-        LD HL,macros
-init2:
-        LD A,(DE)
-        INC DE
-        LD (HL),A
-        INC HL
-        LD (HL),msb(iMacros)
-        INC HL
-        DJNZ init2
         RET
 
 interpret:
@@ -240,11 +229,11 @@ interpret4:
 waitchar:   
         CALL getchar            ; loop around waiting for character
         CP $20
-        JR NC, waitchar1
+        JR NC,waitchar1
         CP $0                   ; is it end of string?
-        JR Z, endchar
+        JR Z,waitchar4
         CP '\r'                 ; carriage return?
-        JR Z, waitchar3
+        JR Z,waitchar3
         LD D,0
         JP macro    
 
@@ -269,9 +258,8 @@ waitchar3:
         LD (HL),$03             ; store end of text ETX in text buffer 
         INC BC
 
-endchar:    
+waitchar4:    
         LD (vTIBPtr),BC
-        ; CALL crlf
         LD BC,TIB               ; Instructions stored on heap at address HERE
         DEC BC
                                 ; Drop into the NEXT and dispatch routines
@@ -348,26 +336,21 @@ Num2:
         jr	c,Num2
         sbc	hl,de
         JP putchar
-		
-		
-;  *************************************************************************		
-;  Getchar and putchar hooks into SCM for RC2014
-;  *************************************************************************
 
-getchar:    PUSH BC
-            LD C, $01
-            RST $30
-            POP BC
-            RET
-
-putchar:    PUSH BC
-            PUSH HL
-            LD C, $02
-            RST $30
-            OR $FF
-            POP HL
-            POP BC
-            RET		
+; ARRAY compilation routine
+compNEXT:
+        POP DE          ; DE = return address
+        LD HL,(vHeapPtr)    ; load heap ptr
+        LD (HL),E       ; store lsb
+        LD A,(vByteMode)
+        INC HL          
+        OR A
+        JR NZ,compNext1
+        LD (HL),D
+        INC HL
+compNext1:
+        LD (vHeapPtr),HL    ; save heap ptr
+        JP NEXT
 
 ; **************************************************************************
 ; Page 2  Jump Tables
@@ -516,7 +499,7 @@ altCodes:
         DB     lsb(nop_)       ;    %            
         DB     lsb(nop_)       ;    &
         DB     lsb(nop_)       ;    '
-        DB     lsb(nop_)       ;    (        
+        DB     lsb(else_)      ;    (        
         DB     lsb(nop_)       ;    )
         DB     lsb(nop_)       ;    *            
         DB     lsb(incr_)      ;    +  ( adr -- ) decrements variable at address
@@ -534,7 +517,7 @@ altCodes:
         DB     lsb(knownVar_)  ;    7
         DB     lsb(knownVar_)  ;    8            
         DB     lsb(knownVar_)  ;    9        
-        DB     lsb(adef_)      ;    :  start defining a macro        
+        DB     lsb(nop_)       ;    :  start defining a macro        
         DB     lsb(nop_)       ;    ;  
         DB     lsb(nop_)       ;    <
         DB     lsb(nop_)       ;    =            
@@ -610,8 +593,8 @@ iUserVars:
         DW TIB                  ; \1 cTIB
         DW defs                 ; \2 cDefs
         DW vars                 ; \3 cVars
-        DW macros               ; \4 cMacros
-        DW userVars             ; \5 cUserVars
+        DW userVars             ; \4 cUserVars
+        DW 0                    ; \5 
         DW 0                    ; \6 
         DW 0                    ; \7 
         DW 0                    ; \8 
@@ -952,6 +935,9 @@ div_end:
 ; *************************************
         	        
 begin:                      ; Left parentesis begins a loop
+        LD HL,vFlags
+        RES fELSE,(HL)
+
         POP HL
         LD A,L              ; zero?
         OR H
@@ -1029,6 +1015,9 @@ endnum:
         JP (IY)                 ; and process the next character
 
 again:
+        LD HL,vFlags
+        BIT fELSE,(HL)
+        JR Z,again2
         LD E,(IX+0)                 ; peek loop var
         LD D,(IX+1)                 
         LD L,(IX+2)                 ; peek loop limit
@@ -1045,6 +1034,7 @@ again:
 again1:   
         LD DE,6                     ; drop loop frame
         ADD IX,DE
+again2:
         JP (IY)
 
 alt:
@@ -1081,47 +1071,25 @@ hexp:                       ; Print HL as a hexadecimal
         CALL    space
         JP      (IY)
 
-; Miscellaneous ************************************************************           
+rpush:
+        DEC IX                  
+        LD (IX+0),H
+        DEC IX
+        LD (IX+0),L
+        RET
 
-space:       
-        LD A, ' '           
-        JP putchar
-
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JP putchar
-
-; ARRAY compilation routine
-compNEXT:
-        POP DE          ; DE = return address
-        LD HL,(vHeapPtr)    ; load heap ptr
-        LD (HL),E       ; store lsb
-        LD A,(vByteMode)
-        INC HL          
-        OR A
-        JR NZ,compNext1
-        LD (HL),D
-        INC HL
-compNext1:
-        LD (vHeapPtr),HL    ; save heap ptr
-        JP NEXT
-
+rpop:
+        LD L,(IX+0)         
+        INC IX              
+        LD H,(IX+0)
+        INC IX                  
+        RET
 
 ; **************************************************************************
 ; Page 6 Alt primitives
 ; **************************************************************************
         .align $100
 page5:
-aDef_:
-        PUSH HL             ; Save HL
-        LD HL, MACROS       ; Start address of jump table         
-        INC BC
-        LD  A,(BC)          ; Get the next character
-        INC BC
-        SUB "@"             ; Calc index
-        JP def1
 
 base16_:
         LD HL,vBase16
@@ -1181,6 +1149,8 @@ emit_:
         CALL putchar
         JP (IY)
 
+else_:
+        JP else
 exec_:
         CALL exec1
         JP (IY)
@@ -1326,6 +1296,16 @@ dots:
         DB "\\0@2-\\D1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
         JP (IY)
 
+else:
+        LD HL,vFlags
+        SET fELSE,(HL)
+        POP HL
+        PUSH HL
+        LD A,L              ; zero?
+        OR H
+        JP NZ,begin1
+        JP (IY)
+		
 knownVar:
         LD A,(BC)
         SUB "0"                 ; Calc index
@@ -1475,15 +1455,13 @@ conv:
 		RET            
 
 macro:
-        ADD A,A
-        LD HL,MACROS
+        LD (vTIBPtr),BC
+        LD HL,ctrlCodes
         LD D,0
         LD E,A
         ADD HL,DE
-        LD (vTIBPtr),BC
         LD E,(HL)
-        INC HL
-        LD D,(HL)
+        LD D,msb(macros)
         PUSH DE
         call ENTER
         .cstr "\\G"
@@ -1525,27 +1503,32 @@ nesting4:
         DEC E
         RET 
 
-rpush:
-        DEC IX                  
-        LD (IX+0),H
-        DEC IX
-        LD (IX+0),L
-        RET
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JP putchar
 
-rpop:
-        LD L,(IX+0)         
-        INC IX              
-        LD H,(IX+0)
-        INC IX                  
-        RET
+space:       
+        LD A, ' '           
+        JP putchar
+
    
 
 ; ; *********************************************************************
 ; ; * extended or non-core routines
 ; ; *********************************************************************
 
-; .if EXTENDED = 1
 
+; aDef_:
+;         PUSH HL             ; Save HL
+;         LD HL, MACROS       ; Start address of jump table         
+;         INC BC
+;         LD  A,(BC)          ; Get the next character
+;         INC BC
+;         SUB "@"             ; Calc index
+;         JP def1
+;
 ; strDef:
 ;         INC BC                  ; point to next char
 ;         PUSH BC                 ; push string address
@@ -1570,6 +1553,3 @@ rpop:
 ;         POP HL
 ;         JP knownVar2
 ;         JP      (IY)
-
-; .endif
-
