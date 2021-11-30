@@ -1201,7 +1201,7 @@
 0369   80                     DB   lsb(empty_)   ; TAB ^I
 036A   80                     DB   lsb(empty_)   ; LF  ^J
 036B   80                     DB   lsb(empty_)   ; VT  ^K
-036C   80                     DB   lsb(empty_)   ; FF  ^L
+036C   B6                     DB   lsb(list_)   ; FF  ^L
 036D   80                     DB   lsb(empty_)   ; CR  ^M
 036E   80                     DB   lsb(empty_)   ; SO  ^N
 036F   80                     DB   lsb(empty_)   ; SI  ^O
@@ -1215,7 +1215,7 @@
 0377   80                     DB   lsb(empty_)   ; ETB ^W
 0378   80                     DB   lsb(empty_)   ; CAN ^X
 0379   80                     DB   lsb(empty_)   ; EM  ^Y
-037A   B6                     DB   lsb(list_)   ; SUB ^Z
+037A   80                     DB   lsb(empty_)   ; SUB ^Z
 037B   80                     DB   lsb(empty_)   ; ESC ^[
 037C   80                     DB   lsb(empty_)   ; FS  ^\
 037D   80                     DB   lsb(empty_)   ; GS  ^]

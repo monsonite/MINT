@@ -494,7 +494,7 @@ altCodes:
         DB     lsb(empty_)     ; TAB ^I
         DB     lsb(empty_)     ; LF  ^J
         DB     lsb(empty_)     ; VT  ^K
-        DB     lsb(empty_)     ; FF  ^L
+        DB     lsb(list_)      ; FF  ^L
         DB     lsb(empty_)     ; CR  ^M
         DB     lsb(empty_)     ; SO  ^N
         DB     lsb(empty_)     ; SI  ^O
@@ -508,7 +508,7 @@ altCodes:
         DB     lsb(empty_)     ; ETB ^W
         DB     lsb(empty_)     ; CAN ^X
         DB     lsb(empty_)     ; EM  ^Y
-        DB     lsb(list_)      ; SUB ^Z
+        DB     lsb(empty_)     ; SUB ^Z
         DB     lsb(empty_)     ; ESC ^[
         DB     lsb(empty_)     ; FS  ^\
         DB     lsb(empty_)     ; GS  ^]
