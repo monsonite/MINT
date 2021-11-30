@@ -361,6 +361,7 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | ------ | ------------------------------- |
 | ^[     | escape clears the line          |
 | ^B     | toggle base decimal/hexadecimal |
+| ^E     | edit a definition               |
 | ^H     | backspace                       |
 | ^P     | print stack                     |
 | ^Z     | list definitions                |

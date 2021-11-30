@@ -16,7 +16,7 @@
 
 testsStart:
     
-    ; test "1:A1;:Z2;\\N26(\\i@\\Z)", 1
+    test "\\0",cS0
 
     ; CALL enter
     ; .cstr "`Done!!`"

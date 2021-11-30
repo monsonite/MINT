@@ -352,36 +352,28 @@ compNext1:
         LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
 
-listDef:                    ; lookup up def based on number
-        LD A,"A"
-        POP DE
-        ADD A,E
-        EX AF,AF'
-        LD HL,defs
-        ADD HL,DE
+space:       
+        LD A,' '           
+        JP putchar
+
+writeChar:
+        LD (DE),A
+        INC DE
+        JP putchar
+
+macro:
+        LD (vTIBPtr),BC
+        LD HL,ctrlCodes
+        LD D,0
+        LD E,A
         ADD HL,DE
         LD E,(HL)
-        INC HL
-        LD D,(HL)
-        EX DE,HL
-        LD A,(HL)
-        CP ";"
-        JR Z,listDef3
-        LD A,":"
-        CALL putchar
-        EX AF,AF'
-        CALL putchar
-        JR listDef2
-listDef1:
-        INC HL
-listDef2:        
-        LD A,(HL)
-        CALL putchar
-        CP ";"
-        JR NZ, listDef1
-        CALL crlf
-listDef3:        
-        JP (IY)
+        LD D,msb(macros)
+        PUSH DE
+        call ENTER
+        .cstr "\\G"
+        LD BC,(vTIBPtr)
+        JP interpret2
 
 ; **************************************************************************
 ; Page 2  Jump Tables
@@ -419,7 +411,7 @@ opcodes:
         DB    lsb(lt_)     ;    <
         DB    lsb(eq_)     ;    =            
         DB    lsb(gt_)     ;    >            
-        DB    lsb(query_)  ;    ?
+        DB    lsb(nop_)    ;    ?
         DB    lsb(fetch_)  ;    @    
         DB    lsb(call_)   ;    A    
         DB    lsb(call_)   ;    B
@@ -483,7 +475,7 @@ opcodes:
         DB    lsb(or_)     ;    |            
         DB    lsb(shr_)    ;    }            
         DB    lsb(inv_)    ;    ~            
-        DB    lsb(del_)    ;    backspace
+        DB    lsb(nop_)    ;    backspace
 		
 ; ***********************************************************************
 ; Alternate function codes		
@@ -495,7 +487,7 @@ altCodes:
         DB     lsb(toggleBase_); STX ^B
         DB     lsb(empty_)     ; ETX ^C
         DB     lsb(empty_)     ; EOT ^D
-        DB     lsb(empty_)     ; ENQ ^E
+        DB     lsb(edit_)      ; ENQ ^E
         DB     lsb(empty_)     ; ACK ^F
         DB     lsb(empty_)     ; BEL ^G
         DB     lsb(backsp_)    ; BS  ^H
@@ -517,7 +509,7 @@ altCodes:
         DB     lsb(empty_)     ; CAN ^X
         DB     lsb(empty_)     ; EM  ^Y
         DB     lsb(list_)      ; SUB ^Z
-        DB     lsb(escape_)    ; ESC ^[
+        DB     lsb(empty_)     ; ESC ^[
         DB     lsb(empty_)     ; FS  ^\
         DB     lsb(empty_)     ; GS  ^]
         DB     lsb(empty_)     ; RS  ^^
@@ -580,7 +572,7 @@ altCodes:
         DB     lsb(while_)     ;    W
         DB     lsb(exec_)      ;    X
         DB     lsb(nop_)       ;    Y
-        DB     lsb(listDef_)   ;    Z
+        DB     lsb(editDef_)   ;    Z
         DB     lsb(cArrDef_)   ;    [
         DB     lsb(comment_)   ;    \  comment text, skips reading until end of line
         DB     lsb(nop_)       ;    ]
@@ -646,7 +638,9 @@ iUserVars:
 page1:
 
 alt_:        
-        JP alt
+        LD HL,(vAlt)
+        JP (HL)
+
 exit_:
         INC BC
         LD DE,BC                
@@ -857,31 +851,27 @@ dot2:
         CALL space
         JP (IY)
 
-str_:       JP str
-hexp_:      JP hexp                 ; print hexadecimal
-query_:     JR query
-del_:       JR del
-mul_:       JR mul
-div_:       JR div
 def_:       JP def
-begin_:     JR begin                   
 again_:     JP again
 arrDef_:    JP arrDef
 arrEnd_:    JP arrEnd
 nop_:       JP NEXT                 ; hardwire white space to always go to NEXT (important for arrays)
 quit_:      RET                     ; exit interpreter
+str_:       JP str
+begin_:     JR begin                   
+div_:       JR div
+mul_:       JR mul
 
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
         .align   $100           
 
-query:
-        JP       (IY) 
-                
-del:      
-        JP       (IY) 
-        
+hexp_:                      ; print hexadecimal
+        POP     HL
+        CALL    printhex
+        JR   dot2
+
 mul:                       ; 16-bit multiply  
 
         POP  DE             ; get first value
@@ -1068,10 +1058,6 @@ again1:
 again2:
         JP (IY)
 
-alt:
-        LD HL,(vAlt)
-        JP (HL)
-
 alt1:
         INC BC
         LD A,(BC)
@@ -1100,12 +1086,6 @@ stringend:
         DEC BC
         JP   (IY) 
 
-hexp:                       ; Print HL as a hexadecimal
-        POP     HL
-        CALL    printhex
-        CALL    space
-        JP      (IY)
-
 rpush:
         DEC IX                  
         LD (IX+0),H
@@ -1119,6 +1099,12 @@ rpop:
         LD H,(IX+0)
         INC IX                  
         RET
+
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JP putchar
 
 ; **************************************************************************
 ; Page 6 Alt primitives
@@ -1185,7 +1171,15 @@ emit_:
         JP (IY)
 
 else_:
-        JP else
+        LD HL,vFlags
+        SET fELSE,(HL)
+        POP HL
+        PUSH HL
+        LD A,L              ; zero?
+        OR H
+        JP NZ,begin1
+        JP (IY)
+		
 exec_:
         CALL exec1
         JP (IY)
@@ -1260,27 +1254,50 @@ key_:
         PUSH HL
         JP (IY)
 
+knownVar_:
+        LD A,(BC)
+        SUB "0"                 ; Calc index
+        ADD A,A
+        LD E,A
+        LD D,0
+        LD HL,userVars
+        ADD HL,DE
+        PUSH HL
+        JP (IY)
+
 min_:                           ; a b -- c
         POP DE
         POP HL
-        PUSH HL
         OR A
         SBC HL,DE
-        JR NC,max1
-        JP (IY)
+        CCF
+        JR max1
 
 max_:                           ; a b -- c
         POP DE
         POP HL
-        PUSH HL
         OR A
         SBC HL,DE
-        JR C,max1
-        JP (IY)
 max1:
+        JR C,max2
+        ADD HL,DE
         EX DE,HL
-        EX (SP),HL
+max2:
+        PUSH DE
         JP (IY)
+
+
+;         POP DE
+;         POP HL
+;         PUSH HL
+;         OR A
+;         SBC HL,DE
+;         JR C,max1
+;         JP (IY)
+; max1:
+;         EX DE,HL
+;         EX (SP),HL
+;         JP (IY)
 
 newln_:
         call crlf
@@ -1309,8 +1326,6 @@ TIBPtr_:
         JP (IY)
 printStk_:
         JP printStk
-knownVar_:
-        JP knownVar 
 while_:
         POP HL
         LD A,L                      ; zero?
@@ -1322,35 +1337,12 @@ while1:
         ADD IX,DE
         JP begin1                   ; skip to end of loop        
 
-listDef_:
-        JP listDef
+editDef_:
+        JP editDef
         
 ; **************************************************************************
 ; Page 6 primitive routines 
 ; **************************************************************************
-
-else:
-        LD HL,vFlags
-        SET fELSE,(HL)
-        POP HL
-        PUSH HL
-        LD A,L              ; zero?
-        OR H
-        JP NZ,begin1
-        JP (IY)
-		
-knownVar:
-        LD A,(BC)
-        SUB "0"                 ; Calc index
-        LD L,A
-        LD H,0
-        LD DE,knownVars
-
-knownVar2:
-        ADD HL,HL
-        ADD HL,DE
-        PUSH HL
-        JP (IY)
 
 printStk:
         call ENTER
@@ -1490,23 +1482,9 @@ conv:
 		DAA
 		ADC	A,0x40
 		DAA
-		CALL putchar
-		RET            
+		JP putchar
 
-macro:
-        LD (vTIBPtr),BC
-        LD HL,ctrlCodes
-        LD D,0
-        LD E,A
-        ADD HL,DE
-        LD E,(HL)
-        LD D,msb(macros)
-        PUSH DE
-        call ENTER
-        .cstr "\\G"
-        LD BC,(vTIBPtr)
-        JP interpret2
-
+; **************************************************************************             
 ; calculate nesting value
 ; A is char to be tested, 
 ; E is the nesting value (initially 0)
@@ -1514,6 +1492,7 @@ macro:
 ; E is decreased by ) and ]
 ; E has its bit 7 toggled by `
 ; limited to 127 levels
+; **************************************************************************             
 
 nesting:
         CP '`'
@@ -1542,15 +1521,46 @@ nesting4:
         DEC E
         RET 
 
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JP putchar
+; **************************************************************************             
+; copy definition to text input buffer
+; update TIBPtr
+; **************************************************************************             
+editDef:                    ; lookup up def based on number
+        LD A,"A"
+        POP DE
+        ADD A,E
+        EX AF,AF'
+        LD HL,defs
+        ADD HL,DE
+        ADD HL,DE
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        EX DE,HL
+        LD A,(HL)
+        CP ";"
+        LD DE,TIB
+        JR Z,editDef3
+        LD A,":"
+        CALL writeChar
+        EX AF,AF'
+        CALL writeChar
+        JR editDef2
+editDef1:
+        INC HL
+editDef2:        
+        LD A,(HL)
+        CALL writeChar
+        CP ";"
+        JR NZ,editDef1
+editDef3:        
+        LD HL,TIB
+        EX DE,HL
+        OR A
+        SBC HL,DE
+        LD (vTIBPtr),HL
+        JP (IY)
 
-space:       
-        LD A, ' '           
-        JP putchar
 
    
 
