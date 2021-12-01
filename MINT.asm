@@ -300,7 +300,7 @@ dispatch:
         LD DE,opcodes               ; 7t    Start address of jump table         
         LD E,A                      ; 4t    Index into table
         LD A,(DE)                   ; 7t    get low jump address
-        LD H,msb(page1)             ; 7t    Load H with the 1st page address
+        LD H,msb(page4)             ; 7t    Load H with the 1st page address
         LD L,A                      ; 4t    and put into L
         JP (HL)                     ; 4t    Jump to routine
 
@@ -514,22 +514,22 @@ altCodes:
         DB     lsb(empty_)     ; GS  ^]
         DB     lsb(empty_)     ; RS  ^^
         DB     lsb(empty_)     ; US  ^_)
-        DB     lsb(nop_)       ; SP  ^`
+        DB     lsb(aNop_)      ; SP  ^`
         DB     lsb(cStore_)    ;    !            
-        DB     lsb(nop_)       ;    "
-        DB     lsb(nop_)       ;    
+        DB     lsb(aNop_)      ;    "
+        DB     lsb(aNop_)      ;    
         DB     lsb(TIBPtr_)    ;    $  ( -- adr ) text input ptr           
-        DB     lsb(nop_)       ;    %            
-        DB     lsb(nop_)       ;    &
-        DB     lsb(nop_)       ;    '
+        DB     lsb(aNop_)      ;    %            
+        DB     lsb(aNop_)      ;    &
+        DB     lsb(aNop_)      ;    '
         DB     lsb(else_)      ;    (        
-        DB     lsb(nop_)       ;    )
-        DB     lsb(nop_)       ;    *            
+        DB     lsb(aNop_)      ;    )
+        DB     lsb(aNop_)      ;    *            
         DB     lsb(incr_)      ;    +  ( adr -- ) decrements variable at address
-        DB     lsb(nop_)       ;    ,            
+        DB     lsb(aNop_)      ;    ,            
         DB     lsb(decr_)      ;    -  ( adr -- ) increments variable at address
-        DB     lsb(nop_)       ;    .  
-        DB     lsb(nop_)       ;    /
+        DB     lsb(aNop_)      ;    .  
+        DB     lsb(aNop_)      ;    /
         DB     lsb(knownVar_)  ;    0  ( -- adr ) start of data stack constant         
         DB     lsb(knownVar_)  ;    1  ; returns HERE variable
         DB     lsb(knownVar_)  ;    2  ( -- adr ) TIBPtr variable          
@@ -540,76 +540,76 @@ altCodes:
         DB     lsb(knownVar_)  ;    7
         DB     lsb(knownVar_)  ;    8            
         DB     lsb(knownVar_)  ;    9        
-        DB     lsb(nop_)       ;    :  start defining a macro        
-        DB     lsb(nop_)       ;    ;  
-        DB     lsb(nop_)       ;    <
-        DB     lsb(nop_)       ;    =            
-        DB     lsb(nop_)       ;    >            
-        DB     lsb(nop_)       ;    ?
+        DB     lsb(aNop_)      ;    :  start defining a macro        
+        DB     lsb(aNop_)      ;    ;  
+        DB     lsb(aNop_)      ;    <
+        DB     lsb(aNop_)      ;    =            
+        DB     lsb(aNop_)      ;    >            
+        DB     lsb(aNop_)      ;    ?
         DB     lsb(cFetch_)    ;    @      
-        DB     lsb(nop_)       ;    A    
+        DB     lsb(aNop_)      ;    A    
         DB     lsb(base16_)    ;    B
         DB     lsb(nop_)       ;    C
         DB     lsb(depth_)     ;    D    
         DB     lsb(emit_)      ;    E  
-        DB     lsb(nop_)       ;    F
+        DB     lsb(aNop_)      ;    F
         DB     lsb(go_)        ;    G
         DB     lsb(nop_)       ;    H  
         DB     lsb(inPort_)    ;    I  ( port -- val )   
-        DB     lsb(nop_)       ;    J
+        DB     lsb(aNop_)      ;    J
         DB     lsb(key_)       ;    K  
-        DB     lsb(nop_)       ;    L
+        DB     lsb(aNop_)      ;    L
         DB     lsb(max_)       ;    M  ( a b -- c ) return the maximum value
         DB     lsb(newln_)     ;    N
         DB     lsb(outPort_)   ;    O  ( val port -- )
         DB     lsb(printStk_)  ;    P
         DB     lsb(quit_)      ;    Q
-        DB     lsb(nop_)       ;    R
-        DB     lsb(nop_)       ;    S
-        DB     lsb(nop_)       ;    T
-        DB     lsb(nop_)       ;    U
-        DB     lsb(nop_)       ;    V
+        DB     lsb(aNop_)      ;    R
+        DB     lsb(aNop_)      ;    S
+        DB     lsb(aNop_)      ;    T
+        DB     lsb(aNop_)      ;    U
+        DB     lsb(aNop_)      ;    V
         DB     lsb(while_)     ;    W
         DB     lsb(exec_)      ;    X
-        DB     lsb(nop_)       ;    Y
+        DB     lsb(aNop_)      ;    Y
         DB     lsb(editDef_)   ;    Z
         DB     lsb(cArrDef_)   ;    [
         DB     lsb(comment_)   ;    \  comment text, skips reading until end of line
-        DB     lsb(nop_)       ;    ]
+        DB     lsb(aNop_)      ;    ]
         DB     lsb(charCode_)  ;    ^
         DB     lsb(sign_)      ;    _)  ( n -- b ) returns true if -ve 
-        DB     lsb(nop_)       ;    `            
-        DB     lsb(nop_)       ;    a
-        DB     lsb(nop_)       ;    b
-        DB     lsb(nop_)       ;    c
-        DB     lsb(nop_)       ;    d  ( -- val ) depth of data stack
-        DB     lsb(nop_)       ;    e  ( val -- ) emits a char to output
-        DB     lsb(nop_)       ;    f
-        DB     lsb(nop_)       ;    g  ( -- ? ) execute mint definition
+        DB     lsb(aNop_)      ;    `            
+        DB     lsb(aNop_)      ;    a
+        DB     lsb(aNop_)      ;    b
+        DB     lsb(aNop_)      ;    c
+        DB     lsb(aNop_)      ;    d  ( -- val ) depth of data stack
+        DB     lsb(aNop_)      ;    e  ( val -- ) emits a char to output
+        DB     lsb(aNop_)      ;    f
+        DB     lsb(aNop_)      ;    g  ( -- ? ) execute mint definition
         DB     lsb(heapPtr_)   ;    h  ; returns heap ptr variable
         DB     lsb(i_)         ;    i  ; returns index variable of current loop          
         DB     lsb(j_)         ;    j  ; returns index variable of outer loop
-        DB     lsb(nop_)       ;    k  ( -- val )  read a char from input
-        DB     lsb(nop_)       ;    l
+        DB     lsb(aNop_)      ;    k  ( -- val )  read a char from input
+        DB     lsb(aNop_)      ;    l
         DB     lsb(min_)       ;    m  ( a b -- c ) return the minimum value
-        DB     lsb(nop_)       ;    n  ; prints a newline to output
-        DB     lsb(nop_)       ;    o
-        DB     lsb(nop_)       ;    p  ( -- ) non-destructively prints stack
-        DB     lsb(nop_)       ;    q  ; quits from Mint REPL         
-        DB     lsb(nop_)       ;    r
-        DB     lsb(nop_)       ;    s 
-        DB     lsb(nop_)       ;    t
-        DB     lsb(nop_)       ;    u
-        DB     lsb(nop_)       ;    v   
-        DB     lsb(nop_)       ;    w  ; ( b -- ) if false, skip to end of loop 
-        DB     lsb(nop_)       ;    x
-        DB     lsb(nop_)       ;    y
-        DB     lsb(nop_)       ;    z
-        DB     lsb(nop_)       ;    {
-        DB     lsb(nop_)       ;    |            
-        DB     lsb(nop_)       ;    }            
-        DB     lsb(nop_)       ;    ~           
-        DB     lsb(nop_)       ;    BS		
+        DB     lsb(aNop_)      ;    n  ; prints a newline to output
+        DB     lsb(aNop_)      ;    o
+        DB     lsb(aNop_)      ;    p  ( -- ) non-destructively prints stack
+        DB     lsb(aNop_)      ;    q  ; quits from Mint REPL         
+        DB     lsb(aNop_)      ;    r
+        DB     lsb(aNop_)      ;    s 
+        DB     lsb(aNop_)      ;    t
+        DB     lsb(aNop_)      ;    u
+        DB     lsb(aNop_)      ;    v   
+        DB     lsb(aNop_)      ;    w  ; ( b -- ) if false, skip to end of loop 
+        DB     lsb(aNop_)      ;    x
+        DB     lsb(aNop_)      ;    y
+        DB     lsb(aNop_)      ;    z
+        DB     lsb(aNop_)      ;    {
+        DB     lsb(aNop_)      ;    |            
+        DB     lsb(aNop_)      ;    }            
+        DB     lsb(aNop_)      ;    ~           
+        DB     lsb(aNop_)      ;    BS		
 
 iUserVars:
         DW dStack               ; \0 cS0
@@ -635,7 +635,7 @@ iUserVars:
 ; Page 4 primitive routines 
 ; **********************************************************************
         .align $100
-page1:
+page4:
 
 alt_:        
         LD HL,(vAlt)
@@ -1115,6 +1115,7 @@ page5:
 base16_:
         LD HL,vBase16
         PUSH HL
+anop_:
         JP (IY)
 
 cArrDef_:                   ; define a byte array
