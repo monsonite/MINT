@@ -288,7 +288,7 @@ Note: logical NOT can be achieved with 0=
 | \\E    | emits a char to output                                    | val --      |
 | \\I    | input from a I/O port                                     | port -- val |
 | \\K    | read a char from input                                    | -- val      |
-| \\C    | prints a CRLF to output                                   | --          |
+| \\N    | prints a CRLF to output                                   | --          |
 | \\O    | output to an I/O port                                     | val port -- |
 | \\P    | non-destructively prints stack                            | --          |
 | \\Z    | print definition by number                                | n --        |
@@ -339,8 +339,8 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | \\1    | text input buffer address   | -- adr |
 | \\2    | defs address                | -- adr |
 | \\3    | vars address                | -- adr |
-| \\4    | macros address              | -- adr |
-| \\5    | user vars                   | -- adr |
+| \\4    | user vars                   | -- adr |
+| \\5    |                             | -- adr |
 | \\6    |                             | -- adr |
 | \\7    |                             | -- adr |
 | \\8    |                             | -- adr |
@@ -355,7 +355,7 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | \\Q    | quits from Mint interpreter                   | --       |
 | \\X    | execute machine code at address               | adr -- ? |
 
-### Macros
+### Control keys
 
 | Symbol | Description                     |
 | ------ | ------------------------------- |
