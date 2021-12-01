@@ -299,7 +299,6 @@ Note: logical NOT can be achieved with 0=
 | ------ | -------------------------- | ------ |
 | :      | define a new word DEF      | "C"    |
 | ;      | end of user definition END |        |
-| \\:    | start defining a macro     | "C" -- |
 
 NOTE: "C" is an uppercase letter immediately following opcode which is the name of the definition
 
