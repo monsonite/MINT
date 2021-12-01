@@ -1,5 +1,5 @@
 notes.txt
-old/
+.vscode/
 rtest.z80.hex
 rtest.z80.lst
 test.z80.hex
