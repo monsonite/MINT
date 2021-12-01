@@ -671,25 +671,5 @@ RESET:
 .endif
 .endif
         
-.if RC2014
 
-;  *************************************************************************		
-;  Getchar and putchar hooks into SCM for RC2014
-;  *************************************************************************
-
-getchar:    PUSH BC
-            LD C, $01
-            RST $30
-            POP BC
-            RET
-
-putchar:    PUSH BC
-            PUSH HL
-            LD C, $02
-            RST $30
-            OR $FF
-            POP HL
-            POP BC
-            RET		
-.endif 
         
