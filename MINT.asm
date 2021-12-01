@@ -161,14 +161,6 @@
 
 		.ORG ROMSTART + $180		
 
-; **************************************************************************
-; Macros must be written in Mint and end with ; 
-; this code must not span pages
-; **************************************************************************
-macros:
-
-.include "MINT-macros.asm"
-
 start:
 mint:
         LD SP,DSTACK
@@ -364,9 +356,8 @@ writeChar:
 macro:
         LD (vTIBPtr),BC
         LD HL,ctrlCodes
-        LD D,0
-        LD E,A
-        ADD HL,DE
+        ADD A,L
+        LD L,A
         LD E,(HL)
         LD D,msb(macros)
         PUSH DE
@@ -374,6 +365,15 @@ macro:
         .cstr "\\G"
         LD BC,(vTIBPtr)
         JP interpret2
+
+; **************************************************************************
+; Macros must be written in Mint and end with ; 
+; this code must not span pages
+; **************************************************************************
+macros:
+
+.include "MINT-macros.asm"
+
 
 ; **************************************************************************
 ; Page 2  Jump Tables
@@ -476,7 +476,29 @@ opcodes:
         DB    lsb(shr_)    ;    }            
         DB    lsb(inv_)    ;    ~            
         DB    lsb(nop_)    ;    backspace
-		
+
+; ***********************************************************************
+; Initial values for user variables		
+; ***********************************************************************		
+iUserVars:
+        DW dStack               ; \0 cS0
+        DW TIB                  ; \1 cTIB
+        DW defs                 ; \2 cDefs
+        DW vars                 ; \3 cVars
+        DW userVars             ; \4 cUserVars
+        DW 0                    ; \5 
+        DW 0                    ; \6 
+        DW 0                    ; \7 
+        DW 0                    ; \8 
+        DW 0                    ; \9 vTemp
+
+        DW HEAP                 ; vHeapPtr
+        DW FALSE                ; vBase16
+        DW TIB                  ; vTIBPtr
+        DW alt1                 ; vAltCodes
+        DW $0                   ; 
+        DW $0                   ;
+        
 ; ***********************************************************************
 ; Alternate function codes		
 ; ***********************************************************************		
@@ -611,25 +633,6 @@ altCodes:
         DB     lsb(aNop_)      ;    ~           
         DB     lsb(aNop_)      ;    BS		
 
-iUserVars:
-        DW dStack               ; \0 cS0
-        DW TIB                  ; \1 cTIB
-        DW defs                 ; \2 cDefs
-        DW vars                 ; \3 cVars
-        DW userVars             ; \4 cUserVars
-        DW 0                    ; \5 
-        DW 0                    ; \6 
-        DW 0                    ; \7 
-        DW 0                    ; \8 
-        DW 0                    ; \9 vTemp
-
-        DW HEAP                 ; vHeapPtr
-        DW FALSE                ; vBase16
-        DW TIB                  ; vTIBPtr
-        DW alt1                 ; vAltCodes
-        DW $0                   ; 
-        DW $0                   ;
-        
 
 ; **********************************************************************			 
 ; Page 4 primitive routines 
