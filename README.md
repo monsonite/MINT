@@ -30,7 +30,7 @@ With MINT, these instructions are just one byte long and a look-up table is used
 
 In the example above 123 456 + .
 
-The numerical strings 123 and 456 are evaluated as 16-bit binary numbers and placed on the data stack. The plus symbol is interpreted as a jump to the routine that performs a 16-bit addition of the top two elements on the data stack, placing their sum on the top of the datastack. The dot character prints out the top value of the data stack, consuming it at the same time.
+The numerical strings 123 and 456 are evaluated as 16-bit binary numbers and placed on the data stack. The plus symbol is interpreted as a jump to the routine that performs a 16-bit addition of the top two elements on the data stack, placing their sum on the top of the data stack. The dot character prints out the top value of the data stack, consuming it at the same time.
 
 In addition to the arithmetic and boolean operations, there are also the three comparison operators Greater Than, Less Than and Equal to, represented by symbols > < and =.
 
@@ -71,9 +71,9 @@ User Commands are what gives MINT its power and flexibility. Each uppercase lett
 
 PRIMITIVES
 
-A primitive is a built in function, normally stored in ROM and not usually needed to be modified by the User. Primitives will include the familliar mathematical functions such as ADD, SUBtract, MULtiply and DIVide, and also boolean logic operations such as AND, OR, XOR and INVert.
+A primitive is a built in function, normally stored in ROM and not usually needed to be modified by the User. Primitives will include the familiar mathematical functions such as ADD, SUBtract, MULtiply and DIVide, and also boolean logic operations such as AND, OR, XOR and INVert.
 
-There are also a small group of primitives that perform operations on the stack, DUP is used to duplicate the top item, DROP will remove the top item, making the second item available. SWAP will exchange the top two intems, effectively placing the second item on top.
+There are also a small group of primitives that perform operations on the stack, DUP is used to duplicate the top item, DROP will remove the top item, making the second item available. SWAP will exchange the top two items, effectively placing the second item on top.
 
 In total, MINT contains 33 primitives which are executed when the interpreter finds the relevant symbol. Some of these will be commonly used arithmetic symbols like "+" and "-" Others are allocated to punctuation symbols. The full-stop, or dot character is used to print out the number held on the top of the stack.
 
@@ -81,13 +81,13 @@ In total, MINT contains 33 primitives which are executed when the interpreter fi
 
 MINT was developed for the RC2014 Micro Z80 Single Board Computer. This board is supplied with a comprehensive Monitor program (The Small Computer Monitor (SCM) by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
 
-If necessary, you can use the serial getchar and printchar routines that are available within the Small Computer Monitor
+If necessary, you can use the serial getchar and putchar routines that are available within the Small Computer Monitor
 
 See the User Manual pages 45 and 46 on how this is done
 
 https://smallcomputercentral.files.wordpress.com/2018/05/scmon-v1-0-userguide-e1-0-0.pdf
 
-MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at addresss $8000 using a serial terminal program. I use TeraTerm when working within the windows environment.
+MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at address $8000 using a serial terminal program. I use TeraTerm when working within the windows environment.
 
 Once the MINT code image is pasted into RAM you can run it using the Go command "G8100"
 
@@ -320,8 +320,8 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | ------ | ------------------------------------------- | ------------- |
 | @      | FETCH a value from memory                   | -- val        |
 | !      | STORE a value to memory                     | val adr --    |
-| \\+    | increments variable at address by an amount | val addr --   |
-| \\-    | decrements variable at address by an amount | val addr --   |
+| \\+    | increments variable at address by an amount | val adr --    |
+| \\-    | decrements variable at address by an amount | val adr --    |
 | \\@    | FETCH a byte from memory                    | -- val        |
 | \\!    | STORE a byte to memory                      | val adr --    |
 | [      | begin an array definition                   | --            |
@@ -348,18 +348,17 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 
 ### Miscellaneous
 
-| Symbol | Description                                   | Effect    |
-| ------ | --------------------------------------------- | --------- |
-| \\\\   | comment text, skips reading until end of line | --        |
-| \\G    | execute mint code at address                  | addr -- ? |
-| \\Q    | quits from Mint interpreter                   | --        |
-| \\X    | execute machine code at address               | addr -- ? |
+| Symbol | Description                                   | Effect   |
+| ------ | --------------------------------------------- | -------- |
+| \\\\   | comment text, skips reading until end of line | --       |
+| \\G    | execute mint code at address                  | adr -- ? |
+| \\Q    | quits from Mint interpreter                   | --       |
+| \\X    | execute machine code at address               | adr -- ? |
 
 ### Macros
 
 | Symbol | Description                     |
 | ------ | ------------------------------- |
-| ^[     | escape clears the line          |
 | ^B     | toggle base decimal/hexadecimal |
 | ^E     | edit a definition               |
 | ^H     | backspace                       |
