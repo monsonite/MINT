@@ -486,8 +486,8 @@ iUserVars:
         DW defs                 ; \2 cDefs
         DW vars                 ; \3 cVars
         DW userVars             ; \4 cUserVars
-        DW 0                    ; \5 
-        DW 0                    ; \6 
+        DW macros               ; \5 cMacros
+        DW opcodes              ; \6 cOpcodes
         DW 0                    ; \7 
         DW 0                    ; \8 
         DW 0                    ; \9 vTemp

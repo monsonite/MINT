@@ -339,8 +339,8 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | \\2    | defs address                | -- adr |
 | \\3    | vars address                | -- adr |
 | \\4    | user vars                   | -- adr |
-| \\5    |                             | -- adr |
-| \\6    |                             | -- adr |
+| \\5    | macros                      | -- adr |
+| \\6    | opcodes                     | -- adr |
 | \\7    |                             | -- adr |
 | \\8    |                             | -- adr |
 | \\9    | temp variable               | -- adr |

@@ -21,8 +21,8 @@ cTIB        DW 0                ; 1     \01
 cDefs:      DW 0                ; 2     \02
 cVars:      DW 0                ; 3     \03
 cUserVars:  DW 0                ; 4     \04
-            DW 0                ; 5     \05
-            DW 0                ; 6     \06
+cMacros     DW 0                ; 5     \05
+cOpcodes    DW 0                ; 6     \06
             DW 0                ; 7     \07
             DW 0                ; 8     \08
 vTemp:      DW 0                ; 9     \09
