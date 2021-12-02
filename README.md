@@ -252,8 +252,8 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | }      | shift the number to the right (2/)        | a -- b   |
 | \\b    | base 16 flag variable                     | -- a     |
 | \\\_   | sign of number                            | n -- b   |
-| \\M    | maximum                                   | a b -- m |
-| \\m    | minimum                                   | a b -- m |
+| \\M    | most                                      | a b -- m |
+| \\L    | least                                     | a b -- m |
 
 ### Logical Operators
 

@@ -584,8 +584,8 @@ altCodes:
         DB     lsb(inPort_)    ;    I  ( port -- val )   
         DB     lsb(aNop_)      ;    J
         DB     lsb(key_)       ;    K  ( -- val )  read a char from input
-        DB     lsb(aNop_)      ;    L
-        DB     lsb(max_)       ;    M  ( a b -- c ) return the maximum value
+        DB     lsb(least_)     ;    L  ( a b -- c ) return the smallest value
+        DB     lsb(most_)      ;    M  ( a b -- c ) return the largest value
         DB     lsb(newln_)     ;    N   ; prints a newline to output
         DB     lsb(outPort_)   ;    O  ( val port -- )
         DB     lsb(printStk_)  ;    P  ( -- ) non-destructively prints stack
@@ -617,7 +617,7 @@ altCodes:
         DB     lsb(j_)         ;    j  ; returns index variable of outer loop
         DB     lsb(userVar_)   ;    k  
         DB     lsb(userVar_)   ;    l
-        DB     lsb(min_)       ;    m  ( a b -- c ) return the minimum value
+        DB     lsb(userVar_)   ;    m  ( a b -- c ) return the minimum value
         DB     lsb(userVar_)   ;    n  
         DB     lsb(userVar_)   ;    o
         DB     lsb(userVar_)   ;    p  
@@ -1274,24 +1274,24 @@ sysConst_:
         LD L,A
         JP fetch1
 
-min_:                           ; a b -- c
+least_:                           ; a b -- c
         POP DE
         POP HL
         OR A
         SBC HL,DE
         CCF
-        JR max1
+        JR most1
 
-max_:                           ; a b -- c
+most_:                           ; a b -- c
         POP DE
         POP HL
         OR A
         SBC HL,DE
-max1:
-        JR C,max2
+most1:
+        JR C,most2
         ADD HL,DE
         EX DE,HL
-max2:
+most2:
         PUSH DE
         JP (IY)
 
