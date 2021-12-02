@@ -2,11 +2,13 @@
 ;
 ;        MINT1_18 Micro-Interpreter for the Z80
 ;
-;        Ken Boak John Hardy and Craig Jones  November 28th 2021
+;        Ken Boak John Hardy and Craig Jones  December 2nd 2021
+;
+;		 Multiplication stack bug fixed 
 ;
 ;        Comparison Operators < and > return 0 (false) when equality is detected
 ;        Printhex routine shortened
-;        Getchar and Putchar hooks into Small Computer Monitor added in page 2 28-11-21
+;        
 ;
 ;        Hex entry bug fixed 28-11-21
 ;        Decimal entry bug fixed  24-11-21
@@ -899,7 +901,10 @@ Mul_Loop_1:
         DEC A
         JR NZ,Mul_Loop_1
 		
-		JR   mul_end
+		POP BC				; Restore the IP
+		PUSH HL             ; Put the product on the stack - stack bug fixed 2/12/21
+		
+		JP (IY)
 
 ; ********************************************************************
 ; 16-bit division subroutine.
