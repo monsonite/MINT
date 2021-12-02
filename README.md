@@ -326,24 +326,25 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | [      | begin an array definition                   | --            |
 | ]      | end an array definition                     | -- adr nwords |
 | \\[    | begin a byte array definition               | --            |
-| \\h    | heap pointer variable                       | -- adr        |
-| \\$    | text input buffer pointer variable          | -- adr        |
-| \\B    | base16 flag variable                        | -- adr        |
 
-### Constants and variables
+### Constants
 
 | Symbol | Description                 | Effect |
 | ------ | --------------------------- | ------ |
-| \\0    | start address of data stack | -- adr |
+| \\0    | data stack start address    | -- adr |
 | \\1    | text input buffer address   | -- adr |
 | \\2    | defs address                | -- adr |
 | \\3    | vars address                | -- adr |
-| \\4    | user vars                   | -- adr |
-| \\5    | macros                      | -- adr |
-| \\6    | opcodes                     | -- adr |
-| \\7    |                             | -- adr |
-| \\8    |                             | -- adr |
-| \\9    | temp variable               | -- adr |
+| \\4    | opcodes address             | -- adr |
+| \\5    | macros address              | -- adr |
+| \\6    | user vars                   | -- adr |
+| \\7    | -                           | -- adr |
+
+### Variables
+
+| \\b    | base16 flag variable                        | -- adr        |
+| \\c    | text input buffer pointer variable          | -- adr        |
+| \\h    | heap pointer variable                       | -- adr        |
 
 ### Miscellaneous
 

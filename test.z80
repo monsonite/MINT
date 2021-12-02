@@ -16,8 +16,6 @@
 
 testsStart:
     
-    test "\\0",cS0
-
     ; CALL enter
     ; .cstr "`Done!!`"
     ; HALT
@@ -42,7 +40,7 @@ testsStart:
     test "1 2 \\m", 1
     test "2 1 \\m", 1
 
-    test "\\0@",DSTACK
+    test "\\0",DSTACK
     test "\\^A",65
 
     test "3x! 1 x\\+ x@", 4

@@ -172,8 +172,8 @@ mint:
 initialize:
         LD IX,RSTACK
         LD IY,NEXT			    ; IY provides a faster jump to NEXT
-        LD HL,iUserVars
-        LD DE,userVars
+        LD HL,iSysConsts
+        LD DE,sysConsts
         LD BC,16 * 2
         LDIR
         LD HL,defs
@@ -480,24 +480,26 @@ opcodes:
 ; ***********************************************************************
 ; Initial values for user variables		
 ; ***********************************************************************		
-iUserVars:
+iSysConsts:
         DW dStack               ; \0 cS0
         DW TIB                  ; \1 cTIB
         DW defs                 ; \2 cDefs
         DW vars                 ; \3 cVars
-        DW userVars             ; \4 cUserVars
+        DW opcodes              ; \4 cOpcodes
         DW macros               ; \5 cMacros
-        DW opcodes              ; \6 cOpcodes
+        DW userVars             ; \6 cUserVars
         DW 0                    ; \7 
-        DW 0                    ; \8 
-        DW 0                    ; \9 vTemp
 
-        DW HEAP                 ; vHeapPtr
-        DW FALSE                ; vBase16
-        DW TIB                  ; vTIBPtr
-        DW alt1                 ; vAltCodes
-        DW $0                   ; 
-        DW $0                   ;
+iUserVars:
+        DW alt1                 ; a vAltCodes
+        DW FALSE                ; b vBase16
+        DW 0                    ; c vTIBPtr
+        DW 0                    ; d putChar
+        DW 0                    ; e enter
+        DW 0                    ; f vFlags
+        DW 0                    ; g vByteMode
+        DW HEAP                 ; h vHeapPtr
+
         
 ; ***********************************************************************
 ; Alternate function codes		
@@ -539,8 +541,8 @@ altCodes:
         DB     lsb(aNop_)      ; SP  ^`
         DB     lsb(cStore_)    ;    !            
         DB     lsb(aNop_)      ;    "
-        DB     lsb(aNop_)      ;    
-        DB     lsb(TIBPtr_)    ;    $  ( -- adr ) text input ptr           
+        DB     lsb(aNop_)      ;    #
+        DB     lsb(aNop_)      ;    $  ( -- adr ) text input ptr           
         DB     lsb(aNop_)      ;    %            
         DB     lsb(aNop_)      ;    &
         DB     lsb(aNop_)      ;    '
@@ -552,16 +554,16 @@ altCodes:
         DB     lsb(decr_)      ;    -  ( adr -- ) increments variable at address
         DB     lsb(aNop_)      ;    .  
         DB     lsb(aNop_)      ;    /
-        DB     lsb(knownVar_)  ;    0  ( -- adr ) start of data stack constant         
-        DB     lsb(knownVar_)  ;    1  ; returns HERE variable
-        DB     lsb(knownVar_)  ;    2  ( -- adr ) TIBPtr variable          
-        DB     lsb(knownVar_)  ;    3  ( -- adr ) isHex variable
-        DB     lsb(knownVar_)  ;    4            
-        DB     lsb(knownVar_)  ;    5            
-        DB     lsb(knownVar_)  ;    6            
-        DB     lsb(knownVar_)  ;    7
-        DB     lsb(knownVar_)  ;    8            
-        DB     lsb(knownVar_)  ;    9        
+        DB     lsb(sysConst_)  ;    0  ( -- adr ) start of data stack constant         
+        DB     lsb(sysConst_)  ;    1  ; returns HERE variable
+        DB     lsb(sysConst_)  ;    2  ( -- adr ) TIBPtr variable          
+        DB     lsb(sysConst_)  ;    3  ( -- adr ) isHex variable
+        DB     lsb(sysConst_)  ;    4            
+        DB     lsb(sysConst_)  ;    5            
+        DB     lsb(sysConst_)  ;    6            
+        DB     lsb(sysConst_)  ;    7
+        DB     lsb(sysConst_)  ;    8            
+        DB     lsb(sysConst_)  ;    9        
         DB     lsb(aNop_)      ;    :  start defining a macro        
         DB     lsb(aNop_)      ;    ;  
         DB     lsb(aNop_)      ;    <
@@ -570,28 +572,28 @@ altCodes:
         DB     lsb(aNop_)      ;    ?
         DB     lsb(cFetch_)    ;    @      
         DB     lsb(aNop_)      ;    A    
-        DB     lsb(base16_)    ;    B
+        DB     lsb(aNop_)      ;    B
         DB     lsb(nop_)       ;    C
-        DB     lsb(depth_)     ;    D    
-        DB     lsb(emit_)      ;    E  
+        DB     lsb(depth_)     ;    D  ( -- val ) depth of data stack  
+        DB     lsb(emit_)      ;    E   ( val -- ) emits a char to output
         DB     lsb(aNop_)      ;    F
-        DB     lsb(go_)        ;    G
-        DB     lsb(nop_)       ;    H  
+        DB     lsb(go_)        ;    G   ( -- ? ) execute mint definition
+        DB     lsb(aNop_)      ;    H  
         DB     lsb(inPort_)    ;    I  ( port -- val )   
         DB     lsb(aNop_)      ;    J
-        DB     lsb(key_)       ;    K  
+        DB     lsb(key_)       ;    K  ( -- val )  read a char from input
         DB     lsb(aNop_)      ;    L
         DB     lsb(max_)       ;    M  ( a b -- c ) return the maximum value
-        DB     lsb(newln_)     ;    N
+        DB     lsb(newln_)     ;    N   ; prints a newline to output
         DB     lsb(outPort_)   ;    O  ( val port -- )
-        DB     lsb(printStk_)  ;    P
-        DB     lsb(quit_)      ;    Q
+        DB     lsb(printStk_)  ;    P  ( -- ) non-destructively prints stack
+        DB     lsb(quit_)      ;    Q   ; quits from Mint REPL
         DB     lsb(aNop_)      ;    R
         DB     lsb(aNop_)      ;    S
         DB     lsb(aNop_)      ;    T
         DB     lsb(aNop_)      ;    U
         DB     lsb(aNop_)      ;    V
-        DB     lsb(while_)     ;    W
+        DB     lsb(while_)     ;    W   ; ( b -- ) if false, skip to end of loop
         DB     lsb(exec_)      ;    X
         DB     lsb(aNop_)      ;    Y
         DB     lsb(editDef_)   ;    Z
@@ -601,30 +603,30 @@ altCodes:
         DB     lsb(charCode_)  ;    ^
         DB     lsb(sign_)      ;    _)  ( n -- b ) returns true if -ve 
         DB     lsb(aNop_)      ;    `            
-        DB     lsb(aNop_)      ;    a
-        DB     lsb(aNop_)      ;    b
-        DB     lsb(aNop_)      ;    c
-        DB     lsb(aNop_)      ;    d  ( -- val ) depth of data stack
-        DB     lsb(aNop_)      ;    e  ( val -- ) emits a char to output
-        DB     lsb(aNop_)      ;    f
-        DB     lsb(aNop_)      ;    g  ( -- ? ) execute mint definition
-        DB     lsb(heapPtr_)   ;    h  ; returns heap ptr variable
+        DB     lsb(userVar_)   ;    a
+        DB     lsb(userVar_)   ;    b  ; base16 variable
+        DB     lsb(userVar_)   ;    c  ; TIBPtr variable
+        DB     lsb(userVar_)   ;    d  
+        DB     lsb(userVar_)   ;    e  
+        DB     lsb(userVar_)   ;    f
+        DB     lsb(userVar_)   ;    g  
+        DB     lsb(userVar_)   ;    h  ; heap ptr variable
         DB     lsb(i_)         ;    i  ; returns index variable of current loop          
         DB     lsb(j_)         ;    j  ; returns index variable of outer loop
-        DB     lsb(aNop_)      ;    k  ( -- val )  read a char from input
-        DB     lsb(aNop_)      ;    l
+        DB     lsb(userVar_)   ;    k  
+        DB     lsb(userVar_)   ;    l
         DB     lsb(min_)       ;    m  ( a b -- c ) return the minimum value
-        DB     lsb(aNop_)      ;    n  ; prints a newline to output
-        DB     lsb(aNop_)      ;    o
-        DB     lsb(aNop_)      ;    p  ( -- ) non-destructively prints stack
-        DB     lsb(aNop_)      ;    q  ; quits from Mint REPL         
-        DB     lsb(aNop_)      ;    r
-        DB     lsb(aNop_)      ;    s 
-        DB     lsb(aNop_)      ;    t
-        DB     lsb(aNop_)      ;    u
-        DB     lsb(aNop_)      ;    v   
-        DB     lsb(aNop_)      ;    w  ; ( b -- ) if false, skip to end of loop 
-        DB     lsb(aNop_)      ;    x
+        DB     lsb(userVar_)   ;    n  
+        DB     lsb(userVar_)   ;    o
+        DB     lsb(userVar_)   ;    p  
+        DB     lsb(userVar_)   ;    q           
+        DB     lsb(userVar_)   ;    r
+        DB     lsb(userVar_)   ;    s 
+        DB     lsb(userVar_)   ;    t
+        DB     lsb(userVar_)   ;    u
+        DB     lsb(userVar_)   ;    v   
+        DB     lsb(userVar_)   ;    w   
+        DB     lsb(userVar_)   ;    x
         DB     lsb(aNop_)      ;    y
         DB     lsb(aNop_)      ;    z
         DB     lsb(aNop_)      ;    {
@@ -689,6 +691,7 @@ var_:
         
 fetch_:                     ; Fetch the value from the address placed on the top of the stack      
         POP     HL          ; 10t
+fetch1:
         LD      E,(HL)      ; 7t
         INC     HL          ; 6t
         LD      D,(HL)      ; 7t
@@ -1115,11 +1118,6 @@ crlf:
         .align $100
 page5:
 
-base16_:
-        LD HL,vBase16
-        PUSH HL
-anop_:
-        JP (IY)
 
 cArrDef_:                   ; define a byte array
         LD A,TRUE
@@ -1130,6 +1128,7 @@ cFetch_:
         LD      E,(HL)      ; 7t
         LD      D,0         ; 7t
         PUSH    DE          ; 11t
+anop_:
         JP      (IY)        ; 8t
                             ; 49t 
 charCode_:
@@ -1199,10 +1198,14 @@ go_:
         DEC BC
         JP  (IY)                ; Execute code from User def
 
-heapPtr_:
-        LD HL,vHeapPtr
+userVar_:
+        LD A,(BC)
+        SUB "a"-8               ; Calc index (deal with alignment)
+        ADD A,A
+        LD HL,userVars
+        LD L,A
         PUSH HL
-        JP (IY)
+        JP  (IY)                ; Execute code from User def
 
 i_:
         PUSH IX
@@ -1258,16 +1261,13 @@ key_:
         PUSH HL
         JP (IY)
 
-knownVar_:
+sysConst_:
         LD A,(BC)
         SUB "0"                 ; Calc index
         ADD A,A
-        LD E,A
-        LD D,0
-        LD HL,userVars
-        ADD HL,DE
-        PUSH HL
-        JP (IY)
+        LD HL,sysConsts
+        LD L,A
+        JP fetch1
 
 min_:                           ; a b -- c
         POP DE
@@ -1290,19 +1290,6 @@ max2:
         PUSH DE
         JP (IY)
 
-
-;         POP DE
-;         POP HL
-;         PUSH HL
-;         OR A
-;         SBC HL,DE
-;         JR C,max1
-;         JP (IY)
-; max1:
-;         EX DE,HL
-;         EX (SP),HL
-;         JP (IY)
-
 newln_:
         call crlf
         JP (IY)        
@@ -1324,10 +1311,6 @@ sign2:
         PUSH HL
         JP (IY)
 
-TIBPtr_:
-        LD HL,vTIBPtr
-        PUSH HL
-        JP (IY)
 printStk_:
         JP printStk
 while_:
@@ -1350,7 +1333,7 @@ editDef_:
 
 printStk:
         call ENTER
-        DB "\\0@2-\\D1-\\9!\\9@\\_0=(\\9@(",$22,"@.2-))'",0
+        DB "\\02-\\D1-\\x!\\x@\\_0=(\\x@(",$22,"@.2-))'",0
         JP (IY)
 
 ;*******************************************************************
@@ -1509,6 +1492,8 @@ nesting1a:
         SET 7,E
         RET
 nesting1:
+        CP ':'
+        JR Z,nesting2
         CP '['
         JR Z,nesting2
         CP '('
@@ -1517,6 +1502,8 @@ nesting2:
         INC E
         RET
 nesting3:
+        CP ';'
+        JR Z,nesting4
         CP ']'
         JR Z,nesting4
         CP ')'
@@ -1565,44 +1552,3 @@ editDef3:
         LD (vTIBPtr),HL
         JP (IY)
 
-
-   
-
-; ; *********************************************************************
-; ; * extended or non-core routines
-; ; *********************************************************************
-
-
-; aDef_:
-;         PUSH HL             ; Save HL
-;         LD HL, MACROS       ; Start address of jump table         
-;         INC BC
-;         LD  A,(BC)          ; Get the next character
-;         INC BC
-;         SUB "@"             ; Calc index
-;         JP def1
-;
-; strDef:
-;         INC BC                  ; point to next char
-;         PUSH BC                 ; push string address
-;         LD DE,0                 ; count = 0
-;         JR strDef2
-; strDef1:
-;         INC BC                  ; point to next char
-;         INC DE                  ; increase count
-; strDef2:
-;         LD A,(BC)
-;         CP "`"                  ; ` is the string terminator
-;         JR NZ,strDef1
-;         PUSH DE                 ; push count
-;         JP   (IY) 
-; type:
-;         call ENTER
-;         .cstr "(",$22,"\\@\\E1+)"
-;         JP (IY)
-
-; userVar:
-;         LD DE,userVars
-;         POP HL
-;         JP knownVar2
-;         JP      (IY)
