@@ -56,8 +56,6 @@ RST30:      DW 0                ; q
             DW 0                ; w
 vTemp:      DW 0                ; x     
 
-BUF:        DS $80
-
 ; ****************************************************************
 ; VARS Table - holds 26 16-bit user variables
 ; ****************************************************************
@@ -67,6 +65,8 @@ vars:       DS 26 * 2
 ; DEFS Table - holds 26 addresses of user routines
 ; ****************************************************************
 defs:       DS 26 * 2
+
+BUF:        DS $80
 
 tbPtr:      DW 0                ; reserved for tests
 

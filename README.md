@@ -297,10 +297,11 @@ Note: logical NOT can be achieved with 0=
 
 | Symbol | Description                | Effect |
 | ------ | -------------------------- | ------ |
-| :      | define a new word DEF      | "C"    |
+| :č      | define a new word DEF      |     |
 | ;      | end of user definition END |        |
+| ?č      | get the address of the def |  -- adr    |
 
-NOTE: "C" is an uppercase letter immediately following opcode which is the name of the definition
+NOTE: "č" is an uppercase letter immediately following opcode which is the name of the definition
 
 ### Loops and conditional execution
 
@@ -320,7 +321,6 @@ NOTE: "C" is an uppercase letter immediately following opcode which is the name 
 | @      | FETCH a value from memory                   | -- val        |
 | !      | STORE a value to memory                     | val adr --    |
 | \\+    | increments variable at address by an amount | val adr --    |
-| \\-    | decrements variable at address by an amount | val adr --    |
 | \\@    | FETCH a byte from memory                    | -- val        |
 | \\!    | STORE a byte to memory                      | val adr --    |
 | [      | begin an array definition                   | --            |

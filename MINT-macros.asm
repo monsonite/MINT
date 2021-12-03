@@ -2,7 +2,7 @@ empty_:
         .cstr ";"
 
 backsp_:
-        .cstr "\\c@0=0=(1\\c\\-8\\E` `8\\E);"
+        .cstr "\\c@0=0=(1_\\c\\+8\\E` `8\\E);"
 
 edit_:
         .cstr "`?`\\K\\N`> `\\^A-\\Z;"

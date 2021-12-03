@@ -413,7 +413,7 @@ opcodes:
         DB    lsb(lt_)     ;    <
         DB    lsb(eq_)     ;    =            
         DB    lsb(gt_)     ;    >            
-        DB    lsb(nop_)    ;    ?
+        DB    lsb(getRef_) ;    ?
         DB    lsb(fetch_)  ;    @    
         DB    lsb(call_)   ;    A    
         DB    lsb(call_)   ;    B
@@ -553,7 +553,7 @@ altCodes:
         DB     lsb(aNop_)      ;    *            
         DB     lsb(incr_)      ;    +  ( adr -- ) decrements variable at address
         DB     lsb(aNop_)      ;    ,            
-        DB     lsb(decr_)      ;    -  ( adr -- ) increments variable at address
+        DB     lsb(aNop_)      ;    -  
         DB     lsb(aNop_)      ;    .  
         DB     lsb(aNop_)      ;    /
         DB     lsb(sysConst_)  ;    0  ( -- adr ) start of data stack constant         
@@ -859,6 +859,8 @@ dot2:
         CALL space
         JP (IY)
 
+getRef_:    JP getRef
+
 def_:       JP def
 again_:     JP again
 arrDef_:    JP arrDef
@@ -1123,15 +1125,14 @@ crlf:
         .align $100
 page5:
 
-
 cArrDef_:                   ; define a byte array
         LD A,TRUE
         JP arrDef1
 
 cFetch_:
         POP     HL          ; 10t
-        LD      E,(HL)      ; 7t
         LD      D,0         ; 7t
+        LD      E,(HL)      ; 7t
         PUSH    DE          ; 11t
 anop_:
         JP      (IY)        ; 8t
@@ -1228,20 +1229,6 @@ incr_:
         ADC A,(HL)
         LD (HL),A
         JP (IY)
-
-; \-    a b -- [b]-a            ; decrement variable at b by a
-decr_:
-        POP HL
-        POP DE
-        LD A,(HL)
-        SUB E
-        LD (HL),A
-        INC HL
-        LD A,(HL)
-        SBC A,D
-        LD (HL),A
-        JP (IY)
-
 
 inPort_:
         POP HL
@@ -1413,6 +1400,19 @@ end_def:
         DEC BC
         JP (IY)       
 
+getRef:                         ; \^A - { \2 + @
+        INC BC
+        LD A,(BC)
+        SUB "A"
+        ADD A,A
+        LD E,A
+        LD D,0
+        LD HL,defs
+        ADD HL,DE
+        JP fetch1
+
+; ***************************************************************************
+
 get_hex:
 		LD HL,$0000				; 10t Clear HL to accept the number
         INC BC
@@ -1426,10 +1426,6 @@ aschx1:
         SUB $30                 ; 7t    Form decimal digit
         ADD A,L                 ; 4t    Add into bottom of HL
         LD  L,A                 ; 4t
-;        LD A,00                 ; 4t    Clear A
-;        ADC	A,H	                ; Add with carry H-reg
-;	     LD	H,A	                ; Put result in H-reg
-                           
         INC BC                  ; 6t    Increment IP
         LD A, (BC)              ; 7t    and get the next character
         CP $20                  ; 7t    is a terminating space?

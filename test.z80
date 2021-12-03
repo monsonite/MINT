@@ -44,7 +44,7 @@ testsStart:
     test "\\^A",65
 
     test "3x! 1 x\\+ x@", 4
-    test "3x! 1 x\\- x@", 2
+    test "3x! 1_ x\\+ x@", 2
     test ":X1; X", 1
     test "2x! x@", 2
     test ":Aa!; 3A a@", 3
