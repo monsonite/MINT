@@ -564,8 +564,8 @@ altCodes:
         DB     lsb(sysConst_)  ;    5            
         DB     lsb(sysConst_)  ;    6            
         DB     lsb(sysConst_)  ;    7
-        DB     lsb(sysConst_)  ;    8            
-        DB     lsb(sysConst_)  ;    9        
+        DB     lsb(aNop_)      ;    8            
+        DB     lsb(aNop_)      ;    9        
         DB     lsb(aNop_)      ;    :  start defining a macro        
         DB     lsb(aNop_)      ;    ;  
         DB     lsb(aNop_)      ;    <
@@ -589,8 +589,8 @@ altCodes:
         DB     lsb(newln_)     ;    N   ; prints a newline to output
         DB     lsb(outPort_)   ;    O  ( val port -- )
         DB     lsb(printStk_)  ;    P  ( -- ) non-destructively prints stack
-        DB     lsb(quit_)      ;    Q   ; quits from Mint REPL
-        DB     lsb(aNop_)      ;    R
+        DB     lsb(quit_)      ;    Q  quits from Mint REPL
+        DB     lsb(rot_)       ;    R  ( a b c -- b c a )
         DB     lsb(aNop_)      ;    S
         DB     lsb(aNop_)      ;    T
         DB     lsb(aNop_)      ;    U
@@ -629,8 +629,8 @@ altCodes:
         DB     lsb(userVar_)   ;    v   
         DB     lsb(userVar_)   ;    w   
         DB     lsb(userVar_)   ;    x
-        DB     lsb(aNop_)      ;    y
-        DB     lsb(aNop_)      ;    z
+        DB     lsb(userVar_)   ;    y
+        DB     lsb(userVar_)   ;    z
         DB     lsb(aNop_)      ;    {
         DB     lsb(aNop_)      ;    |            
         DB     lsb(aNop_)      ;    }            
@@ -867,22 +867,23 @@ arrDef_:    JP arrDef
 arrEnd_:    JP arrEnd
 nop_:       JP NEXT                 ; hardwire white space to always go to NEXT (important for arrays)
 quit_:      RET                     ; exit interpreter
-str_:       JP str
 begin_:     JR begin                   
+str_:       JR str
 div_:       JR div
 mul_:       JR mul
+hexp_:      JR hexp                 ; print hexadecimal
 
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
         .align   $100           
 
-hexp_:                      ; print hexadecimal
+hexp:                       ; print hexadecimal
         POP     HL
         CALL    printhex
         JR   dot2
 
-mul:                       ; 16-bit multiply  
+mul:                        ; 16-bit multiply  
 
         POP  DE             ; get first value
         POP  HL
@@ -963,6 +964,24 @@ div_end:
 
         JP       (IY)
         
+; **************************************************************************             
+; Print the string between the `backticks`
+
+str:                       
+        INC BC
+        
+nextchar:            
+        LD A, (BC)
+        INC BC
+        CP "`"              ; ` is the string terminator
+        JR Z,stringend
+        CALL putchar
+        JR   nextchar
+
+stringend:  
+        DEC BC
+        JP   (IY) 
+
         
 ; *************************************
 ; Loop Handling Code
@@ -1081,24 +1100,6 @@ alt1:
         LD H, msb(page5)    ; Load H with the 5th page address
         JP  (HL)                    ; 4t    Jump to routine
          
-; **************************************************************************             
-; Print the string between the `backticks`
-
-str:                       
-        INC BC
-        
-nextchar:            
-        LD A, (BC)
-        INC BC
-        CP "`"              ; ` is the string terminator
-        JR Z,stringend
-        CALL putchar
-        JR   nextchar
-
-stringend:  
-        DEC BC
-        JP   (IY) 
-
 rpush:
         DEC IX                  
         LD (IX+0),H
@@ -1293,6 +1294,14 @@ outPort_:
         OUT (C),L
         JP (IY)        
 
+rot_:                               ; a b c -- b c a
+        POP DE                      ; a b                   de = c
+        POP HL                      ; a                     hl = b
+        EX (SP),HL                  ; b                     hl = a
+        PUSH DE                     ; b c             
+        PUSH HL                     ; b c a                         
+        JP (IY)
+
 sign_:
         POP HL
         BIT 7,H
@@ -1303,8 +1312,6 @@ sign2:
         PUSH HL
         JP (IY)
 
-printStk_:
-        JP printStk
 while_:
         POP HL
         LD A,L                      ; zero?
@@ -1316,9 +1323,12 @@ while1:
         ADD IX,DE
         JP begin1                   ; skip to end of loop        
 
-editDef_:
-        JP editDef
+printStk_:
+        JR printStk
         
+editDef_:
+        JR editDef
+
 ; **************************************************************************
 ; Page 6 primitive routines 
 ; **************************************************************************
@@ -1326,6 +1336,46 @@ editDef_:
 printStk:
         call ENTER
         DB "\\02-\\D1-\\x!\\x@\\_0=(\\x@(",$22,"@.2-))'",0
+        JP (IY)
+
+; **************************************************************************             
+; copy definition to text input buffer
+; update TIBPtr
+; **************************************************************************             
+editDef:                    ; lookup up def based on number
+        LD A,"A"
+        POP DE
+        ADD A,E
+        EX AF,AF'
+        LD HL,defs
+        ADD HL,DE
+        ADD HL,DE
+        LD E,(HL)
+        INC HL
+        LD D,(HL)
+        EX DE,HL
+        LD A,(HL)
+        CP ";"
+        LD DE,TIB
+        JR Z,editDef3
+        LD A,":"
+        CALL writeChar
+        EX AF,AF'
+        CALL writeChar
+        JR editDef2
+editDef1:
+        INC HL
+editDef2:        
+        LD A,(HL)
+        CALL writeChar
+        CP ";"
+        JR NZ,editDef1
+editDef3:        
+        LD HL,TIB
+        EX DE,HL
+        OR A
+        SBC HL,DE
+        LD (vTIBPtr),HL
         JP (IY)
 
 ;*******************************************************************
@@ -1400,7 +1450,7 @@ end_def:
         DEC BC
         JP (IY)       
 
-getRef:                         ; \^A - { \2 + @
+getRef:                         
         INC BC
         LD A,(BC)
         SUB "A"
@@ -1493,8 +1543,6 @@ nesting1a:
         SET 7,E
         RET
 nesting1:
-        CP ':'
-        JR Z,nesting2
         CP '['
         JR Z,nesting2
         CP '('
@@ -1503,8 +1551,6 @@ nesting2:
         INC E
         RET
 nesting3:
-        CP ';'
-        JR Z,nesting4
         CP ']'
         JR Z,nesting4
         CP ')'
@@ -1512,44 +1558,3 @@ nesting3:
 nesting4:
         DEC E
         RET 
-
-; **************************************************************************             
-; copy definition to text input buffer
-; update TIBPtr
-; **************************************************************************             
-editDef:                    ; lookup up def based on number
-        LD A,"A"
-        POP DE
-        ADD A,E
-        EX AF,AF'
-        LD HL,defs
-        ADD HL,DE
-        ADD HL,DE
-        LD E,(HL)
-        INC HL
-        LD D,(HL)
-        EX DE,HL
-        LD A,(HL)
-        CP ";"
-        LD DE,TIB
-        JR Z,editDef3
-        LD A,":"
-        CALL writeChar
-        EX AF,AF'
-        CALL writeChar
-        JR editDef2
-editDef1:
-        INC HL
-editDef2:        
-        LD A,(HL)
-        CALL writeChar
-        CP ";"
-        JR NZ,editDef1
-editDef3:        
-        LD HL,TIB
-        EX DE,HL
-        OR A
-        SBC HL,DE
-        LD (vTIBPtr),HL
-        JP (IY)
-
