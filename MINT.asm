@@ -498,7 +498,7 @@ iUserVars:
         DW 0                    ; c vTIBPtr
         DW 0                    ; d putChar
         DW 0                    ; e enter
-        DW 0                    ; f vFlags
+        DW 0                    ; f vElseMode
         DW 0                    ; g vByteMode
         DW HEAP                 ; h vHeapPtr
 
@@ -743,6 +743,7 @@ and_:
         LD      L,A         ; 4t
         LD      A,D         ; 4t
         AND     H           ; 4t
+and1:
         LD      H,A         ; 4t
         PUSH    HL          ; 11t
         JP      (IY)        ; 8t
@@ -758,9 +759,10 @@ or_:
         LD      L,A
         LD      A,D
         OR      H
-        LD      H,A
-        PUSH    HL
-        JP      (IY)
+        JR and1
+        ; LD      H,A
+        ; PUSH    HL
+        ; JP      (IY)
     
     
 xor_:		 
@@ -772,9 +774,10 @@ xor1:
         LD      L,A
         LD      A,D
         XOR     H
-        LD      H,A
-        PUSH    HL
-        JP      (IY)
+        JR and1
+        ; LD      H,A
+        ; PUSH    HL
+        ; JP      (IY)
 
 inv_:						    ; Bitwise INVert the top member of the stack
         LD DE, $FFFF            ; by xoring with $FFFF
@@ -861,6 +864,11 @@ dot2:
 
 getRef_:    JP getRef
 
+hexp_:                              ; print hexadecimal
+        POP     HL
+        CALL    printhex
+        JR   dot2
+
 def_:       JP def
 again_:     JP again
 arrDef_:    JP arrDef
@@ -871,17 +879,12 @@ begin_:     JR begin
 str_:       JR str
 div_:       JR div
 mul_:       JR mul
-hexp_:      JR hexp                 ; print hexadecimal
 
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
         .align   $100           
 
-hexp:                       ; print hexadecimal
-        POP     HL
-        CALL    printhex
-        JR   dot2
 
 mul:                        ; 16-bit multiply  
 
@@ -988,8 +991,8 @@ stringend:
 ; *************************************
         	        
 begin:                      ; Left parentesis begins a loop
-        LD HL,vFlags
-        RES fELSE,(HL)
+        LD HL,vElseMode
+        LD (HL),0
 
         POP HL
         LD A,L              ; zero?
@@ -1068,9 +1071,10 @@ endnum:
         JP (IY)                 ; and process the next character
 
 again:
-        LD HL,vFlags
-        BIT fELSE,(HL)
-        JR Z,again2
+        LD HL,vElseMode
+        XOR A
+        OR (HL)
+        JR NZ,again2
         LD E,(IX+0)                 ; peek loop var
         LD D,(IX+1)                 
         LD L,(IX+2)                 ; peek loop limit
@@ -1181,8 +1185,8 @@ emit_:
         JP (IY)
 
 else_:
-        LD HL,vFlags
-        SET fELSE,(HL)
+        LD HL,vElseMode
+        LD (HL),TRUE
         POP HL
         PUSH HL
         LD A,L              ; zero?

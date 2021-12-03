@@ -35,8 +35,8 @@ vBase16:    DW 0                ; b
 vTIBPtr:    DW 0                ; c
             DW 0                ; d
             DW 0                ; e
-vFlags      DW 0                ; f
-vByteMode:  DW 0                ; g
+            DW 0                ; f
+            DW 0                ; g
 vHeapPtr:   DW 0                ; h
             DW 0                ; i
             DW 0                ; j
@@ -69,7 +69,8 @@ defs:       DS 26 * 2
 
 BUF:        DS $80
 
-tbPtr:      DW 0                ; reserved for tests
+vElseMode   DW 0                ; 
+vByteMode:  DW 0                ; 
 RST08:      DW 0                ; 
 RST10:      DW 0                ; 
 RST18:      DW 0                ; 
@@ -81,6 +82,7 @@ INTVEC:     DW 0                ;
 NMIVEC:     DW 0                ; 
 GETCVEC:    DW 0                ;   
 PUTCVEC:    DW 0                ;   
+tbPtr:      DW 0                ; reserved for tests
 
             .align $40
 HEAP:         
