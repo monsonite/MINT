@@ -130,43 +130,43 @@
 0003                             ;RST 1
 0008                          .ORG   ROMSTART+$08   
 0008   E5                     PUSH   HL   
-0009   2A 2E 0C               LD   HL,(RST08)   
+0009   2A 30 0C               LD   HL,(RST08)   
 000C   E9                     JP   (HL)   
 000D                             ; 
 000D                             ;RST 2
 0010                          .ORG   ROMSTART+$10   
 0010   E5                     PUSH   HL   
-0011   2A 30 0C               LD   HL,(RST10)   
+0011   2A 32 0C               LD   HL,(RST10)   
 0014   E9                     JP   (HL)   
 0015                             ; 
 0015                             ;RST 3
 0018                          .ORG   ROMSTART+$18   
 0018   E5                     PUSH   HL   
-0019   2A 32 0C               LD   HL,(RST18)   
+0019   2A 34 0C               LD   HL,(RST18)   
 001C   E9                     JP   (HL)   
 001D                             ; 
 001D                             ;RST 4
 0020                          .ORG   ROMSTART+$20   
 0020   E5                     PUSH   HL   
-0021   2A 34 0C               LD   HL,(RST20)   
+0021   2A 36 0C               LD   HL,(RST20)   
 0024   E9                     JP   (HL)   
 0025                             ; 
 0025                             ;RST 5
 0028                          .ORG   ROMSTART+$28   
 0028   E5                     PUSH   HL   
-0029   2A 36 0C               LD   HL,(RST28)   
+0029   2A 38 0C               LD   HL,(RST28)   
 002C   E9                     JP   (HL)   
 002D                             ; 
 002D                             ;RST 6
 0030                          .ORG   ROMSTART+$30   
 0030   E5                     PUSH   HL   
-0031   2A 38 0C               LD   HL,(RST30)   
+0031   2A 3A 0C               LD   HL,(RST30)   
 0034   E9                     JP   (HL)   
 0035                             ; 
 0035                             ;RST 7 Interrupt
 0038                          .ORG   ROMSTART+$38   
 0038   E5                     PUSH   HL   
-0039   2A 3C 0C               LD   HL,(INTVEC)   
+0039   2A 3E 0C               LD   HL,(INTVEC)   
 003C   E9                     JP   (HL)   
 003D   ED 4D                  RETI      
 003F                             ; 
@@ -214,7 +214,7 @@
 0060                             ;RST 8  Non Maskable Interrupt
 0066                          .ORG   ROMSTART+$66   
 0066   E5                     PUSH   HL   
-0067   2A 3E 0C               LD   HL,(NMIVEC)   
+0067   2A 40 0C               LD   HL,(NMIVEC)   
 006A   E9                     JP   (HL)   
 006B                             ; 
 006B                             ; 
@@ -640,31 +640,31 @@
 0081                             ; .endif        
 0081                             ; 
 0081                GETCHAR:      
-0081   2A 40 0C               LD   HL,(GETCVEC)   
+0081   2A 42 0C               LD   HL,(GETCVEC)   
 0084   E9                     JP   (HL)   
 0085                             ; 
 0085                PUTCHAR:      
 0085   E5                     PUSH   HL   
-0086   2A 42 0C               LD   HL,(PUTCVEC)   
+0086   2A 44 0C               LD   HL,(PUTCVEC)   
 0089   E3                     EX   (SP),HL   
 008A   C9                     RET      
 008B                             ; 
 008B                RESET:       
 008B   31 00 09               LD   SP,stack   
 008E   21 5F 00               LD   HL,IntRet   
-0091   22 2E 0C               LD   (RST08),HL   
-0094   22 30 0C               LD   (RST10),HL   
-0097   22 32 0C               LD   (RST18),HL   
-009A   22 34 0C               LD   (RST20),HL   
-009D   22 36 0C               LD   (RST28),HL   
-00A0   22 38 0C               LD   (RST30),HL   
-00A3   22 3C 0C               LD   (INTVEC),HL   
-00A6   22 3E 0C               LD   (NMIVEC),HL   
+0091   22 30 0C               LD   (RST08),HL   
+0094   22 32 0C               LD   (RST10),HL   
+0097   22 34 0C               LD   (RST18),HL   
+009A   22 36 0C               LD   (RST20),HL   
+009D   22 38 0C               LD   (RST28),HL   
+00A0   22 3A 0C               LD   (RST30),HL   
+00A3   22 3E 0C               LD   (INTVEC),HL   
+00A6   22 40 0C               LD   (NMIVEC),HL   
 00A9                             ; 
 00A9   21 78 00               LD   HL,RXDATA   
-00AC   22 40 0C               LD   (GETCVEC),HL   
+00AC   22 42 0C               LD   (GETCVEC),HL   
 00AF   21 6B 00               LD   HL,TXDATA   
-00B2   22 42 0C               LD   (PUTCVEC),HL   
+00B2   22 44 0C               LD   (PUTCVEC),HL   
 00B5                             ; 
 00B5                          IF   TEC_1   
 00B5                          IF   BITBANG = 0   
@@ -1017,7 +1017,7 @@
 0260   D1                     POP   DE   ; DE = return address
 0261   2A 1E 0B               LD   HL,(vHeapPtr)   ; load heap ptr
 0264   73                     LD   (HL),E   ; store lsb
-0265   3A 1C 0B               LD   A,(vByteMode)   
+0265   3A 2E 0C               LD   A,(vByteMode)   
 0268   23                     INC   HL   
 0269   B7                     OR   A   
 026A   20 02                  JR   NZ,compNext1   
@@ -1181,7 +1181,7 @@
 0374   00 00                  DW   0   ; c vTIBPtr
 0376   00 00                  DW   0   ; d putChar
 0378   00 00                  DW   0   ; e enter
-037A   00 00                  DW   0   ; f vFlags
+037A   00 00                  DW   0   ; f vElseMode
 037C   00 00                  DW   0   ; g vByteMode
 037E   80 0C                  DW   HEAP   ; h vHeapPtr
 0380                             ; ***********************************************************************
@@ -1612,7 +1612,7 @@
 054E                             ; *************************************
 054E                             ; 
 054E                BEGIN:       ; Left parentesis begins a loop
-054E   21 1A 0B               LD   HL,vFlags   
+054E   21 2C 0C               LD   HL,vElseMode   
 0551   36 00                  LD   (HL),0   
 0553   E1                     POP   HL   
 0554   7D                     LD   A,L   ; zero?
@@ -1680,7 +1680,7 @@
 05A0   0B                     DEC   BC   
 05A1   FD E9                  JP   (IY)   ; and process the next character
 05A3                AGAIN:       
-05A3   21 1A 0B               LD   HL,vFlags   
+05A3   21 2C 0C               LD   HL,vElseMode   
 05A6   AF                     XOR   A   
 05A7   B6                     OR   (HL)   
 05A8   20 25                  JR   NZ,again2   
@@ -1782,7 +1782,7 @@
 0636   CD 85 00               CALL   putchar   
 0639   FD E9                  JP   (IY)   
 063B                ELSE_:       
-063B   21 1A 0B               LD   HL,vFlags   
+063B   21 2C 0C               LD   HL,vElseMode   
 063E   36 01                  LD   (HL),TRUE   
 0640   E1                     POP   HL   
 0641   E5                     PUSH   HL   
@@ -1966,7 +1966,7 @@
 073C   3E 00                  LD   A,FALSE   
 073E                ARRDEF1:      
 073E   FD 21 60 02            LD   IY,compNEXT   
-0742   32 1C 0B               LD   (vByteMode),A   
+0742   32 2E 0C               LD   (vByteMode),A   
 0745   2A 1E 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
 0748   CD DC 05               CALL   rpush   ; save start of array \[  \]
 074B   C3 1A 02               JP   NEXT   ; hardwired to NEXT
@@ -1978,7 +1978,7 @@
 0753   2A 1E 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
 0756   B7                     OR   A   
 0757   ED 52                  SBC   HL,DE   ; bytes on heap
-0759   3A 1C 0B               LD   A,(vByteMode)   
+0759   3A 2E 0C               LD   A,(vByteMode)   
 075C   B7                     OR   A   
 075D   20 04                  JR   NZ,arrEnd2   
 075F   CB 3C                  SRL   H   ; BC = m words
@@ -2150,8 +2150,8 @@
 0B14   00 00        VTIBPTR:   DW   0   ; c
 0B16   00 00                  DW   0   ; d
 0B18   00 00                  DW   0   ; e
-0B1A   00 00        VFLAGS:   DW   0   ; f
-0B1C   00 00        VBYTEMODE:   DW   0   ; g
+0B1A   00 00                  DW   0   ; f
+0B1C   00 00                  DW   0   ; g
 0B1E   00 00        VHEAPPTR:   DW   0   ; h
 0B20   00 00                  DW   0   ; i
 0B22   00 00                  DW   0   ; j
@@ -2180,19 +2180,21 @@
 0B78                             ; ****************************************************************
 0B78                DEFS:     DS   26 * 2   
 0BAC                BUF:      DS   $80   
-0C2C   00 00        TBPTR:    DW   0   ; reserved for tests
-0C2E   00 00        RST08:    DW   0   ; 
-0C30   00 00        RST10:    DW   0   ; 
-0C32   00 00        RST18:    DW   0   ; 
-0C34   00 00        RST20:    DW   0   ; 
-0C36   00 00        RST28:    DW   0   ; 
-0C38   00 00        RST30:    DW   0   ; 
-0C3A   00 00        BAUD:     DW   0   ; 
-0C3C   00 00        INTVEC:   DW   0   ; 
-0C3E   00 00        NMIVEC:   DW   0   ; 
-0C40   00 00        GETCVEC:   DW   0   ; 
-0C42   00 00        PUTCVEC:   DW   0   ; 
-0C44                          ALIGN   $40   
+0C2C   00 00        VELSEMODE:   DW   0   ; 
+0C2E   00 00        VBYTEMODE:   DW   0   ; 
+0C30   00 00        RST08:    DW   0   ; 
+0C32   00 00        RST10:    DW   0   ; 
+0C34   00 00        RST18:    DW   0   ; 
+0C36   00 00        RST20:    DW   0   ; 
+0C38   00 00        RST28:    DW   0   ; 
+0C3A   00 00        RST30:    DW   0   ; 
+0C3C   00 00        BAUD:     DW   0   ; 
+0C3E   00 00        INTVEC:   DW   0   ; 
+0C40   00 00        NMIVEC:   DW   0   ; 
+0C42   00 00        GETCVEC:   DW   0   ; 
+0C44   00 00        PUTCVEC:   DW   0   ; 
+0C46   00 00        TBPTR:    DW   0   ; reserved for tests
+0C48                          ALIGN   $40   
 0C80                HEAP:        
 
 
@@ -2647,14 +2649,6 @@ VTIBPTR:            0B14 DEFINED AT LINE 35 IN ram.asm
                     > USED AT LINE 359 IN MINT.asm
                     > USED AT LINE 368 IN MINT.asm
                     > USED AT LINE 1382 IN MINT.asm
-VFLAGS:             0B1A DEFINED AT LINE 38 IN ram.asm
-                    > USED AT LINE 994 IN MINT.asm
-                    > USED AT LINE 1074 IN MINT.asm
-                    > USED AT LINE 1188 IN MINT.asm
-VBYTEMODE:          0B1C DEFINED AT LINE 39 IN ram.asm
-                    > USED AT LINE 339 IN MINT.asm
-                    > USED AT LINE 1394 IN MINT.asm
-                    > USED AT LINE 1407 IN MINT.asm
 VHEAPPTR:           0B1E DEFINED AT LINE 40 IN ram.asm
                     > USED AT LINE 337 IN MINT.asm
                     > USED AT LINE 346 IN MINT.asm
@@ -2673,37 +2667,45 @@ DEFS:               0B78 DEFINED AT LINE 68 IN ram.asm
                     > USED AT LINE 1428 IN MINT.asm
                     > USED AT LINE 1464 IN MINT.asm
 BUF:                0BAC DEFINED AT LINE 70 IN ram.asm
-TBPTR:              0C2C DEFINED AT LINE 72 IN ram.asm
-RST08:              0C2E DEFINED AT LINE 73 IN ram.asm
+VELSEMODE:          0C2C DEFINED AT LINE 72 IN ram.asm
+                    > USED AT LINE 994 IN MINT.asm
+                    > USED AT LINE 1074 IN MINT.asm
+                    > USED AT LINE 1188 IN MINT.asm
+VBYTEMODE:          0C2E DEFINED AT LINE 73 IN ram.asm
+                    > USED AT LINE 339 IN MINT.asm
+                    > USED AT LINE 1394 IN MINT.asm
+                    > USED AT LINE 1407 IN MINT.asm
+RST08:              0C30 DEFINED AT LINE 74 IN ram.asm
                     > USED AT LINE 107 IN IOSerial.asm
                     > USED AT LINE 629 IN IOSerial.asm
-RST10:              0C30 DEFINED AT LINE 74 IN ram.asm
+RST10:              0C32 DEFINED AT LINE 75 IN ram.asm
                     > USED AT LINE 113 IN IOSerial.asm
                     > USED AT LINE 630 IN IOSerial.asm
-RST18:              0C32 DEFINED AT LINE 75 IN ram.asm
+RST18:              0C34 DEFINED AT LINE 76 IN ram.asm
                     > USED AT LINE 119 IN IOSerial.asm
                     > USED AT LINE 631 IN IOSerial.asm
-RST20:              0C34 DEFINED AT LINE 76 IN ram.asm
+RST20:              0C36 DEFINED AT LINE 77 IN ram.asm
                     > USED AT LINE 125 IN IOSerial.asm
                     > USED AT LINE 632 IN IOSerial.asm
-RST28:              0C36 DEFINED AT LINE 77 IN ram.asm
+RST28:              0C38 DEFINED AT LINE 78 IN ram.asm
                     > USED AT LINE 131 IN IOSerial.asm
                     > USED AT LINE 633 IN IOSerial.asm
-RST30:              0C38 DEFINED AT LINE 78 IN ram.asm
+RST30:              0C3A DEFINED AT LINE 79 IN ram.asm
                     > USED AT LINE 137 IN IOSerial.asm
                     > USED AT LINE 634 IN IOSerial.asm
-BAUD:               0C3A DEFINED AT LINE 79 IN ram.asm
-INTVEC:             0C3C DEFINED AT LINE 80 IN ram.asm
+BAUD:               0C3C DEFINED AT LINE 80 IN ram.asm
+INTVEC:             0C3E DEFINED AT LINE 81 IN ram.asm
                     > USED AT LINE 143 IN IOSerial.asm
                     > USED AT LINE 635 IN IOSerial.asm
-NMIVEC:             0C3E DEFINED AT LINE 81 IN ram.asm
+NMIVEC:             0C40 DEFINED AT LINE 82 IN ram.asm
                     > USED AT LINE 191 IN IOSerial.asm
                     > USED AT LINE 636 IN IOSerial.asm
-GETCVEC:            0C40 DEFINED AT LINE 82 IN ram.asm
+GETCVEC:            0C42 DEFINED AT LINE 83 IN ram.asm
                     > USED AT LINE 617 IN IOSerial.asm
                     > USED AT LINE 639 IN IOSerial.asm
-PUTCVEC:            0C42 DEFINED AT LINE 83 IN ram.asm
+PUTCVEC:            0C44 DEFINED AT LINE 84 IN ram.asm
                     > USED AT LINE 622 IN IOSerial.asm
                     > USED AT LINE 641 IN IOSerial.asm
-HEAP:               0C80 DEFINED AT LINE 86 IN ram.asm
+TBPTR:              0C46 DEFINED AT LINE 85 IN ram.asm
+HEAP:               0C80 DEFINED AT LINE 88 IN ram.asm
                     > USED AT LINE 503 IN MINT.asm

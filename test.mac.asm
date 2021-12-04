@@ -8,12 +8,11 @@
     OR H
     JR Z,expect%%M
     CALL enter
-    .cstr "`",msg1,"`\\n"
+    .cstr "`",msg1,"`\\N`Actual: `\\P\\N"
     LD HL,val1
     PUSH HL
-    CALL crlf
     CALL enter
-    .cstr "`Expected `.` Actual `."
+    .cstr "`Expected: `."
     HALT
     .cstr
 expect%%M:

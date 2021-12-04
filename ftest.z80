@@ -1,0 +1,35 @@
+.engine mycomputer
+
+.include "constants.asm"
+.include "test.mac.asm"
+
+.include "IOSerial.asm"
+
+LD SP,DSTACK
+CALL initialize
+JP testsStart
+
+.include "MINT.asm"
+.include "ram.asm"
+
+.org $4000
+
+.macro fold,name1,fun1,test1,val1 
+    CALL enter
+    DB ":F \\f!( $%@ \\f@\\G $ 2+)';"
+    DB fun1
+    DB test1
+    DB 0
+    expect name1, val1
+.endm
+
+testsStart:
+
+fold "count",   ":C'1+;",                   "0 [1 2 3] ?C F", 3
+fold "sum",     ":S+;",                     "0 [1 2 3] ?S F", 6
+fold "most",    ":M %%> \\(\\R')(');",      "1 [1 2 3] ?M F", 3
+fold "least",   ":L %%< \\(\\R')(');",      "1 [1 2 3] ?L F", 1
+
+CALL enter
+.cstr "`Done!`"
+HALT
