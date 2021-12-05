@@ -498,7 +498,7 @@ iUserVars:
         DW 0                    ; c vTIBPtr
         DW 0                    ; d putChar
         DW 0                    ; e enter
-        DW 0                    ; f vElseMode
+        DW 0                    ; f vIFTEMode
         DW 0                    ; g vByteMode
         DW HEAP                 ; h vHeapPtr
 
@@ -548,7 +548,7 @@ altCodes:
         DB     lsb(aNop_)      ;    %            
         DB     lsb(aNop_)      ;    &
         DB     lsb(aNop_)      ;    '
-        DB     lsb(else_)      ;    (        
+        DB     lsb(ifte_)      ;    (        
         DB     lsb(aNop_)      ;    )
         DB     lsb(aNop_)      ;    *            
         DB     lsb(incr_)      ;    +  ( adr -- ) decrements variable at address
@@ -878,14 +878,11 @@ quit_:      RET                     ; exit interpreter
 begin_:     JR begin                   
 str_:       JR str
 div_:       JR div
-mul_:       JR mul
-
+mul_:       
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
-        .align   $100           
-
-
+        ;falls through 
 mul:                        ; 16-bit multiply  
 
         POP  DE             ; get first value
@@ -991,7 +988,7 @@ stringend:
 ; *************************************
         	        
 begin:                      ; Left parentesis begins a loop
-        LD HL,vElseMode
+        LD HL,vIFTEMode
         LD (HL),0
 
         POP HL
@@ -1071,7 +1068,7 @@ endnum:
         JP (IY)                 ; and process the next character
 
 again:
-        LD HL,vElseMode
+        LD HL,vIFTEMode
         XOR A
         OR (HL)
         JR NZ,again2
@@ -1151,11 +1148,10 @@ charCode_:
         JP (IY)
 
 comment_:
-comment:
         INC BC              ; point to next char
         LD A,(BC)
         CP "\r"             ; terminate at newline 
-        JR NZ,comment
+        JR NZ,comment_
         DEC BC
         JP   (IY) 
 
@@ -1184,10 +1180,14 @@ emit_:
         CALL putchar
         JP (IY)
 
-else_:
-        LD HL,vElseMode
+ifte_:
+        LD HL,vIFTEMode
         LD (HL),TRUE
-        POP HL
+        OR A                ; invert condition
+        SBC HL,HL
+        POP DE
+        SBC HL,DE
+        INC HL
         PUSH HL
         LD A,L              ; zero?
         OR H
@@ -1327,16 +1327,13 @@ while1:
         ADD IX,DE
         JP begin1                   ; skip to end of loop        
 
-printStk_:
-        JR printStk
-        
 editDef_:
         JR editDef
-
+printStk_:
 ; **************************************************************************
 ; Page 6 primitive routines 
 ; **************************************************************************
-
+        ; falls through
 printStk:
         call ENTER
         DB "\\02-\\D1-\\x!\\x@\\_0=(\\x@(",$22,"@.2-))'",0

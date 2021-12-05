@@ -14,6 +14,16 @@
     
     .org $4000
     
+    .macro hash,name1,test1,test2 
+        CALL enter
+        DB ":H ( $ %@ 1+^ $ 2+)';"
+        DB test1, " H"
+        DB test2, " H"
+        DB "="
+        DB 0
+        expect name1, 1
+    .endm
+
     .macro reduce,name1,fun1,test1,val1 
         CALL enter
         DB ":R \\f!( $%@ \\f@\\G $ 2+)';"
@@ -33,23 +43,14 @@
     ;     expect name1, val1
     ; .endm
     
-    .macro hash,name1,test1,test2 
-        CALL enter
-        DB ":H ( $%@ 1+^ $ 2+)';"
-        DB test1, " H"
-        DB test2, " H"
-        DB "="
-        DB 0
-        expect name1, 1
-    .endm
-    
     testsStart:
     hash "hash1",       "[1 2 3]",                      "[1 2 3]"
     
+    test ":G %%> \\($ ')($ '); 5 2 G", 5
     
     reduce "count",     ":C'1+;",                   "0 [1 4 3 6 2] ?C R", 5
-    reduce "greatest",  ":G %%> \\(\\R')(');",      "1 [1 4 3 6 2] ?G R", 6
-    reduce "least",     ":L %%< \\(\\R')(');",      "1 [1 4 3 6 2] ?L R", 1
+    reduce "greatest",  ":G %%> \\($ ')($ ') ;",    "1 [1 4 3 6 2] ?G R", 6
+    reduce "least",     ":L %%< \\($ ')($ ') ;",    "1 [1 4 3 6 2] ?L R", 1
     reduce "sum",       ":S+;",                     "0 [1 4 3 6 2] ?S R", 16
     reduce "hash",      ":H1+^;",                   "0 [1 4 3 6 2] ?H R", 7
     

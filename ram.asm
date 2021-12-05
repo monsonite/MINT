@@ -69,7 +69,7 @@ defs:       DS 26 * 2
 
 BUF:        DS $80
 
-vElseMode   DW 0                ; 
+vIFTEMode   DW 0                ; 
 vByteMode:  DW 0                ; 
 RST08:      DW 0                ; 
 RST10:      DW 0                ; 

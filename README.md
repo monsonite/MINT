@@ -310,7 +310,7 @@ NOTE: "č" is an uppercase letter immediately following opcode which is the name
 | ------ | ------------------------------------------------- | ------ |
 | (      | BEGIN a loop or conditionally executed code block | n --   |
 | )      | END a loop or conditionally executed code block   | --     |
-| \\(    | Execute if false, preserves condition             | n -- n |
+| \\(    | ifElse \\(`true`)(`false`)                        | n -- n |
 | \\i    | returns index variable of current loop            | -- val |
 | \\j    | returns index variable of outer loop              | -- val |
 | \\W    | if false then skip to end of loop                 | b --   |
