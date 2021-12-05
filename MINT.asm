@@ -1121,6 +1121,11 @@ crlf:
         LD A, '\n'           
         JP putchar
 
+end_def:    
+        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
+        DEC BC
+        JP (IY)       
+
 ; **************************************************************************
 ; Page 6 Alt primitives
 ; **************************************************************************
@@ -1425,7 +1430,6 @@ def:                       ; Create a colon definition
         LD  A,(BC)          ; Get the next character
         INC BC
         SUB "A"             ; Calc index
-def1:
         ADD A,A             ; Double A to index even addresses
         LD E,A              ; Index into table
         LD D,0
@@ -1441,13 +1445,8 @@ nextbyte:                   ; Skip to end of definition
         LD (DE),A
         INC DE
         CP ";"                  ; Is it a semicolon 
-        JR z, end_def           ; end the definition
+        JP z, end_def           ; end the definition
         JR  nextbyte            ; get the next element
-
-end_def:    
-        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
-        DEC BC
-        JP (IY)       
 
 getRef:                         
         INC BC
@@ -1542,6 +1541,8 @@ nesting1a:
         SET 7,E
         RET
 nesting1:
+        CP ':'
+        JR Z,nesting2
         CP '['
         JR Z,nesting2
         CP '('
@@ -1550,6 +1551,8 @@ nesting2:
         INC E
         RET
 nesting3:
+        CP ';'
+        JR Z,nesting4
         CP ']'
         JR Z,nesting4
         CP ')'
