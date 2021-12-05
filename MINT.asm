@@ -1189,9 +1189,7 @@ ifte_:
         SBC HL,DE
         INC HL
         PUSH HL
-        LD A,L              ; zero?
-        OR H
-        JP NZ,begin1
+        JP Z,begin1
         JP (IY)
 		
 exec_:
