@@ -743,10 +743,10 @@
 00C6                             ;        64 t states to 33 t states
 00C6                             ; 
 00C6                             ; 
-00C6                             ;        User defined commands and variables
+00C6                             ;        User defined commands and mintVars
 00C6                             ; 
 00C6                             ;        User Commands  A-Z
-00C6                             ;        User Variables a-z
+00C6                             ;        User mintVars a-z
 00C6                             ; 
 00C6                             ;        Commands now available:
 00C6                             ; 
@@ -828,7 +828,7 @@
 00C6                             ;       Each time A is encountered (outside of a colon definition)
 00C6                             ;       it will execute the code  located there i.e. 123 456 + .
 00C6                             ; 
-00C6                             ;       Variables are associated with lowercase characters a-z
+00C6                             ;       mintVars are associated with lowercase characters a-z
 00C6                             ;       Each variable is allocated 2 bytes located on even addresses
 00C6                             ;       They run contiguously from $A800 (a) to $A830 (z)
 00C6                             ;       They are accessed using the fetch and store commands @ and !
@@ -900,7 +900,7 @@
 01D4   7E                     LD   A,(HL)   ; A = char in TIB
 01D5   23                     INC   HL   ; inc pointer into TIB
 01D6   0B                     DEC   BC   ; dec count of chars in TIB
-01D7   CD D7 07               CALL   nesting   ; update nesting value
+01D7   CD D5 07               CALL   nesting   ; update nesting value
 01DA                INTERPRET4:      
 01DA   79                     LD   A,C   ; is count zero?
 01DB   B0                     OR   B   
@@ -927,14 +927,14 @@
 01F7   77                     LD   (HL),A   ; store the character in textbuf
 01F8   03                     INC   BC   
 01F9   CD 85 00               CALL   putchar   ; echo character to screen
-01FC   CD D7 07               CALL   nesting   
+01FC   CD D5 07               CALL   nesting   
 01FF   18 DE                  JR   waitchar   ; wait for next character
 0201                WAITCHAR3:      
 0201   21 00 0A               LD   HL,TIB   
 0204   09                     ADD   HL,BC   
 0205   36 0D                  LD   (HL),"\r"   ; store the crlf in textbuf
 0207   03                     INC   BC   
-0208   CD EC 05               CALL   crlf   ; echo character to screen
+0208   CD E8 05               CALL   crlf   ; echo character to screen
 020B   7B                     LD   A,E   ; if zero nesting append and ETX after \r
 020C   B7                     OR   A   
 020D   20 D0                  JR   NZ,waitchar   
@@ -985,7 +985,7 @@
 0232   E9                     JP   (HL)   ; 4t    Jump to routine
 0233                ENTER:       
 0233   60 69                  LD   HL,BC   
-0235   CD D6 05               CALL   rpush   ; save Instruction Pointer
+0235   CD D2 05               CALL   rpush   ; save Instruction Pointer
 0238   C1                     POP   BC   
 0239   0B                     DEC   BC   
 023A   FD E9                  JP   (IY)   ; Execute code from User def
@@ -1067,22 +1067,22 @@
 02FE                             ; **************************************************************************
 02FE                          ALIGN   $100   
 0300                OPCODES:      
-0300   F0                     DB   lsb(nop_)   ;    SP
-0301   43                     DB   lsb(store_)   ;    !
-0302   4A                     DB   lsb(dup_)   ;    "
-0303   C2                     DB   lsb(hex_)   ;    #
-0304   4F                     DB   lsb(swap_)   ;    $
-0305   54                     DB   lsb(over_)   ;    %
-0306   5E                     DB   lsb(and_)   ;    &
-0307   5B                     DB   lsb(drop_)   ;    '
-0308   F4                     DB   lsb(begin_)   ;    (
-0309   E7                     DB   lsb(again_)   ;    )
-030A   FA                     DB   lsb(mul_)   ;    *
-030B   80                     DB   lsb(add_)   ;    +
-030C   DE                     DB   lsb(hexp_)   ;    ,
-030D   99                     DB   lsb(sub_)   ;    -
-030E   C7                     DB   lsb(dot_)   ;    .
-030F   F8                     DB   lsb(div_)   ;    /
+0300   EC                     DB   lsb(nop_)   ;    SP
+0301   3F                     DB   lsb(store_)   ;    !
+0302   46                     DB   lsb(dup_)   ;    "
+0303   BE                     DB   lsb(hex_)   ;    #
+0304   4B                     DB   lsb(swap_)   ;    $
+0305   50                     DB   lsb(over_)   ;    %
+0306   5A                     DB   lsb(and_)   ;    &
+0307   57                     DB   lsb(drop_)   ;    '
+0308   F0                     DB   lsb(begin_)   ;    (
+0309   E3                     DB   lsb(again_)   ;    )
+030A   F6                     DB   lsb(mul_)   ;    *
+030B   7C                     DB   lsb(add_)   ;    +
+030C   DA                     DB   lsb(hexp_)   ;    ,
+030D   95                     DB   lsb(sub_)   ;    -
+030E   C3                     DB   lsb(dot_)   ;    .
+030F   F4                     DB   lsb(div_)   ;    /
 0310   0E                     DB   lsb(num_)   ;    0
 0311   0E                     DB   lsb(num_)   ;    1
 0312   0E                     DB   lsb(num_)   ;    2
@@ -1093,13 +1093,13 @@
 0317   0E                     DB   lsb(num_)   ;    7
 0318   0E                     DB   lsb(num_)   ;    8
 0319   0E                     DB   lsb(num_)   ;    9
-031A   E4                     DB   lsb(def_)   ;    :
+031A   E0                     DB   lsb(def_)   ;    :
 031B   27                     DB   lsb(ret_)   ;    ;
-031C   B1                     DB   lsb(lt_)   ;    <
-031D   A1                     DB   lsb(eq_)   ;    =
-031E   AD                     DB   lsb(gt_)   ;    >
-031F   DB                     DB   lsb(getRef_)   ;    ?
-0320   3C                     DB   lsb(fetch_)   ;    @
+031C   AD                     DB   lsb(lt_)   ;    <
+031D   9D                     DB   lsb(eq_)   ;    =
+031E   A9                     DB   lsb(gt_)   ;    >
+031F   D7                     DB   lsb(getRef_)   ;    ?
+0320   38                     DB   lsb(fetch_)   ;    @
 0321   11                     DB   lsb(call_)   ;    A
 0322   11                     DB   lsb(call_)   ;    B
 0323   11                     DB   lsb(call_)   ;    C
@@ -1126,12 +1126,12 @@
 0338   11                     DB   lsb(call_)   ;    X
 0339   11                     DB   lsb(call_)   ;    Y
 033A   11                     DB   lsb(call_)   ;    Z
-033B   EA                     DB   lsb(arrDef_)   ;    [
+033B   E6                     DB   lsb(arrDef_)   ;    [
 033C   00                     DB   lsb(alt_)   ;    \
-033D   ED                     DB   lsb(arrEnd_)   ;    ]
-033E   72                     DB   lsb(xor_)   ;    ^
-033F   93                     DB   lsb(neg_)   ;    _
-0340   F6                     DB   lsb(str_)   ;    `
+033D   E9                     DB   lsb(arrEnd_)   ;    ]
+033E   6E                     DB   lsb(xor_)   ;    ^
+033F   8F                     DB   lsb(neg_)   ;    _
+0340   F2                     DB   lsb(str_)   ;    `
 0341   2E                     DB   lsb(var_)   ;    a
 0342   2E                     DB   lsb(var_)   ;    b
 0343   2E                     DB   lsb(var_)   ;    c
@@ -1158,13 +1158,13 @@
 0358   2E                     DB   lsb(var_)   ;    x
 0359   2E                     DB   lsb(var_)   ;    y
 035A   2E                     DB   lsb(var_)   ;    z
-035B   86                     DB   lsb(shl_)   ;    {
-035C   69                     DB   lsb(or_)   ;    |
-035D   8B                     DB   lsb(shr_)   ;    }
-035E   7B                     DB   lsb(inv_)   ;    ~
-035F   F0                     DB   lsb(nop_)   ;    backspace
+035B   82                     DB   lsb(shl_)   ;    {
+035C   65                     DB   lsb(or_)   ;    |
+035D   87                     DB   lsb(shr_)   ;    }
+035E   77                     DB   lsb(inv_)   ;    ~
+035F   EC                     DB   lsb(nop_)   ;    backspace
 0360                             ; ***********************************************************************
-0360                             ; Initial values for user variables		
+0360                             ; Initial values for user mintVars		
 0360                             ; ***********************************************************************		
 0360                ISYSCONSTS:      
 0360   00 09                  DW   dStack   ; \0 cS0
@@ -1176,7 +1176,7 @@
 036C   10 0B                  DW   userVars   ; \6 cUserVars
 036E   00 00                  DW   0   ; \7
 0370                IUSERVARS:      
-0370   CB 05                  DW   alt1   ; a vAltCodes
+0370   C7 05                  DW   alt1   ; a vAltCodes
 0372   00 00                  DW   FALSE   ; b vBase16
 0374   00 00                  DW   0   ; c vTIBPtr
 0376   00 00                  DW   0   ; d putChar
@@ -1232,19 +1232,19 @@
 03A8   3B                     DB   lsb(ifte_)   ;    (
 03A9   0A                     DB   lsb(aNop_)   ;    )
 03AA   0A                     DB   lsb(aNop_)   ;    *
-03AB   6D                     DB   lsb(incr_)   ;    +  ( adr -- ) decrements variable at address
+03AB   6C                     DB   lsb(incr_)   ;    +  ( adr -- ) decrements variable at address
 03AC   0A                     DB   lsb(aNop_)   ;    ,
 03AD   0A                     DB   lsb(aNop_)   ;    -
 03AE   0A                     DB   lsb(aNop_)   ;    .
 03AF   0A                     DB   lsb(aNop_)   ;    /
-03B0   94                     DB   lsb(sysConst_)   ;    0  ( -- adr ) start of data stack constant
-03B1   94                     DB   lsb(sysConst_)   ;    1  ; returns HERE variable
-03B2   94                     DB   lsb(sysConst_)   ;    2  ( -- adr ) TIBPtr variable
-03B3   94                     DB   lsb(sysConst_)   ;    3  ( -- adr ) isHex variable
-03B4   94                     DB   lsb(sysConst_)   ;    4
-03B5   94                     DB   lsb(sysConst_)   ;    5
-03B6   94                     DB   lsb(sysConst_)   ;    6
-03B7   94                     DB   lsb(sysConst_)   ;    7
+03B0   93                     DB   lsb(sysConst_)   ;    0  ( -- adr ) start of data stack constant
+03B1   93                     DB   lsb(sysConst_)   ;    1  ; returns HERE variable
+03B2   93                     DB   lsb(sysConst_)   ;    2  ( -- adr ) TIBPtr variable
+03B3   93                     DB   lsb(sysConst_)   ;    3  ( -- adr ) isHex variable
+03B4   93                     DB   lsb(sysConst_)   ;    4
+03B5   93                     DB   lsb(sysConst_)   ;    5
+03B6   93                     DB   lsb(sysConst_)   ;    6
+03B7   93                     DB   lsb(sysConst_)   ;    7
 03B8   0A                     DB   lsb(aNop_)   ;    8
 03B9   0A                     DB   lsb(aNop_)   ;    9
 03BA   0A                     DB   lsb(aNop_)   ;    :  start defining a macro
@@ -1256,35 +1256,35 @@
 03C0   05                     DB   lsb(cFetch_)   ;    @
 03C1   0A                     DB   lsb(aNop_)   ;    A
 03C2   0A                     DB   lsb(aNop_)   ;    B
-03C3   F0                     DB   lsb(nop_)   ;    C
+03C3   EC                     DB   lsb(nop_)   ;    C
 03C4   22                     DB   lsb(depth_)   ;    D  ( -- val ) depth of data stack
 03C5   34                     DB   lsb(emit_)   ;    E   ( val -- ) emits a char to output
 03C6   0A                     DB   lsb(aNop_)   ;    F
 03C7   55                     DB   lsb(go_)   ;    G   ( -- ? ) execute mint definition
 03C8   0A                     DB   lsb(aNop_)   ;    H
-03C9   78                     DB   lsb(inPort_)   ;    I  ( port -- val )
+03C9   77                     DB   lsb(inPort_)   ;    I  ( port -- val )
 03CA   0A                     DB   lsb(aNop_)   ;    J
-03CB   8B                     DB   lsb(key_)   ;    K  ( -- val )  read a char from input
-03CC   9F                     DB   lsb(least_)   ;    L  ( a b -- c ) return the smallest value
-03CD   A7                     DB   lsb(most_)   ;    M  ( a b -- c ) return the largest value
-03CE   B3                     DB   lsb(newln_)   ;    N   ; prints a newline to output
-03CF   B8                     DB   lsb(outPort_)   ;    O  ( val port -- )
-03D0   E3                     DB   lsb(printStk_)   ;    P  ( -- ) non-destructively prints stack
-03D1   F3                     DB   lsb(quit_)   ;    Q  quits from Mint REPL
-03D2   BF                     DB   lsb(rot_)   ;    R  ( a b c -- b c a )
+03CB   8A                     DB   lsb(key_)   ;    K  ( -- val )  read a char from input
+03CC   9E                     DB   lsb(least_)   ;    L  ( a b -- c ) return the smallest value
+03CD   A6                     DB   lsb(most_)   ;    M  ( a b -- c ) return the largest value
+03CE   B2                     DB   lsb(newln_)   ;    N   ; prints a newline to output
+03CF   B7                     DB   lsb(outPort_)   ;    O  ( val port -- )
+03D0   E2                     DB   lsb(printStk_)   ;    P  ( -- ) non-destructively prints stack
+03D1   EF                     DB   lsb(quit_)   ;    Q  quits from Mint REPL
+03D2   BE                     DB   lsb(rot_)   ;    R  ( a b c -- b c a )
 03D3   0A                     DB   lsb(aNop_)   ;    S
 03D4   0A                     DB   lsb(aNop_)   ;    T
 03D5   0A                     DB   lsb(aNop_)   ;    U
 03D6   0A                     DB   lsb(aNop_)   ;    V
-03D7   D2                     DB   lsb(while_)   ;    W   ; ( b -- ) if false, skip to end of loop
+03D7   D1                     DB   lsb(while_)   ;    W   ; ( b -- ) if false, skip to end of loop
 03D8   4D                     DB   lsb(exec_)   ;    X
 03D9   0A                     DB   lsb(aNop_)   ;    Y
-03DA   E1                     DB   lsb(editDef_)   ;    Z
+03DA   E0                     DB   lsb(editDef_)   ;    Z
 03DB   00                     DB   lsb(cArrDef_)   ;    [
 03DC   14                     DB   lsb(comment_)   ;    \  comment text, skips reading until end of line
 03DD   0A                     DB   lsb(aNop_)   ;    ]
 03DE   0C                     DB   lsb(charCode_)   ;    ^
-03DF   C6                     DB   lsb(sign_)   ;    _)  ( n -- b ) returns true if -ve
+03DF   C5                     DB   lsb(sign_)   ;    _)  ( n -- b ) returns true if -ve
 03E0   0A                     DB   lsb(aNop_)   ;    `
 03E1   5E                     DB   lsb(userVar_)   ;    a
 03E2   5E                     DB   lsb(userVar_)   ;    b  ; base16 variable
@@ -1294,8 +1294,8 @@
 03E6   5E                     DB   lsb(userVar_)   ;    f
 03E7   5E                     DB   lsb(userVar_)   ;    g
 03E8   5E                     DB   lsb(userVar_)   ;    h  ; heap ptr variable
-03E9   69                     DB   lsb(i_)   ;    i  ; returns index variable of current loop
-03EA   81                     DB   lsb(j_)   ;    j  ; returns index variable of outer loop
+03E9   68                     DB   lsb(i_)   ;    i  ; returns index variable of current loop
+03EA   80                     DB   lsb(j_)   ;    j  ; returns index variable of outer loop
 03EB   5E                     DB   lsb(userVar_)   ;    k
 03EC   5E                     DB   lsb(userVar_)   ;    l
 03ED   5E                     DB   lsb(userVar_)   ;    m  ( a b -- c ) return the minimum value
@@ -1328,15 +1328,15 @@
 0404                EXIT_:       
 0404   03                     INC   BC   
 0405   50 59                  LD   DE,BC   
-0407   CD E1 05               CALL   rpop   ; Restore Instruction pointer
+0407   CD DD 05               CALL   rpop   ; Restore Instruction pointer
 040A   44 4D                  LD   BC,HL   
 040C   EB                     EX   DE,HL   
 040D   E9                     JP   (HL)   
 040E                NUM_:        
-040E   C3 7B 05               JP   number   
+040E   C3 77 05               JP   number   
 0411                CALL_:       
 0411   60 69                  LD   HL,BC   
-0413   CD D6 05               CALL   rpush   ; save Instruction Pointer
+0413   CD D2 05               CALL   rpush   ; save Instruction Pointer
 0416   0A                     LD   A,(BC)   
 0417   D6 41                  SUB   "A"   ; Calc index
 0419   87                     ADD   A,A   
@@ -1350,396 +1350,400 @@
 0424   0B                     DEC   BC   
 0425   FD E9                  JP   (IY)   ; Execute code from User def
 0427                RET_:        
-0427   CD E1 05               CALL   rpop   ; Restore Instruction pointer
+0427   CD DD 05               CALL   rpop   ; Restore Instruction pointer
 042A   44 4D                  LD   BC,HL   
 042C   FD E9                  JP   (IY)   
 042E                VAR_:        
 042E   0A                     LD   A,(BC)   
-042F   D6 61                  SUB   "a"   ; Calc index
+042F                             ; SUB "a"                 ; Calc index
+042F                             ; ADD A,A
+042F                             ; LD HL,VARS
+042F                             ; LD E,A
+042F                             ; LD D,0
+042F                             ; ADD HL,DE
+042F   D6 83                  SUB   "a" + ((VARS - mintVars)/2)   
 0431   87                     ADD   A,A   
-0432   21 44 0B               LD   HL,VARS   
-0435   5F                     LD   E,A   
-0436   16 00                  LD   D,0   
-0438   19                     ADD   HL,DE   
-0439   E5                     PUSH   HL   
-043A   FD E9                  JP   (IY)   
-043C                FETCH_:      ; Fetch the value from the address placed on the top of the stack
-043C   E1                     POP   HL   ; 10t
-043D                FETCH1:      
-043D   5E                     LD   E,(HL)   ; 7t
-043E   23                     INC   HL   ; 6t
-043F   56                     LD   D,(HL)   ; 7t
-0440   D5                     PUSH   DE   ; 11t
-0441   FD E9                  JP   (IY)   ; 8t
-0443                             ; 49t
-0443                STORE_:      ; Store the value at the address placed on the top of the stack
-0443   E1                     POP   HL   ; 10t
-0444   D1                     POP   DE   ; 10t
-0445   73                     LD   (HL),E   ; 7t
-0446   23                     INC   HL   ; 6t
-0447   72                     LD   (HL),D   ; 7t
-0448   FD E9                  JP   (IY)   ; 8t
-044A                             ; 48t
-044A                DUP_:        
-044A   E1                     POP   HL   ; Duplicate the top member of the stack
-044B   E5                     PUSH   HL   
-044C   E5                     PUSH   HL   
-044D   FD E9                  JP   (IY)   
-044F                             ; $ swap                    ; a b -- b a Swap the top 2 elements of the stack
-044F                SWAP_:       
-044F   E1                     POP   HL   
-0450   E3                     EX   (SP),HL   
-0451   E5                     PUSH   HL   
-0452   FD E9                  JP   (IY)   
-0454                OVER_:       
-0454   E1                     POP   HL   ; Duplicate 2nd element of the stack
-0455   D1                     POP   DE   
-0456   D5                     PUSH   DE   
-0457   E5                     PUSH   HL   
-0458   D5                     PUSH   DE   ; And push it to top of stack
-0459   FD E9                  JP   (IY)   
-045B                DROP_:       ; Discard the top member of the stack
-045B   E1                     POP   HL   
-045C   FD E9                  JP   (IY)   
-045E                AND_:        
-045E   D1                     POP   DE   ; 10t Bitwise AND the top 2 elements of the stack
-045F   E1                     POP   HL   ; 10t
-0460   7B                     LD   A,E   ; 4t
-0461   A5                     AND   L   ; 4t
-0462   6F                     LD   L,A   ; 4t
-0463   7A                     LD   A,D   ; 4t
-0464   A4                     AND   H   ; 4t
-0465                AND1:        
-0465   67                     LD   H,A   ; 4t
-0466   E5                     PUSH   HL   ; 11t
-0467   FD E9                  JP   (IY)   ; 8t
-0469                             ; 63t
-0469                OR_:         
-0469   D1                     POP   DE   ; Bitwise OR the top 2 elements of the stack
-046A   E1                     POP   HL   
-046B   7B                     LD   A,E   
-046C   B5                     OR   L   
-046D   6F                     LD   L,A   
-046E   7A                     LD   A,D   
-046F   B4                     OR   H   
-0470   18 F3                  JR   and1   
-0472                             ; LD      H,A
-0472                             ; PUSH    HL
-0472                             ; JP      (IY)
-0472                XOR_:        
-0472   D1                     POP   DE   ; Bitwise XOR the top 2 elements of the stack
-0473                XOR1:        
-0473   E1                     POP   HL   
-0474   7B                     LD   A,E   
-0475   AD                     XOR   L   
-0476   6F                     LD   L,A   
-0477   7A                     LD   A,D   
-0478   AC                     XOR   H   
-0479   18 EA                  JR   and1   
-047B                             ; LD      H,A
-047B                             ; PUSH    HL
-047B                             ; JP      (IY)
-047B                INV_:        ; Bitwise INVert the top member of the stack
-047B   11 FF FF               LD   DE,$FFFF   ; by xoring with $FFFF
-047E   18 F3                  JR   xor1   
-0480                ADD_:        ; Add the top 2 members of the stack
-0480   D1                     POP   DE   ; 10t
-0481   E1                     POP   HL   ; 10t
-0482   19                     ADD   HL,DE   ; 11t
-0483   E5                     PUSH   HL   ; 11t
-0484   FD E9                  JP   (IY)   ; 8t
-0486                             ; 50t
-0486                             ;  Left shift { is multply by 2		
-0486                SHL_:        
-0486   E1                     POP   HL   ; Duplicate the top member of the stack
-0487   29                     ADD   HL,HL   
-0488   E5                     PUSH   HL   ; shift left fallthrough into add_
-0489   FD E9                  JP   (IY)   ; 8t
-048B                             ;  Right shift } is a divide by 2		
-048B                             ; 
-048B                SHR_:        
-048B   E1                     POP   HL   ; Get the top member of the stack
-048C   CB 3C                  SRL   H   
-048E   CB 1D                  RR   L   
-0490   E5                     PUSH   HL   
-0491   FD E9                  JP   (IY)   ; 8t
-0493   21 00 00     NEG_:     LD   HL,0   ; NEGate the value on top of stack (2's complement)
-0496   D1                     POP   DE   ; 10t
-0497   18 02                  JR   SUB_2   ; use the SUBtract routine
-0499                SUB_:        ; Subtract the value 2nd on stack from top of stack
-0499   D1                     POP   DE   ; 10t
-049A   E1           SUB_1:    POP   HL   ; 10t  Entry point for INVert
-049B   A7           SUB_2:    AND   A   ;  4t  Entry point for NEGate
-049C   ED 52                  SBC   HL,DE   ; 15t
-049E   E5                     PUSH   HL   ; 11t
-049F   FD E9                  JP   (IY)   ; 8t
-04A1                             ; 58t
-04A1   E1           EQ_:      POP   HL   
-04A2   D1                     POP   DE   
-04A3   A7                     AND   A   ; reset the carry flag
-04A4   ED 52                  SBC   HL,DE   ; only equality sets HL=0 here
-04A6   28 16                  JR   Z,equal   
-04A8   21 00 00               LD   HL,0   
-04AB   18 12                  JR   less   ; HL = 1
-04AD   D1           GT_:      POP   DE   
-04AE   E1                     POP   HL   
-04AF   18 02                  JR   cmp_   
-04B1   E1           LT_:      POP   HL   
-04B2   D1                     POP   DE   
-04B3   A7           CMP_:     AND   A   ; reset the carry flag
-04B4   ED 52                  SBC   HL,DE   ; only equality sets HL=0 here
-04B6   28 07                  JR   Z,less   ; equality returns 0  KB 25/11/21
-04B8   21 00 00               LD   HL,0   
-04BB   FA BF 04               JP   M,less   
-04BE   2C           EQUAL:    INC   L   ; HL = 1
-04BF                LESS:        
-04BF   E5                     PUSH   HL   
-04C0   FD E9                  JP   (IY)   
-04C2   CD 9C 07     HEX_:     CALL   get_hex   
-04C5   18 F8                  JR   less   ; piggyback for ending
-04C7                DOT_:        
-04C7   E1                     POP   HL   
-04C8   3A 12 0B               LD   A,(vBase16)   
-04CB   B7                     OR   A   
-04CC   28 05                  JR   Z,dot1   
-04CE   CD B8 07               CALL   printhex   
-04D1   18 03                  JR   dot2   
-04D3                DOT1:        
-04D3   CD 3C 02               CALL   printdec   
-04D6                DOT2:        
-04D6   CD 74 02               CALL   space   
-04D9   FD E9                  JP   (IY)   
-04DB   C3 8D 07     GETREF_:   JP   getRef   
-04DE                HEXP_:       ; print hexadecimal
-04DE   E1                     POP   HL   
-04DF   CD B8 07               CALL   printhex   
-04E2   18 F2                  JR   dot2   
-04E4   C3 6C 07     DEF_:     JP   def   
-04E7   C3 9D 05     AGAIN_:   JP   again   
-04EA   C3 3E 07     ARRDEF_:   JP   arrDef   
-04ED   C3 50 07     ARREND_:   JP   arrEnd   
-04F0   C3 1A 02     NOP_:     JP   NEXT   ; hardwire white space to always go to NEXT (important for arrays)
-04F3   C9           QUIT_:    RET      ; exit interpreter
-04F4   18 52        BEGIN_:   JR   begin   
-04F6   18 41        STR_:     JR   str   
-04F8   18 1C        DIV_:     JR   div   
-04FA                MUL_:        
-04FA                             ;*******************************************************************
-04FA                             ; Page 5 primitive routines
-04FA                             ;*******************************************************************
-04FA                             ;falls through
-04FA                MUL:         ; 16-bit multiply
-04FA   D1                     POP   DE   ; get first value
-04FB   E1                     POP   HL   
-04FC   C5                     PUSH   BC   ; Preserve the IP
-04FD   44                     LD   B,H   ; BC = 2nd value
-04FE   4D                     LD   C,L   
-04FF   21 00 00               LD   HL,0   
-0502   3E 10                  LD   A,16   
-0504                MUL_LOOP_1:      
-0504   29                     ADD   HL,HL   
-0505   CB 13                  RL   E   
-0507   CB 12                  RL   D   
-0509   30 04                  JR   NC,$+6   
-050B   09                     ADD   HL,BC   
-050C   30 01                  JR   NC,$+3   
-050E   13                     INC   DE   
-050F   3D                     DEC   A   
-0510   20 F2                  JR   NZ,Mul_Loop_1   
+0432   6F                     LD   L,A   
+0433   26 0B                  LD   H,msb(mintVars)   
+0435   E5                     PUSH   HL   
+0436   FD E9                  JP   (IY)   
+0438                FETCH_:      ; Fetch the value from the address placed on the top of the stack
+0438   E1                     POP   HL   ; 10t
+0439                FETCH1:      
+0439   5E                     LD   E,(HL)   ; 7t
+043A   23                     INC   HL   ; 6t
+043B   56                     LD   D,(HL)   ; 7t
+043C   D5                     PUSH   DE   ; 11t
+043D   FD E9                  JP   (IY)   ; 8t
+043F                             ; 49t
+043F                STORE_:      ; Store the value at the address placed on the top of the stack
+043F   E1                     POP   HL   ; 10t
+0440   D1                     POP   DE   ; 10t
+0441   73                     LD   (HL),E   ; 7t
+0442   23                     INC   HL   ; 6t
+0443   72                     LD   (HL),D   ; 7t
+0444   FD E9                  JP   (IY)   ; 8t
+0446                             ; 48t
+0446                DUP_:        
+0446   E1                     POP   HL   ; Duplicate the top member of the stack
+0447   E5                     PUSH   HL   
+0448   E5                     PUSH   HL   
+0449   FD E9                  JP   (IY)   
+044B                             ; $ swap                    ; a b -- b a Swap the top 2 elements of the stack
+044B                SWAP_:       
+044B   E1                     POP   HL   
+044C   E3                     EX   (SP),HL   
+044D   E5                     PUSH   HL   
+044E   FD E9                  JP   (IY)   
+0450                OVER_:       
+0450   E1                     POP   HL   ; Duplicate 2nd element of the stack
+0451   D1                     POP   DE   
+0452   D5                     PUSH   DE   
+0453   E5                     PUSH   HL   
+0454   D5                     PUSH   DE   ; And push it to top of stack
+0455   FD E9                  JP   (IY)   
+0457                DROP_:       ; Discard the top member of the stack
+0457   E1                     POP   HL   
+0458   FD E9                  JP   (IY)   
+045A                AND_:        
+045A   D1                     POP   DE   ; 10t Bitwise AND the top 2 elements of the stack
+045B   E1                     POP   HL   ; 10t
+045C   7B                     LD   A,E   ; 4t
+045D   A5                     AND   L   ; 4t
+045E   6F                     LD   L,A   ; 4t
+045F   7A                     LD   A,D   ; 4t
+0460   A4                     AND   H   ; 4t
+0461                AND1:        
+0461   67                     LD   H,A   ; 4t
+0462   E5                     PUSH   HL   ; 11t
+0463   FD E9                  JP   (IY)   ; 8t
+0465                             ; 63t
+0465                OR_:         
+0465   D1                     POP   DE   ; Bitwise OR the top 2 elements of the stack
+0466   E1                     POP   HL   
+0467   7B                     LD   A,E   
+0468   B5                     OR   L   
+0469   6F                     LD   L,A   
+046A   7A                     LD   A,D   
+046B   B4                     OR   H   
+046C   18 F3                  JR   and1   
+046E                             ; LD      H,A
+046E                             ; PUSH    HL
+046E                             ; JP      (IY)
+046E                XOR_:        
+046E   D1                     POP   DE   ; Bitwise XOR the top 2 elements of the stack
+046F                XOR1:        
+046F   E1                     POP   HL   
+0470   7B                     LD   A,E   
+0471   AD                     XOR   L   
+0472   6F                     LD   L,A   
+0473   7A                     LD   A,D   
+0474   AC                     XOR   H   
+0475   18 EA                  JR   and1   
+0477                             ; LD      H,A
+0477                             ; PUSH    HL
+0477                             ; JP      (IY)
+0477                INV_:        ; Bitwise INVert the top member of the stack
+0477   11 FF FF               LD   DE,$FFFF   ; by xoring with $FFFF
+047A   18 F3                  JR   xor1   
+047C                ADD_:        ; Add the top 2 members of the stack
+047C   D1                     POP   DE   ; 10t
+047D   E1                     POP   HL   ; 10t
+047E   19                     ADD   HL,DE   ; 11t
+047F   E5                     PUSH   HL   ; 11t
+0480   FD E9                  JP   (IY)   ; 8t
+0482                             ; 50t
+0482                             ;  Left shift { is multply by 2		
+0482                SHL_:        
+0482   E1                     POP   HL   ; Duplicate the top member of the stack
+0483   29                     ADD   HL,HL   
+0484   E5                     PUSH   HL   ; shift left fallthrough into add_
+0485   FD E9                  JP   (IY)   ; 8t
+0487                             ;  Right shift } is a divide by 2		
+0487                             ; 
+0487                SHR_:        
+0487   E1                     POP   HL   ; Get the top member of the stack
+0488   CB 3C                  SRL   H   
+048A   CB 1D                  RR   L   
+048C   E5                     PUSH   HL   
+048D   FD E9                  JP   (IY)   ; 8t
+048F   21 00 00     NEG_:     LD   HL,0   ; NEGate the value on top of stack (2's complement)
+0492   D1                     POP   DE   ; 10t
+0493   18 02                  JR   SUB_2   ; use the SUBtract routine
+0495                SUB_:        ; Subtract the value 2nd on stack from top of stack
+0495   D1                     POP   DE   ; 10t
+0496   E1           SUB_1:    POP   HL   ; 10t  Entry point for INVert
+0497   A7           SUB_2:    AND   A   ;  4t  Entry point for NEGate
+0498   ED 52                  SBC   HL,DE   ; 15t
+049A   E5                     PUSH   HL   ; 11t
+049B   FD E9                  JP   (IY)   ; 8t
+049D                             ; 58t
+049D   E1           EQ_:      POP   HL   
+049E   D1                     POP   DE   
+049F   A7                     AND   A   ; reset the carry flag
+04A0   ED 52                  SBC   HL,DE   ; only equality sets HL=0 here
+04A2   28 16                  JR   Z,equal   
+04A4   21 00 00               LD   HL,0   
+04A7   18 12                  JR   less   ; HL = 1
+04A9   D1           GT_:      POP   DE   
+04AA   E1                     POP   HL   
+04AB   18 02                  JR   cmp_   
+04AD   E1           LT_:      POP   HL   
+04AE   D1                     POP   DE   
+04AF   A7           CMP_:     AND   A   ; reset the carry flag
+04B0   ED 52                  SBC   HL,DE   ; only equality sets HL=0 here
+04B2   28 07                  JR   Z,less   ; equality returns 0  KB 25/11/21
+04B4   21 00 00               LD   HL,0   
+04B7   FA BB 04               JP   M,less   
+04BA   2C           EQUAL:    INC   L   ; HL = 1
+04BB                LESS:        
+04BB   E5                     PUSH   HL   
+04BC   FD E9                  JP   (IY)   
+04BE   CD 9A 07     HEX_:     CALL   get_hex   
+04C1   18 F8                  JR   less   ; piggyback for ending
+04C3                DOT_:        
+04C3   E1                     POP   HL   
+04C4   3A 12 0B               LD   A,(vBase16)   
+04C7   B7                     OR   A   
+04C8   28 05                  JR   Z,dot1   
+04CA   CD B6 07               CALL   printhex   
+04CD   18 03                  JR   dot2   
+04CF                DOT1:        
+04CF   CD 3C 02               CALL   printdec   
+04D2                DOT2:        
+04D2   CD 74 02               CALL   space   
+04D5   FD E9                  JP   (IY)   
+04D7   C3 8B 07     GETREF_:   JP   getRef   
+04DA                HEXP_:       ; print hexadecimal
+04DA   E1                     POP   HL   
+04DB   CD B6 07               CALL   printhex   
+04DE   18 F2                  JR   dot2   
+04E0   C3 6B 07     DEF_:     JP   def   
+04E3   C3 99 05     AGAIN_:   JP   again   
+04E6   C3 3D 07     ARRDEF_:   JP   arrDef   
+04E9   C3 4F 07     ARREND_:   JP   arrEnd   
+04EC   C3 1A 02     NOP_:     JP   NEXT   ; hardwire white space to always go to NEXT (important for arrays)
+04EF   C9           QUIT_:    RET      ; exit interpreter
+04F0   18 52        BEGIN_:   JR   begin   
+04F2   18 41        STR_:     JR   str   
+04F4   18 1C        DIV_:     JR   div   
+04F6                MUL_:        
+04F6                             ;*******************************************************************
+04F6                             ; Page 5 primitive routines
+04F6                             ;*******************************************************************
+04F6                             ;falls through
+04F6                MUL:         ; 16-bit multiply
+04F6   D1                     POP   DE   ; get first value
+04F7   E1                     POP   HL   
+04F8   C5                     PUSH   BC   ; Preserve the IP
+04F9   44                     LD   B,H   ; BC = 2nd value
+04FA   4D                     LD   C,L   
+04FB   21 00 00               LD   HL,0   
+04FE   3E 10                  LD   A,16   
+0500                MUL_LOOP_1:      
+0500   29                     ADD   HL,HL   
+0501   CB 13                  RL   E   
+0503   CB 12                  RL   D   
+0505   30 04                  JR   NC,$+6   
+0507   09                     ADD   HL,BC   
+0508   30 01                  JR   NC,$+3   
+050A   13                     INC   DE   
+050B   3D                     DEC   A   
+050C   20 F2                  JR   NZ,Mul_Loop_1   
+050E                             ; 
+050E   C1                     POP   BC   ; Restore the IP
+050F   E5                     PUSH   HL   ; Put the product on the stack - stack bug fixed 2/12/21
+0510                             ; 
+0510   FD E9                  JP   (IY)   
+0512                             ; ********************************************************************
+0512                             ; 16-bit division subroutine.
 0512                             ; 
-0512   C1                     POP   BC   ; Restore the IP
-0513   E5                     PUSH   HL   ; Put the product on the stack - stack bug fixed 2/12/21
-0514                             ; 
-0514   FD E9                  JP   (IY)   
-0516                             ; ********************************************************************
-0516                             ; 16-bit division subroutine.
-0516                             ; 
-0516                             ; BC: divisor, DE: dividend, HL: remainder
-0516                             ; *********************************************************************
-0516                             ; This divides DE by BC, storing the result in DE, remainder in HL
-0516                             ; *********************************************************************
-0516                             ; 1382 cycles
-0516                             ; 35 bytes (reduced from 48)
-0516                             ; 
-0516                DIV:         
-0516   D1                     POP   DE   ; get first value
-0517   E1                     POP   HL   ; get 2nd value
-0518   C5                     PUSH   BC   ; Preserve the IP
-0519   44                     LD   B,H   ; BC = 2nd value
-051A   4D                     LD   C,L   
-051B                             ; 
-051B   21 00 00               LD   hl,0   ; Zero the remainder
-051E   3E 10                  LD   a,16   ; Loop counter
-0520                DIV_LOOP:      ;shift the bits from BC (numerator) into HL (accumulator)
-0520   CB 21                  SLA   c   
-0522   CB 10                  RL   b   
-0524   ED 6A                  ADC   hl,hl   
-0526   ED 52                  SBC   hl,de   ;Check if remainder >= denominator (HL>=DE)
-0528   38 03                  JR   c,div_adjust   
-052A   0C                     INC   c   
-052B   18 01                  JR   div_done   
-052D                DIV_ADJUST:      ; remainder is not >= denominator, so we have to add DE back to HL
-052D   19                     ADD   hl,de   
-052E                DIV_DONE:      
-052E   3D                     DEC   a   
-052F   20 EF                  JR   nz,div_loop   
-0531   50                     LD   D,B   ; Result from BC to DE
-0532   59                     LD   E,C   
-0533   EB                     EX   DE,HL   ; swap them over?
-0534                             ; 
-0534                MUL_END:      
-0534                DIV_END:      
-0534   C1                     POP   BC   ; Restore the IP
-0535   D5                     PUSH   DE   ; Push Result
-0536   E5                     PUSH   HL   ; Push remainder
-0537   FD E9                  JP   (IY)   
-0539                             ; **************************************************************************
-0539                             ; Print the string between the `backticks`
-0539                STR:         
-0539   03                     INC   BC   
-053A                NEXTCHAR:      
-053A   0A                     LD   A,(BC)   
-053B   03                     INC   BC   
-053C   FE 60                  CP   "`"   ; ` is the string terminator
-053E   28 05                  JR   Z,stringend   
-0540   CD 85 00               CALL   putchar   
-0543   18 F5                  JR   nextchar   
-0545                STRINGEND:      
-0545   0B                     DEC   BC   
-0546   FD E9                  JP   (IY)   
-0548                             ; *************************************
-0548                             ; Loop Handling Code
-0548                             ; *************************************
-0548                             ; 
-0548                BEGIN:       ; Left parentesis begins a loop
-0548   21 2C 0C               LD   HL,vIFTEMode   
-054B   36 00                  LD   (HL),0   
-054D   E1                     POP   HL   
-054E   7D                     LD   A,L   ; zero?
-054F   B4                     OR   H   
-0550   28 1C                  JR   Z,begin1   
-0552   2B                     DEC   HL   
-0553   11 FA FF               LD   DE,-6   
-0556   DD 19                  ADD   IX,DE   
-0558   DD 36 00 00            LD   (IX+0),0   ; loop var
-055C   DD 36 01 00            LD   (IX+1),0   
-0560   DD 75 02               LD   (IX+2),L   ; loop limit
-0563   DD 74 03               LD   (IX+3),H   
-0566   DD 71 04               LD   (IX+4),C   ; loop address
-0569   DD 70 05               LD   (IX+5),B   
-056C   FD E9                  JP   (IY)   
-056E                BEGIN1:      
-056E   1E 01                  LD   E,1   
-0570                BEGIN2:      
-0570   03                     INC   BC   
-0571   0A                     LD   A,(BC)   
-0572   CD D7 07               CALL   nesting   
-0575   AF                     XOR   A   
-0576   B3                     OR   E   
-0577   20 F7                  JR   NZ,begin2   
-0579   FD E9                  JP   (IY)   
-057B                             ; ********************************************************************************
-057B                             ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
-057B                             ; Read the first character.
-057B                             ;			
-057B                             ; Number characters ($30 to $39) are converted to digits by subtracting $30
-057B                             ; and then added into the L register. (HL forms a 16-bit accumulator)
-057B                             ; Fetch the next character, if it is a number, multiply contents of HL by 10
-057B                             ; and then add in the next digit. Repeat this until a non-number character is
-057B                             ; detected. Add in the final digit so that HL contains the converted number.
-057B                             ; Push HL onto the stack and proceed to the dispatch routine.
-057B                             ; ********************************************************************************
-057B                             ; 
-057B                NUMBER:      
-057B   21 00 00               LD   HL,$0000   ; 10t Clear HL to accept the number
-057E   0A                     LD   A,(BC)   ; 7t  Get the character which is a numeral
-057F                NUMBER1:      ; corrected KB 24/11/21
-057F   D6 30                  SUB   $30   ; 7t    Form decimal digit
-0581   85                     ADD   A,L   ; 4t    Add into bottom of HL
-0582   6F                     LD   L,A   ; 4t
-0583   3E 00                  LD   A,00   ; 4t    Clear A
-0585   8C                     ADC   A,H   ; Add with carry H-reg
-0586   67                     LD   H,A   ; Put result in H-reg
-0587   03                     INC   BC   ; 6t    Increment IP
-0588   0A                     LD   A,(BC)   ; 7t    and get the next character
-0589   FE 30                  CP   $30   ; 7t    Less than $30
-058B   38 0C                  JR   C,endnum   ; 7/12t Not a number / end of number
-058D   FE 3A                  CP   $3A   ; 7t    Greater or equal to $3A
-058F   30 08                  JR   NC,endnum   ; 7/12t Not a number / end of number
-0591                TIMES10:      ; Multiply digit(s) in HL by 10
-0591   29                     ADD   HL,HL   ; 11t    2X
-0592   5D                     LD   E,L   ;  4t    LD DE,HL
-0593   54                     LD   D,H   ;  4t
-0594   29                     ADD   HL,HL   ; 11t    4X
-0595   29                     ADD   HL,HL   ; 11t    8X
-0596   19                     ADD   HL,DE   ; 11t    2X  + 8X  = 10X
-0597                             ; 52t cycles
-0597   18 E6                  JR   number1   
-0599                ENDNUM:      
-0599   E5                     PUSH   HL   ; 11t   Put the number on the stack
-059A   0B                     DEC   BC   
-059B   FD E9                  JP   (IY)   ; and process the next character
-059D                AGAIN:       
-059D   21 2C 0C               LD   HL,vIFTEMode   
-05A0   AF                     XOR   A   
-05A1   B6                     OR   (HL)   
-05A2   20 25                  JR   NZ,again2   
-05A4   DD 5E 00               LD   E,(IX+0)   ; peek loop var
-05A7   DD 56 01               LD   D,(IX+1)   
-05AA   DD 6E 02               LD   L,(IX+2)   ; peek loop limit
-05AD   DD 66 03               LD   H,(IX+3)   
-05B0   B7                     OR   A   
-05B1   ED 52                  SBC   HL,DE   
-05B3   28 0F                  JR   Z,again1   
-05B5   13                     INC   DE   
-05B6   DD 73 00               LD   (IX+0),E   ; poke loop var
-05B9   DD 72 01               LD   (IX+1),D   
-05BC   DD 4E 04               LD   C,(IX+4)   ; peek loop address
-05BF   DD 46 05               LD   B,(IX+5)   
-05C2   FD E9                  JP   (IY)   
-05C4                AGAIN1:      
-05C4   11 06 00               LD   DE,6   ; drop loop frame
-05C7   DD 19                  ADD   IX,DE   
-05C9                AGAIN2:      
-05C9   FD E9                  JP   (IY)   
-05CB                ALT1:        
-05CB   03                     INC   BC   
-05CC   0A                     LD   A,(BC)   
-05CD   21 80 03               LD   HL,altCodes   
-05D0   85                     ADD   A,L   
-05D1   6F                     LD   L,A   
-05D2   6E                     LD   L,(HL)   ; 7t    get low jump address
-05D3   26 06                  LD   H,msb(page5)   ; Load H with the 5th page address
-05D5   E9                     JP   (HL)   ; 4t    Jump to routine
-05D6                RPUSH:       
-05D6   DD 2B                  DEC   IX   
-05D8   DD 74 00               LD   (IX+0),H   
-05DB   DD 2B                  DEC   IX   
-05DD   DD 75 00               LD   (IX+0),L   
-05E0   C9                     RET      
-05E1                RPOP:        
-05E1   DD 6E 00               LD   L,(IX+0)   
-05E4   DD 23                  INC   IX   
-05E6   DD 66 00               LD   H,(IX+0)   
-05E9   DD 23                  INC   IX   
-05EB   C9                     RET      
-05EC                CRLF:        
-05EC   3E 0D                  LD   A,"\r"   
-05EE   CD 85 00               CALL   putchar   
-05F1   3E 0A                  LD   A,"\n"   
-05F3   C3 85 00               JP   putchar   
-05F6                END_DEF:      
-05F6   ED 53 1E 0B            LD   (vHeapPtr),DE   ; bump heap ptr to after definiton
-05FA   0B                     DEC   BC   
-05FB   FD E9                  JP   (IY)   
-05FD                             ; **************************************************************************
-05FD                             ; Page 6 Alt primitives
-05FD                             ; **************************************************************************
-05FD                          ALIGN   $100   
+0512                             ; BC: divisor, DE: dividend, HL: remainder
+0512                             ; *********************************************************************
+0512                             ; This divides DE by BC, storing the result in DE, remainder in HL
+0512                             ; *********************************************************************
+0512                             ; 1382 cycles
+0512                             ; 35 bytes (reduced from 48)
+0512                             ; 
+0512                DIV:         
+0512   D1                     POP   DE   ; get first value
+0513   E1                     POP   HL   ; get 2nd value
+0514   C5                     PUSH   BC   ; Preserve the IP
+0515   44                     LD   B,H   ; BC = 2nd value
+0516   4D                     LD   C,L   
+0517                             ; 
+0517   21 00 00               LD   hl,0   ; Zero the remainder
+051A   3E 10                  LD   a,16   ; Loop counter
+051C                DIV_LOOP:      ;shift the bits from BC (numerator) into HL (accumulator)
+051C   CB 21                  SLA   c   
+051E   CB 10                  RL   b   
+0520   ED 6A                  ADC   hl,hl   
+0522   ED 52                  SBC   hl,de   ;Check if remainder >= denominator (HL>=DE)
+0524   38 03                  JR   c,div_adjust   
+0526   0C                     INC   c   
+0527   18 01                  JR   div_done   
+0529                DIV_ADJUST:      ; remainder is not >= denominator, so we have to add DE back to HL
+0529   19                     ADD   hl,de   
+052A                DIV_DONE:      
+052A   3D                     DEC   a   
+052B   20 EF                  JR   nz,div_loop   
+052D   50                     LD   D,B   ; Result from BC to DE
+052E   59                     LD   E,C   
+052F   EB                     EX   DE,HL   ; swap them over?
+0530                             ; 
+0530                MUL_END:      
+0530                DIV_END:      
+0530   C1                     POP   BC   ; Restore the IP
+0531   D5                     PUSH   DE   ; Push Result
+0532   E5                     PUSH   HL   ; Push remainder
+0533   FD E9                  JP   (IY)   
+0535                             ; **************************************************************************
+0535                             ; Print the string between the `backticks`
+0535                STR:         
+0535   03                     INC   BC   
+0536                NEXTCHAR:      
+0536   0A                     LD   A,(BC)   
+0537   03                     INC   BC   
+0538   FE 60                  CP   "`"   ; ` is the string terminator
+053A   28 05                  JR   Z,stringend   
+053C   CD 85 00               CALL   putchar   
+053F   18 F5                  JR   nextchar   
+0541                STRINGEND:      
+0541   0B                     DEC   BC   
+0542   FD E9                  JP   (IY)   
+0544                             ; *************************************
+0544                             ; Loop Handling Code
+0544                             ; *************************************
+0544                             ; 
+0544                BEGIN:       ; Left parentesis begins a loop
+0544   21 2C 0C               LD   HL,vIFTEMode   
+0547   36 00                  LD   (HL),0   
+0549   E1                     POP   HL   
+054A   7D                     LD   A,L   ; zero?
+054B   B4                     OR   H   
+054C   28 1C                  JR   Z,begin1   
+054E   2B                     DEC   HL   
+054F   11 FA FF               LD   DE,-6   
+0552   DD 19                  ADD   IX,DE   
+0554   DD 36 00 00            LD   (IX+0),0   ; loop var
+0558   DD 36 01 00            LD   (IX+1),0   
+055C   DD 75 02               LD   (IX+2),L   ; loop limit
+055F   DD 74 03               LD   (IX+3),H   
+0562   DD 71 04               LD   (IX+4),C   ; loop address
+0565   DD 70 05               LD   (IX+5),B   
+0568   FD E9                  JP   (IY)   
+056A                BEGIN1:      
+056A   1E 01                  LD   E,1   
+056C                BEGIN2:      
+056C   03                     INC   BC   
+056D   0A                     LD   A,(BC)   
+056E   CD D5 07               CALL   nesting   
+0571   AF                     XOR   A   
+0572   B3                     OR   E   
+0573   20 F7                  JR   NZ,begin2   
+0575   FD E9                  JP   (IY)   
+0577                             ; ********************************************************************************
+0577                             ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
+0577                             ; Read the first character.
+0577                             ;			
+0577                             ; Number characters ($30 to $39) are converted to digits by subtracting $30
+0577                             ; and then added into the L register. (HL forms a 16-bit accumulator)
+0577                             ; Fetch the next character, if it is a number, multiply contents of HL by 10
+0577                             ; and then add in the next digit. Repeat this until a non-number character is
+0577                             ; detected. Add in the final digit so that HL contains the converted number.
+0577                             ; Push HL onto the stack and proceed to the dispatch routine.
+0577                             ; ********************************************************************************
+0577                             ; 
+0577                NUMBER:      
+0577   21 00 00               LD   HL,$0000   ; 10t Clear HL to accept the number
+057A   0A                     LD   A,(BC)   ; 7t  Get the character which is a numeral
+057B                NUMBER1:      ; corrected KB 24/11/21
+057B   D6 30                  SUB   $30   ; 7t    Form decimal digit
+057D   85                     ADD   A,L   ; 4t    Add into bottom of HL
+057E   6F                     LD   L,A   ; 4t
+057F   3E 00                  LD   A,00   ; 4t    Clear A
+0581   8C                     ADC   A,H   ; Add with carry H-reg
+0582   67                     LD   H,A   ; Put result in H-reg
+0583   03                     INC   BC   ; 6t    Increment IP
+0584   0A                     LD   A,(BC)   ; 7t    and get the next character
+0585   FE 30                  CP   $30   ; 7t    Less than $30
+0587   38 0C                  JR   C,endnum   ; 7/12t Not a number / end of number
+0589   FE 3A                  CP   $3A   ; 7t    Greater or equal to $3A
+058B   30 08                  JR   NC,endnum   ; 7/12t Not a number / end of number
+058D                TIMES10:      ; Multiply digit(s) in HL by 10
+058D   29                     ADD   HL,HL   ; 11t    2X
+058E   5D                     LD   E,L   ;  4t    LD DE,HL
+058F   54                     LD   D,H   ;  4t
+0590   29                     ADD   HL,HL   ; 11t    4X
+0591   29                     ADD   HL,HL   ; 11t    8X
+0592   19                     ADD   HL,DE   ; 11t    2X  + 8X  = 10X
+0593                             ; 52t cycles
+0593   18 E6                  JR   number1   
+0595                ENDNUM:      
+0595   E5                     PUSH   HL   ; 11t   Put the number on the stack
+0596   0B                     DEC   BC   
+0597   FD E9                  JP   (IY)   ; and process the next character
+0599                AGAIN:       
+0599   21 2C 0C               LD   HL,vIFTEMode   
+059C   AF                     XOR   A   
+059D   B6                     OR   (HL)   
+059E   20 25                  JR   NZ,again2   
+05A0   DD 5E 00               LD   E,(IX+0)   ; peek loop var
+05A3   DD 56 01               LD   D,(IX+1)   
+05A6   DD 6E 02               LD   L,(IX+2)   ; peek loop limit
+05A9   DD 66 03               LD   H,(IX+3)   
+05AC   B7                     OR   A   
+05AD   ED 52                  SBC   HL,DE   
+05AF   28 0F                  JR   Z,again1   
+05B1   13                     INC   DE   
+05B2   DD 73 00               LD   (IX+0),E   ; poke loop var
+05B5   DD 72 01               LD   (IX+1),D   
+05B8   DD 4E 04               LD   C,(IX+4)   ; peek loop address
+05BB   DD 46 05               LD   B,(IX+5)   
+05BE   FD E9                  JP   (IY)   
+05C0                AGAIN1:      
+05C0   11 06 00               LD   DE,6   ; drop loop frame
+05C3   DD 19                  ADD   IX,DE   
+05C5                AGAIN2:      
+05C5   FD E9                  JP   (IY)   
+05C7                ALT1:        
+05C7   03                     INC   BC   
+05C8   0A                     LD   A,(BC)   
+05C9   21 80 03               LD   HL,altCodes   
+05CC   85                     ADD   A,L   
+05CD   6F                     LD   L,A   
+05CE   6E                     LD   L,(HL)   ; 7t    get low jump address
+05CF   26 06                  LD   H,msb(page5)   ; Load H with the 5th page address
+05D1   E9                     JP   (HL)   ; 4t    Jump to routine
+05D2                RPUSH:       
+05D2   DD 2B                  DEC   IX   
+05D4   DD 74 00               LD   (IX+0),H   
+05D7   DD 2B                  DEC   IX   
+05D9   DD 75 00               LD   (IX+0),L   
+05DC   C9                     RET      
+05DD                RPOP:        
+05DD   DD 6E 00               LD   L,(IX+0)   
+05E0   DD 23                  INC   IX   
+05E2   DD 66 00               LD   H,(IX+0)   
+05E5   DD 23                  INC   IX   
+05E7   C9                     RET      
+05E8                CRLF:        
+05E8   3E 0D                  LD   A,"\r"   
+05EA   CD 85 00               CALL   putchar   
+05ED   3E 0A                  LD   A,"\n"   
+05EF   C3 85 00               JP   putchar   
+05F2                END_DEF:      
+05F2   ED 53 1E 0B            LD   (vHeapPtr),DE   ; bump heap ptr to after definiton
+05F6   0B                     DEC   BC   
+05F7   FD E9                  JP   (IY)   
+05F9                             ; **************************************************************************
+05F9                             ; Page 6 Alt primitives
+05F9                             ; **************************************************************************
+05F9                          ALIGN   $100   
 0600                PAGE5:       
 0600                CARRDEF_:      ; define a byte array
 0600   3E 01                  LD   A,TRUE   
-0602   C3 40 07               JP   arrDef1   
+0602   C3 3F 07               JP   arrDef1   
 0605                CFETCH_:      
 0605   E1                     POP   HL   ; 10t
 0606   16 00                  LD   D,0   ; 7t
@@ -1793,7 +1797,7 @@
 0644   ED 52                  SBC   HL,DE   
 0646   23                     INC   HL   
 0647   E5                     PUSH   HL   
-0648   CA 6E 05               JP   Z,begin1   
+0648   CA 6A 05               JP   Z,begin1   
 064B   FD E9                  JP   (IY)   
 064D                             ; 
 064D                EXEC_:       
@@ -1805,325 +1809,330 @@
 0654   E9                     JP   (HL)   
 0655                GO_:         
 0655   60 69                  LD   HL,BC   
-0657   CD D6 05               CALL   rpush   ; save Instruction Pointer
+0657   CD D2 05               CALL   rpush   ; save Instruction Pointer
 065A   C1                     POP   BC   
 065B   0B                     DEC   BC   
 065C   FD E9                  JP   (IY)   ; Execute code from User def
 065E                USERVAR_:      
 065E   0A                     LD   A,(BC)   
-065F   D6 59                  SUB   "a"-8   ; Calc index (deal with alignment)
+065F                             ; Calc index (deal with alignment)
+065F   D6 59                  SUB   "a" - ((userVars - mintVars) / 2)   
 0661   87                     ADD   A,A   
-0662   21 10 0B               LD   HL,userVars   
-0665   6F                     LD   L,A   
-0666   E5                     PUSH   HL   
-0667   FD E9                  JP   (IY)   ; Execute code from User def
-0669                I_:          
-0669   DD E5                  PUSH   IX   
-066B   FD E9                  JP   (IY)   
-066D                             ; \+    a b -- [b]+a            ; increment variable at b by a
-066D                INCR_:       
-066D   E1                     POP   HL   
-066E   D1                     POP   DE   
-066F   7B                     LD   A,E   
-0670   86                     ADD   A,(HL)   
-0671   77                     LD   (HL),A   
-0672   23                     INC   HL   
-0673   7A                     LD   A,D   
-0674   8E                     ADC   A,(HL)   
-0675   77                     LD   (HL),A   
-0676   FD E9                  JP   (IY)   
-0678                INPORT_:      
-0678   E1                     POP   HL   
-0679   4D                     LD   C,L   
-067A   ED 68                  IN   L,(C)   
-067C   26 00                  LD   H,0   
-067E   E5                     PUSH   HL   
-067F   FD E9                  JP   (IY)   
-0681                J_:          
-0681   DD E5                  PUSH   IX   
-0683   E1                     POP   HL   
-0684   11 06 00               LD   DE,6   
-0687   19                     ADD   HL,DE   
-0688   E5                     PUSH   HL   
-0689   FD E9                  JP   (IY)   
-068B                KEY_:        
-068B   CD 81 00               CALL   getchar   
-068E   6F                     LD   L,A   
-068F   26 00                  LD   H,0   
-0691   E5                     PUSH   HL   
-0692   FD E9                  JP   (IY)   
-0694                SYSCONST_:      
-0694   0A                     LD   A,(BC)   
-0695   D6 30                  SUB   "0"   ; Calc index
-0697   87                     ADD   A,A   
-0698   21 00 0B               LD   HL,sysConsts   
-069B   6F                     LD   L,A   
-069C   C3 3D 04               JP   fetch1   
-069F                LEAST_:      ; a b -- c
-069F   D1                     POP   DE   
-06A0   E1                     POP   HL   
-06A1   B7                     OR   A   
-06A2   ED 52                  SBC   HL,DE   
-06A4   3F                     CCF      
-06A5   18 05                  JR   most1   
-06A7                MOST_:       ; a b -- c
-06A7   D1                     POP   DE   
-06A8   E1                     POP   HL   
-06A9   B7                     OR   A   
-06AA   ED 52                  SBC   HL,DE   
-06AC                MOST1:       
-06AC   38 02                  JR   C,most2   
-06AE   19                     ADD   HL,DE   
-06AF   EB                     EX   DE,HL   
-06B0                MOST2:       
-06B0   D5                     PUSH   DE   
-06B1   FD E9                  JP   (IY)   
-06B3                NEWLN_:      
-06B3   CD EC 05               CALL   crlf   
-06B6   FD E9                  JP   (IY)   
-06B8                OUTPORT_:      
-06B8   E1                     POP   HL   
-06B9   4D                     LD   C,L   
-06BA   E1                     POP   HL   
-06BB   ED 69                  OUT   (C),L   
-06BD   FD E9                  JP   (IY)   
-06BF                ROT_:        ; a b c -- b c a
-06BF   D1                     POP   DE   ; a b                   de = c
-06C0   E1                     POP   HL   ; a                     hl = b
-06C1   E3                     EX   (SP),HL   ; b                     hl = a
-06C2   D5                     PUSH   DE   ; b c
-06C3   E5                     PUSH   HL   ; b c a
-06C4   FD E9                  JP   (IY)   
-06C6                SIGN_:       
-06C6   E1                     POP   HL   
-06C7   CB 7C                  BIT   7,H   
-06C9   21 00 00               LD   HL,0   
-06CC   28 01                  JR   Z,sign2   
-06CE   23                     INC   HL   
-06CF                SIGN2:       
-06CF   E5                     PUSH   HL   
-06D0   FD E9                  JP   (IY)   
-06D2                WHILE_:      
-06D2   E1                     POP   HL   
-06D3   7D                     LD   A,L   ; zero?
-06D4   B4                     OR   H   
-06D5   28 02                  JR   Z,while1   
-06D7   FD E9                  JP   (IY)   
-06D9                WHILE1:      
-06D9   11 06 00               LD   DE,6   ; drop loop frame
-06DC   DD 19                  ADD   IX,DE   
-06DE   C3 6E 05               JP   begin1   ; skip to end of loop
-06E1                EDITDEF_:      
-06E1   18 25                  JR   editDef   
-06E3                PRINTSTK_:      
-06E3                             ; **************************************************************************
-06E3                             ; Page 6 primitive routines
-06E3                             ; **************************************************************************
-06E3                             ; falls through
-06E3                PRINTSTK:      
-06E3   CD 33 02               CALL   ENTER   
-06E6   5C 30 32 2D 5C 44 31 2D 5C 78 21 5C 78 40 5C 5F 30 3D 28 5C 78 40 28 22 40 2E 32 2D 29 29 27 00 DB   "\\02-\\D1-\\x!\\x@\\_0=(\\x@(",$22,"@.2-))'",0   
-0706   FD E9                  JP   (IY)   
-0708                             ; **************************************************************************
-0708                             ; copy definition to text input buffer
-0708                             ; update TIBPtr
-0708                             ; **************************************************************************
-0708                EDITDEF:      ; lookup up def based on number
-0708   3E 41                  LD   A,"A"   
-070A   D1                     POP   DE   
-070B   83                     ADD   A,E   
-070C   08                     EX   AF,AF'   
-070D   21 78 0B               LD   HL,defs   
+0662   6F                     LD   L,A   
+0663   26 0B                  LD   H,msb(mintVars)   
+0665   E5                     PUSH   HL   
+0666   FD E9                  JP   (IY)   ; Execute code from User def
+0668                I_:          
+0668   DD E5                  PUSH   IX   
+066A   FD E9                  JP   (IY)   
+066C                             ; \+    a b -- [b]+a            ; increment variable at b by a
+066C                INCR_:       
+066C   E1                     POP   HL   
+066D   D1                     POP   DE   
+066E   7B                     LD   A,E   
+066F   86                     ADD   A,(HL)   
+0670   77                     LD   (HL),A   
+0671   23                     INC   HL   
+0672   7A                     LD   A,D   
+0673   8E                     ADC   A,(HL)   
+0674   77                     LD   (HL),A   
+0675   FD E9                  JP   (IY)   
+0677                INPORT_:      
+0677   E1                     POP   HL   
+0678   4D                     LD   C,L   
+0679   ED 68                  IN   L,(C)   
+067B   26 00                  LD   H,0   
+067D   E5                     PUSH   HL   
+067E   FD E9                  JP   (IY)   
+0680                J_:          
+0680   DD E5                  PUSH   IX   
+0682   E1                     POP   HL   
+0683   11 06 00               LD   DE,6   
+0686   19                     ADD   HL,DE   
+0687   E5                     PUSH   HL   
+0688   FD E9                  JP   (IY)   
+068A                KEY_:        
+068A   CD 81 00               CALL   getchar   
+068D   6F                     LD   L,A   
+068E   26 00                  LD   H,0   
+0690   E5                     PUSH   HL   
+0691   FD E9                  JP   (IY)   
+0693                SYSCONST_:      
+0693   0A                     LD   A,(BC)   
+0694   D6 30                  SUB   "0"   ; Calc index
+0696   87                     ADD   A,A   
+0697   21 00 0B               LD   HL,sysConsts   
+069A   6F                     LD   L,A   
+069B   C3 39 04               JP   fetch1   
+069E                LEAST_:      ; a b -- c
+069E   D1                     POP   DE   
+069F   E1                     POP   HL   
+06A0   B7                     OR   A   
+06A1   ED 52                  SBC   HL,DE   
+06A3   3F                     CCF      
+06A4   18 05                  JR   most1   
+06A6                MOST_:       ; a b -- c
+06A6   D1                     POP   DE   
+06A7   E1                     POP   HL   
+06A8   B7                     OR   A   
+06A9   ED 52                  SBC   HL,DE   
+06AB                MOST1:       
+06AB   38 02                  JR   C,most2   
+06AD   19                     ADD   HL,DE   
+06AE   EB                     EX   DE,HL   
+06AF                MOST2:       
+06AF   D5                     PUSH   DE   
+06B0   FD E9                  JP   (IY)   
+06B2                NEWLN_:      
+06B2   CD E8 05               CALL   crlf   
+06B5   FD E9                  JP   (IY)   
+06B7                OUTPORT_:      
+06B7   E1                     POP   HL   
+06B8   4D                     LD   C,L   
+06B9   E1                     POP   HL   
+06BA   ED 69                  OUT   (C),L   
+06BC   FD E9                  JP   (IY)   
+06BE                ROT_:        ; a b c -- b c a
+06BE   D1                     POP   DE   ; a b                   de = c
+06BF   E1                     POP   HL   ; a                     hl = b
+06C0   E3                     EX   (SP),HL   ; b                     hl = a
+06C1   D5                     PUSH   DE   ; b c
+06C2   E5                     PUSH   HL   ; b c a
+06C3   FD E9                  JP   (IY)   
+06C5                SIGN_:       
+06C5   E1                     POP   HL   
+06C6   CB 7C                  BIT   7,H   
+06C8   21 00 00               LD   HL,0   
+06CB   28 01                  JR   Z,sign2   
+06CD   23                     INC   HL   
+06CE                SIGN2:       
+06CE   E5                     PUSH   HL   
+06CF   FD E9                  JP   (IY)   
+06D1                WHILE_:      
+06D1   E1                     POP   HL   
+06D2   7D                     LD   A,L   ; zero?
+06D3   B4                     OR   H   
+06D4   28 02                  JR   Z,while1   
+06D6   FD E9                  JP   (IY)   
+06D8                WHILE1:      
+06D8   11 06 00               LD   DE,6   ; drop loop frame
+06DB   DD 19                  ADD   IX,DE   
+06DD   C3 6A 05               JP   begin1   ; skip to end of loop
+06E0                EDITDEF_:      
+06E0   18 25                  JR   editDef   
+06E2                PRINTSTK_:      
+06E2                             ; **************************************************************************
+06E2                             ; Page 6 primitive routines
+06E2                             ; **************************************************************************
+06E2                             ; falls through
+06E2                PRINTSTK:      
+06E2   CD 33 02               CALL   ENTER   
+06E5   5C 30 32 2D 5C 44 31 2D 5C 78 21 5C 78 40 5C 5F 30 3D 28 5C 78 40 28 22 40 2E 32 2D 29 29 27 00 DB   "\\02-\\D1-\\x!\\x@\\_0=(\\x@(",$22,"@.2-))'",0   
+0705   FD E9                  JP   (IY)   
+0707                             ; **************************************************************************
+0707                             ; copy definition to text input buffer
+0707                             ; update TIBPtr
+0707                             ; **************************************************************************
+0707                EDITDEF:      ; lookup up def based on number
+0707   3E 41                  LD   A,"A"   
+0709   D1                     POP   DE   
+070A   83                     ADD   A,E   
+070B   08                     EX   AF,AF'   
+070C   21 78 0B               LD   HL,defs   
+070F   19                     ADD   HL,DE   
 0710   19                     ADD   HL,DE   
-0711   19                     ADD   HL,DE   
-0712   5E                     LD   E,(HL)   
-0713   23                     INC   HL   
-0714   56                     LD   D,(HL)   
-0715   EB                     EX   DE,HL   
-0716   7E                     LD   A,(HL)   
-0717   FE 3B                  CP   ";"   
-0719   11 00 0A               LD   DE,TIB   
-071C   28 14                  JR   Z,editDef3   
-071E   3E 3A                  LD   A,":"   
-0720   CD 79 02               CALL   writeChar   
-0723   08                     EX   AF,AF'   
-0724   CD 79 02               CALL   writeChar   
-0727   18 01                  JR   editDef2   
-0729                EDITDEF1:      
-0729   23                     INC   HL   
-072A                EDITDEF2:      
-072A   7E                     LD   A,(HL)   
-072B   CD 79 02               CALL   writeChar   
-072E   FE 3B                  CP   ";"   
-0730   20 F7                  JR   NZ,editDef1   
-0732                EDITDEF3:      
-0732   21 00 0A               LD   HL,TIB   
-0735   EB                     EX   DE,HL   
-0736   B7                     OR   A   
-0737   ED 52                  SBC   HL,DE   
-0739   22 14 0B               LD   (vTIBPtr),HL   
-073C   FD E9                  JP   (IY)   
-073E                             ;*******************************************************************
-073E                             ; Page 5 primitive routines continued
-073E                             ;*******************************************************************
-073E                             ; define a word array
-073E                ARRDEF:      
-073E   3E 00                  LD   A,FALSE   
-0740                ARRDEF1:      
-0740   FD 21 60 02            LD   IY,compNEXT   
-0744   32 2E 0C               LD   (vByteMode),A   
-0747   2A 1E 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
-074A   CD D6 05               CALL   rpush   ; save start of array \[  \]
-074D   C3 1A 02               JP   NEXT   ; hardwired to NEXT
-0750                             ; end a word array
-0750                ARREND:      
-0750   CD E1 05               CALL   rpop   ; DE = start of array
-0753   E5                     PUSH   HL   
-0754   EB                     EX   DE,HL   
-0755   2A 1E 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
-0758   B7                     OR   A   
-0759   ED 52                  SBC   HL,DE   ; bytes on heap
-075B   3A 2E 0C               LD   A,(vByteMode)   
-075E   B7                     OR   A   
-075F   20 04                  JR   NZ,arrEnd2   
-0761   CB 3C                  SRL   H   ; BC = m words
-0763   CB 1D                  RR   L   
-0765                ARREND2:      
-0765   E5                     PUSH   HL   
-0766   FD 21 1A 02            LD   IY,NEXT   
-076A   FD E9                  JP   (IY)   ; hardwired to NEXT
-076C                             ; **************************************************************************
-076C                             ; def is used to create a colon definition
-076C                             ; When a colon is detected, the next character (usually uppercase alpha)
-076C                             ; is looked up in the vector table to get its associated code field address
-076C                             ; This CFA is updated to point to the character after uppercase alpha
-076C                             ; The remainder of the characters are then skipped until after a semicolon
-076C                             ; is found.
-076C                             ; ***************************************************************************
-076C                DEF:         ; Create a colon definition
-076C   E5                     PUSH   HL   ; Save HL
-076D   21 78 0B               LD   HL,DEFS   ; Start address of jump table
-0770   03                     INC   BC   
-0771   0A                     LD   A,(BC)   ; Get the next character
-0772   03                     INC   BC   
-0773   D6 41                  SUB   "A"   ; Calc index
-0775   87                     ADD   A,A   ; Double A to index even addresses
-0776   5F                     LD   E,A   ; Index into table
-0777   16 00                  LD   D,0   
-0779   19                     ADD   HL,DE   
-077A   ED 5B 1E 0B            LD   DE,(vHeapPtr)   ; start of defintion
-077E   73                     LD   (HL),E   ; Save low byte of address in CFA
-077F   23                     INC   HL   
-0780   72                     LD   (HL),D   ; Save high byte of address in CFA+1
-0781   E1                     POP   HL   ; Restore HL
-0782                NEXTBYTE:      ; Skip to end of definition
-0782   0A                     LD   A,(BC)   ; Get the next character
-0783   03                     INC   BC   ; Point to next character
-0784   12                     LD   (DE),A   
-0785   13                     INC   DE   
-0786   FE 3B                  CP   ";"   ; Is it a semicolon
-0788   CA F6 05               JP   z,end_def   ; end the definition
-078B   18 F5                  JR   nextbyte   ; get the next element
-078D                GETREF:      
-078D   03                     INC   BC   
-078E   0A                     LD   A,(BC)   
-078F   D6 41                  SUB   "A"   
-0791   87                     ADD   A,A   
-0792   5F                     LD   E,A   
-0793   16 00                  LD   D,0   
-0795   21 78 0B               LD   HL,defs   
-0798   19                     ADD   HL,DE   
-0799   C3 3D 04               JP   fetch1   
-079C                             ; ***************************************************************************
-079C                GET_HEX:      
-079C   21 00 00               LD   HL,$0000   ; 10t Clear HL to accept the number
-079F   03                     INC   BC   
-07A0   0A                     LD   A,(BC)   ; 7t  Get the character which is a numeral
-07A1                GET_HEX1:      
-07A1   CB 77                  BIT   6,A   ; 7t    is it uppercase alpha?
-07A3   28 02                  JR   Z,ASCHX1   ; no a decimal
-07A5   D6 07                  SUB   7   ; sub 7  to make $A - $F
-07A7                ASCHX1:      
-07A7   D6 30                  SUB   $30   ; 7t    Form decimal digit
-07A9   85                     ADD   A,L   ; 4t    Add into bottom of HL
-07AA   6F                     LD   L,A   ; 4t
-07AB   03                     INC   BC   ; 6t    Increment IP
-07AC   0A                     LD   A,(BC)   ; 7t    and get the next character
-07AD   FE 20                  CP   $20   ; 7t    is a terminating space?
-07AF   28 06                  JR   Z,endhex   ; 7/12t Not a number / end of number
-07B1                TIMES16:      ; Multiply digit(s) in HL by 16
-07B1   29                     ADD   HL,HL   ; 11t    2X
-07B2   29                     ADD   HL,HL   ; 11t    4X
-07B3   29                     ADD   HL,HL   ; 11t    8X
-07B4   29                     ADD   HL,HL   ; 11t   16X
-07B5   18 EA                  JR   get_hex1   
-07B7   C9           ENDHEX:   RET      
-07B8                PRINTHEX:      
-07B8                             ; Display HL as a 16-bit number in hex.
-07B8   C5                     PUSH   BC   ; preserve the IP
-07B9   7C                     LD   A,H   
-07BA   CD C3 07               CALL   Print_Hex8   
-07BD   7D                     LD   A,L   
-07BE   CD C3 07               CALL   Print_Hex8   
-07C1   C1                     POP   BC   
-07C2   C9                     RET      
-07C3                             ; Print an 8-bit HEX number  - shortened KB 25/11/21
-07C3                             ; A: Number to print
-07C3                             ; 
-07C3                PRINT_HEX8:      
-07C3   4F                     LD   C,A   
+0711   5E                     LD   E,(HL)   
+0712   23                     INC   HL   
+0713   56                     LD   D,(HL)   
+0714   EB                     EX   DE,HL   
+0715   7E                     LD   A,(HL)   
+0716   FE 3B                  CP   ";"   
+0718   11 00 0A               LD   DE,TIB   
+071B   28 14                  JR   Z,editDef3   
+071D   3E 3A                  LD   A,":"   
+071F   CD 79 02               CALL   writeChar   
+0722   08                     EX   AF,AF'   
+0723   CD 79 02               CALL   writeChar   
+0726   18 01                  JR   editDef2   
+0728                EDITDEF1:      
+0728   23                     INC   HL   
+0729                EDITDEF2:      
+0729   7E                     LD   A,(HL)   
+072A   CD 79 02               CALL   writeChar   
+072D   FE 3B                  CP   ";"   
+072F   20 F7                  JR   NZ,editDef1   
+0731                EDITDEF3:      
+0731   21 00 0A               LD   HL,TIB   
+0734   EB                     EX   DE,HL   
+0735   B7                     OR   A   
+0736   ED 52                  SBC   HL,DE   
+0738   22 14 0B               LD   (vTIBPtr),HL   
+073B   FD E9                  JP   (IY)   
+073D                             ;*******************************************************************
+073D                             ; Page 5 primitive routines continued
+073D                             ;*******************************************************************
+073D                             ; define a word array
+073D                ARRDEF:      
+073D   3E 00                  LD   A,FALSE   
+073F                ARRDEF1:      
+073F   FD 21 60 02            LD   IY,compNEXT   
+0743   32 2E 0C               LD   (vByteMode),A   
+0746   2A 1E 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
+0749   CD D2 05               CALL   rpush   ; save start of array \[  \]
+074C   C3 1A 02               JP   NEXT   ; hardwired to NEXT
+074F                             ; end a word array
+074F                ARREND:      
+074F   CD DD 05               CALL   rpop   ; DE = start of array
+0752   E5                     PUSH   HL   
+0753   EB                     EX   DE,HL   
+0754   2A 1E 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
+0757   B7                     OR   A   
+0758   ED 52                  SBC   HL,DE   ; bytes on heap
+075A   3A 2E 0C               LD   A,(vByteMode)   
+075D   B7                     OR   A   
+075E   20 04                  JR   NZ,arrEnd2   
+0760   CB 3C                  SRL   H   ; BC = m words
+0762   CB 1D                  RR   L   
+0764                ARREND2:      
+0764   E5                     PUSH   HL   
+0765   FD 21 1A 02            LD   IY,NEXT   
+0769   FD E9                  JP   (IY)   ; hardwired to NEXT
+076B                             ; **************************************************************************
+076B                             ; def is used to create a colon definition
+076B                             ; When a colon is detected, the next character (usually uppercase alpha)
+076B                             ; is looked up in the vector table to get its associated code field address
+076B                             ; This CFA is updated to point to the character after uppercase alpha
+076B                             ; The remainder of the characters are then skipped until after a semicolon
+076B                             ; is found.
+076B                             ; ***************************************************************************
+076B                DEF:         ; Create a colon definition
+076B   E5                     PUSH   HL   ; Save HL
+076C   21 78 0B               LD   HL,DEFS   ; Start address of jump table
+076F   03                     INC   BC   
+0770   0A                     LD   A,(BC)   ; Get the next character
+0771   03                     INC   BC   
+0772                             ; SUB "A"             ; Calc index
+0772                             ; ADD A,A             ; Double A to index even addresses
+0772                             ; LD E,A              ; Index into table
+0772                             ; LD D,0
+0772                             ; ADD HL,DE
+0772   D6 7D                  SUB   "A" + ((DEFS - mintVars)/2)   
+0774   87                     ADD   A,A   
+0775   6F                     LD   L,A   
+0776   26 0B                  LD   H,msb(mintVars)   
+0778   ED 5B 1E 0B            LD   DE,(vHeapPtr)   ; start of defintion
+077C   73                     LD   (HL),E   ; Save low byte of address in CFA
+077D   23                     INC   HL   
+077E   72                     LD   (HL),D   ; Save high byte of address in CFA+1
+077F   E1                     POP   HL   ; Restore HL
+0780                NEXTBYTE:      ; Skip to end of definition
+0780   0A                     LD   A,(BC)   ; Get the next character
+0781   03                     INC   BC   ; Point to next character
+0782   12                     LD   (DE),A   
+0783   13                     INC   DE   
+0784   FE 3B                  CP   ";"   ; Is it a semicolon
+0786   CA F2 05               JP   z,end_def   ; end the definition
+0789   18 F5                  JR   nextbyte   ; get the next element
+078B                GETREF:      
+078B   03                     INC   BC   
+078C   0A                     LD   A,(BC)   
+078D   D6 41                  SUB   "A"   
+078F   87                     ADD   A,A   
+0790   5F                     LD   E,A   
+0791   16 00                  LD   D,0   
+0793   21 78 0B               LD   HL,defs   
+0796   19                     ADD   HL,DE   
+0797   C3 39 04               JP   fetch1   
+079A                             ; ***************************************************************************
+079A                GET_HEX:      
+079A   21 00 00               LD   HL,$0000   ; 10t Clear HL to accept the number
+079D   03                     INC   BC   
+079E   0A                     LD   A,(BC)   ; 7t  Get the character which is a numeral
+079F                GET_HEX1:      
+079F   CB 77                  BIT   6,A   ; 7t    is it uppercase alpha?
+07A1   28 02                  JR   Z,ASCHX1   ; no a decimal
+07A3   D6 07                  SUB   7   ; sub 7  to make $A - $F
+07A5                ASCHX1:      
+07A5   D6 30                  SUB   $30   ; 7t    Form decimal digit
+07A7   85                     ADD   A,L   ; 4t    Add into bottom of HL
+07A8   6F                     LD   L,A   ; 4t
+07A9   03                     INC   BC   ; 6t    Increment IP
+07AA   0A                     LD   A,(BC)   ; 7t    and get the next character
+07AB   FE 20                  CP   $20   ; 7t    is a terminating space?
+07AD   28 06                  JR   Z,endhex   ; 7/12t Not a number / end of number
+07AF                TIMES16:      ; Multiply digit(s) in HL by 16
+07AF   29                     ADD   HL,HL   ; 11t    2X
+07B0   29                     ADD   HL,HL   ; 11t    4X
+07B1   29                     ADD   HL,HL   ; 11t    8X
+07B2   29                     ADD   HL,HL   ; 11t   16X
+07B3   18 EA                  JR   get_hex1   
+07B5   C9           ENDHEX:   RET      
+07B6                PRINTHEX:      
+07B6                             ; Display HL as a 16-bit number in hex.
+07B6   C5                     PUSH   BC   ; preserve the IP
+07B7   7C                     LD   A,H   
+07B8   CD C1 07               CALL   Print_Hex8   
+07BB   7D                     LD   A,L   
+07BC   CD C1 07               CALL   Print_Hex8   
+07BF   C1                     POP   BC   
+07C0   C9                     RET      
+07C1                             ; Print an 8-bit HEX number  - shortened KB 25/11/21
+07C1                             ; A: Number to print
+07C1                             ; 
+07C1                PRINT_HEX8:      
+07C1   4F                     LD   C,A   
+07C2   1F                     RRA      
+07C3   1F                     RRA      
 07C4   1F                     RRA      
 07C5   1F                     RRA      
-07C6   1F                     RRA      
-07C7   1F                     RRA      
-07C8   CD CC 07               CALL   conv   
-07CB   79                     LD   A,C   
-07CC                CONV:        
-07CC   E6 0F                  AND   0x0F   
-07CE   C6 90                  ADD   A,0x90   
-07D0   27                     DAA      
-07D1   CE 40                  ADC   A,0x40   
-07D3   27                     DAA      
-07D4   C3 85 00               JP   putchar   
-07D7                             ; **************************************************************************
-07D7                             ; calculate nesting value
-07D7                             ; A is char to be tested,
-07D7                             ; E is the nesting value (initially 0)
-07D7                             ; E is increased by ( and [
-07D7                             ; E is decreased by ) and ]
-07D7                             ; E has its bit 7 toggled by `
-07D7                             ; limited to 127 levels
-07D7                             ; **************************************************************************
-07D7                NESTING:      
-07D7   FE 60                  CP   "`"   
-07D9   20 0A                  JR   NZ,nesting1   
-07DB   CB 7B                  BIT   7,E   
-07DD   28 03                  JR   Z,nesting1a   
-07DF   CB BB                  RES   7,E   
-07E1   C9                     RET      
-07E2                NESTING1A:      
-07E2   CB FB                  SET   7,E   
-07E4   C9                     RET      
-07E5                NESTING1:      
-07E5   FE 3A                  CP   ":"   
-07E7   28 08                  JR   Z,nesting2   
-07E9   FE 5B                  CP   "["   
-07EB   28 04                  JR   Z,nesting2   
-07ED   FE 28                  CP   "("   
-07EF   20 02                  JR   NZ,nesting3   
-07F1                NESTING2:      
-07F1   1C                     INC   E   
-07F2   C9                     RET      
-07F3                NESTING3:      
-07F3   FE 3B                  CP   ";"   
-07F5   28 07                  JR   Z,nesting4   
-07F7   FE 5D                  CP   "]"   
-07F9   28 03                  JR   Z,nesting4   
-07FB   FE 29                  CP   ")"   
-07FD   C0                     RET   NZ   
-07FE                NESTING4:      
-07FE   1D                     DEC   E   
-07FF   C9                     RET      
+07C6   CD CA 07               CALL   conv   
+07C9   79                     LD   A,C   
+07CA                CONV:        
+07CA   E6 0F                  AND   0x0F   
+07CC   C6 90                  ADD   A,0x90   
+07CE   27                     DAA      
+07CF   CE 40                  ADC   A,0x40   
+07D1   27                     DAA      
+07D2   C3 85 00               JP   putchar   
+07D5                             ; **************************************************************************
+07D5                             ; calculate nesting value
+07D5                             ; A is char to be tested,
+07D5                             ; E is the nesting value (initially 0)
+07D5                             ; E is increased by ( and [
+07D5                             ; E is decreased by ) and ]
+07D5                             ; E has its bit 7 toggled by `
+07D5                             ; limited to 127 levels
+07D5                             ; **************************************************************************
+07D5                NESTING:      
+07D5   FE 60                  CP   "`"   
+07D7   20 0A                  JR   NZ,nesting1   
+07D9   CB 7B                  BIT   7,E   
+07DB   28 03                  JR   Z,nesting1a   
+07DD   CB BB                  RES   7,E   
+07DF   C9                     RET      
+07E0                NESTING1A:      
+07E0   CB FB                  SET   7,E   
+07E2   C9                     RET      
+07E3                NESTING1:      
+07E3   FE 3A                  CP   ":"   
+07E5   28 08                  JR   Z,nesting2   
+07E7   FE 5B                  CP   "["   
+07E9   28 04                  JR   Z,nesting2   
+07EB   FE 28                  CP   "("   
+07ED   20 02                  JR   NZ,nesting3   
+07EF                NESTING2:      
+07EF   1C                     INC   E   
+07F0   C9                     RET      
+07F1                NESTING3:      
+07F1   FE 3B                  CP   ";"   
+07F3   28 07                  JR   Z,nesting4   
+07F5   FE 5D                  CP   "]"   
+07F7   28 03                  JR   Z,nesting4   
+07F9   FE 29                  CP   ")"   
+07FB   C0                     RET   NZ   
+07FC                NESTING4:      
+07FC   1D                     DEC   E   
+07FD   C9                     RET      
 0800                          .ORG   RAMSTART   
 0800                          DS   DSIZE   
 0900                STACK:       
@@ -2133,6 +2142,7 @@
 0A00                TIB:         
 0A00                          DS   TIBSIZE   
 0B00                          ALIGN   $100   
+0B00                MINTVARS:      
 0B00                             ; ****************************************************************
 0B00                             ; System constants
 0B00                             ; ****************************************************************
@@ -2291,17 +2301,17 @@ RXCHAR:             0078 DEFINED AT LINE 310 IN IOSerial.asm
                     > USED AT LINE 314 IN IOSerial.asm
 GETCHAR:            0081 DEFINED AT LINE 616 IN IOSerial.asm
                     > USED AT LINE 224 IN MINT.asm
-                    > USED AT LINE 1258 IN MINT.asm
+                    > USED AT LINE 1267 IN MINT.asm
 PUTCHAR:            0085 DEFINED AT LINE 620 IN IOSerial.asm
                     > USED AT LINE 239 IN MINT.asm
                     > USED AT LINE 332 IN MINT.asm
                     > USED AT LINE 351 IN MINT.asm
                     > USED AT LINE 356 IN MINT.asm
-                    > USED AT LINE 978 IN MINT.asm
-                    > USED AT LINE 1120 IN MINT.asm
-                    > USED AT LINE 1122 IN MINT.asm
-                    > USED AT LINE 1185 IN MINT.asm
-                    > USED AT LINE 1521 IN MINT.asm
+                    > USED AT LINE 986 IN MINT.asm
+                    > USED AT LINE 1128 IN MINT.asm
+                    > USED AT LINE 1130 IN MINT.asm
+                    > USED AT LINE 1193 IN MINT.asm
+                    > USED AT LINE 1537 IN MINT.asm
 RESET:              008B DEFINED AT LINE 626 IN IOSerial.asm
                     > USED AT LINE 103 IN IOSerial.asm
 DSIZE:              0100 DEFINED AT LINE 151 IN MINT.asm
@@ -2311,11 +2321,11 @@ RSIZE:              0100 DEFINED AT LINE 152 IN MINT.asm
 TIBSIZE:            0100 DEFINED AT LINE 153 IN MINT.asm
                     > USED AT LINE 11 IN ram.asm
 TRUE:               0001 DEFINED AT LINE 154 IN MINT.asm
-                    > USED AT LINE 1136 IN MINT.asm
-                    > USED AT LINE 1190 IN MINT.asm
+                    > USED AT LINE 1144 IN MINT.asm
+                    > USED AT LINE 1198 IN MINT.asm
 FALSE:              0000 DEFINED AT LINE 155 IN MINT.asm
                     > USED AT LINE 497 IN MINT.asm
-                    > USED AT LINE 1391 IN MINT.asm
+                    > USED AT LINE 1400 IN MINT.asm
 START:              0180 DEFINED AT LINE 166 IN MINT.asm
                     > USED AT LINE 6
 MINT:               0180 DEFINED AT LINE 167 IN MINT.asm
@@ -2346,17 +2356,17 @@ NEXT:               021A DEFINED AT LINE 283 IN MINT.asm
                     > USED AT LINE 176 IN MINT.asm
                     > USED AT LINE 293 IN MINT.asm
                     > USED AT LINE 347 IN MINT.asm
-                    > USED AT LINE 876 IN MINT.asm
-                    > USED AT LINE 1397 IN MINT.asm
-                    > USED AT LINE 1414 IN MINT.asm
+                    > USED AT LINE 884 IN MINT.asm
+                    > USED AT LINE 1406 IN MINT.asm
+                    > USED AT LINE 1423 IN MINT.asm
 DISPATCH:           021C DEFINED AT LINE 287 IN MINT.asm
 ENTER:              0233 DEFINED AT LINE 301 IN MINT.asm
                     > USED AT LINE 170 IN MINT.asm
                     > USED AT LINE 192 IN MINT.asm
                     > USED AT LINE 366 IN MINT.asm
-                    > USED AT LINE 1341 IN MINT.asm
+                    > USED AT LINE 1350 IN MINT.asm
 PRINTDEC:           023C DEFINED AT LINE 308 IN MINT.asm
-                    > USED AT LINE 860 IN MINT.asm
+                    > USED AT LINE 868 IN MINT.asm
 DISPHL:             023C DEFINED AT LINE 315 IN MINT.asm
 NUM1:               0255 DEFINED AT LINE 325 IN MINT.asm
                     > USED AT LINE 317 IN MINT.asm
@@ -2366,15 +2376,15 @@ NUM1:               0255 DEFINED AT LINE 325 IN MINT.asm
 NUM2:               0257 DEFINED AT LINE 327 IN MINT.asm
                     > USED AT LINE 330 IN MINT.asm
 COMPNEXT:           0260 DEFINED AT LINE 335 IN MINT.asm
-                    > USED AT LINE 1393 IN MINT.asm
+                    > USED AT LINE 1402 IN MINT.asm
 COMPNEXT1:          026E DEFINED AT LINE 345 IN MINT.asm
                     > USED AT LINE 342 IN MINT.asm
 SPACE:              0274 DEFINED AT LINE 349 IN MINT.asm
-                    > USED AT LINE 862 IN MINT.asm
+                    > USED AT LINE 870 IN MINT.asm
 WRITECHAR:          0279 DEFINED AT LINE 353 IN MINT.asm
-                    > USED AT LINE 1366 IN MINT.asm
-                    > USED AT LINE 1368 IN MINT.asm
-                    > USED AT LINE 1374 IN MINT.asm
+                    > USED AT LINE 1375 IN MINT.asm
+                    > USED AT LINE 1377 IN MINT.asm
+                    > USED AT LINE 1383 IN MINT.asm
 MACRO:              027E DEFINED AT LINE 358 IN MINT.asm
                     > USED AT LINE 232 IN MINT.asm
 MACROS:             0298 DEFINED AT LINE 375 IN MINT.asm
@@ -2394,7 +2404,7 @@ IUSERVARS:          0370 DEFINED AT LINE 495 IN MINT.asm
 CTRLCODES:          0380 DEFINED AT LINE 509 IN MINT.asm
                     > USED AT LINE 360 IN MINT.asm
 ALTCODES:           0380 DEFINED AT LINE 510 IN MINT.asm
-                    > USED AT LINE 1097 IN MINT.asm
+                    > USED AT LINE 1105 IN MINT.asm
 PAGE4:              0400 DEFINED AT LINE 645 IN MINT.asm
 ALT_:               0400 DEFINED AT LINE 647 IN MINT.asm
 EXIT_:              0404 DEFINED AT LINE 651 IN MINT.asm
@@ -2403,221 +2413,221 @@ NUM_:               040E DEFINED AT LINE 659 IN MINT.asm
 CALL_:              0411 DEFINED AT LINE 662 IN MINT.asm
 RET_:               0427 DEFINED AT LINE 678 IN MINT.asm
 VAR_:               042E DEFINED AT LINE 683 IN MINT.asm
-FETCH_:             043C DEFINED AT LINE 694 IN MINT.asm
-FETCH1:             043D DEFINED AT LINE 696 IN MINT.asm
-                    > USED AT LINE 1270 IN MINT.asm
-                    > USED AT LINE 1460 IN MINT.asm
-STORE_:             0443 DEFINED AT LINE 704 IN MINT.asm
-DUP_:               044A DEFINED AT LINE 713 IN MINT.asm
-SWAP_:              044F DEFINED AT LINE 720 IN MINT.asm
-OVER_:              0454 DEFINED AT LINE 726 IN MINT.asm
-DROP_:              045B DEFINED AT LINE 734 IN MINT.asm
-AND_:               045E DEFINED AT LINE 738 IN MINT.asm
-AND1:               0465 DEFINED AT LINE 746 IN MINT.asm
-                    > USED AT LINE 762 IN MINT.asm
-                    > USED AT LINE 777 IN MINT.asm
-OR_:                0469 DEFINED AT LINE 754 IN MINT.asm
-XOR_:               0472 DEFINED AT LINE 768 IN MINT.asm
-XOR1:               0473 DEFINED AT LINE 770 IN MINT.asm
-                    > USED AT LINE 784 IN MINT.asm
-INV_:               047B DEFINED AT LINE 782 IN MINT.asm
-ADD_:               0480 DEFINED AT LINE 786 IN MINT.asm
-SHL_:               0486 DEFINED AT LINE 795 IN MINT.asm
-SHR_:               048B DEFINED AT LINE 804 IN MINT.asm
-NEG_:               0493 DEFINED AT LINE 811 IN MINT.asm
-SUB_:               0499 DEFINED AT LINE 815 IN MINT.asm
-SUB_1:              049A DEFINED AT LINE 818 IN MINT.asm
-SUB_2:              049B DEFINED AT LINE 819 IN MINT.asm
-                    > USED AT LINE 813 IN MINT.asm
-EQ_:                04A1 DEFINED AT LINE 824 IN MINT.asm
-GT_:                04AD DEFINED AT LINE 833 IN MINT.asm
-LT_:                04B1 DEFINED AT LINE 837 IN MINT.asm
-CMP_:               04B3 DEFINED AT LINE 839 IN MINT.asm
-                    > USED AT LINE 835 IN MINT.asm
-EQUAL:              04BE DEFINED AT LINE 844 IN MINT.asm
-                    > USED AT LINE 828 IN MINT.asm
-LESS:               04BF DEFINED AT LINE 845 IN MINT.asm
-                    > USED AT LINE 830 IN MINT.asm
-                    > USED AT LINE 841 IN MINT.asm
+FETCH_:             0438 DEFINED AT LINE 702 IN MINT.asm
+FETCH1:             0439 DEFINED AT LINE 704 IN MINT.asm
+                    > USED AT LINE 1279 IN MINT.asm
+                    > USED AT LINE 1476 IN MINT.asm
+STORE_:             043F DEFINED AT LINE 712 IN MINT.asm
+DUP_:               0446 DEFINED AT LINE 721 IN MINT.asm
+SWAP_:              044B DEFINED AT LINE 728 IN MINT.asm
+OVER_:              0450 DEFINED AT LINE 734 IN MINT.asm
+DROP_:              0457 DEFINED AT LINE 742 IN MINT.asm
+AND_:               045A DEFINED AT LINE 746 IN MINT.asm
+AND1:               0461 DEFINED AT LINE 754 IN MINT.asm
+                    > USED AT LINE 770 IN MINT.asm
+                    > USED AT LINE 785 IN MINT.asm
+OR_:                0465 DEFINED AT LINE 762 IN MINT.asm
+XOR_:               046E DEFINED AT LINE 776 IN MINT.asm
+XOR1:               046F DEFINED AT LINE 778 IN MINT.asm
+                    > USED AT LINE 792 IN MINT.asm
+INV_:               0477 DEFINED AT LINE 790 IN MINT.asm
+ADD_:               047C DEFINED AT LINE 794 IN MINT.asm
+SHL_:               0482 DEFINED AT LINE 803 IN MINT.asm
+SHR_:               0487 DEFINED AT LINE 812 IN MINT.asm
+NEG_:               048F DEFINED AT LINE 819 IN MINT.asm
+SUB_:               0495 DEFINED AT LINE 823 IN MINT.asm
+SUB_1:              0496 DEFINED AT LINE 826 IN MINT.asm
+SUB_2:              0497 DEFINED AT LINE 827 IN MINT.asm
+                    > USED AT LINE 821 IN MINT.asm
+EQ_:                049D DEFINED AT LINE 832 IN MINT.asm
+GT_:                04A9 DEFINED AT LINE 841 IN MINT.asm
+LT_:                04AD DEFINED AT LINE 845 IN MINT.asm
+CMP_:               04AF DEFINED AT LINE 847 IN MINT.asm
                     > USED AT LINE 843 IN MINT.asm
-                    > USED AT LINE 850 IN MINT.asm
-HEX_:               04C2 DEFINED AT LINE 849 IN MINT.asm
-DOT_:               04C7 DEFINED AT LINE 852 IN MINT.asm
-DOT1:               04D3 DEFINED AT LINE 859 IN MINT.asm
-                    > USED AT LINE 856 IN MINT.asm
-DOT2:               04D6 DEFINED AT LINE 861 IN MINT.asm
+EQUAL:              04BA DEFINED AT LINE 852 IN MINT.asm
+                    > USED AT LINE 836 IN MINT.asm
+LESS:               04BB DEFINED AT LINE 853 IN MINT.asm
+                    > USED AT LINE 838 IN MINT.asm
+                    > USED AT LINE 849 IN MINT.asm
+                    > USED AT LINE 851 IN MINT.asm
                     > USED AT LINE 858 IN MINT.asm
-                    > USED AT LINE 870 IN MINT.asm
-GETREF_:            04DB DEFINED AT LINE 865 IN MINT.asm
-HEXP_:              04DE DEFINED AT LINE 867 IN MINT.asm
-DEF_:               04E4 DEFINED AT LINE 872 IN MINT.asm
-AGAIN_:             04E7 DEFINED AT LINE 873 IN MINT.asm
-ARRDEF_:            04EA DEFINED AT LINE 874 IN MINT.asm
-ARREND_:            04ED DEFINED AT LINE 875 IN MINT.asm
-NOP_:               04F0 DEFINED AT LINE 876 IN MINT.asm
-QUIT_:              04F3 DEFINED AT LINE 877 IN MINT.asm
-BEGIN_:             04F4 DEFINED AT LINE 878 IN MINT.asm
-STR_:               04F6 DEFINED AT LINE 879 IN MINT.asm
-DIV_:               04F8 DEFINED AT LINE 880 IN MINT.asm
-MUL_:               04FA DEFINED AT LINE 881 IN MINT.asm
-MUL:                04FA DEFINED AT LINE 886 IN MINT.asm
-MUL_LOOP_1:         0504 DEFINED AT LINE 896 IN MINT.asm
-                    > USED AT LINE 905 IN MINT.asm
-DIV:                0516 DEFINED AT LINE 925 IN MINT.asm
-                    > USED AT LINE 880 IN MINT.asm
-DIV_LOOP:           0520 DEFINED AT LINE 936 IN MINT.asm
-                    > USED AT LINE 951 IN MINT.asm
-DIV_ADJUST:         052D DEFINED AT LINE 946 IN MINT.asm
-                    > USED AT LINE 942 IN MINT.asm
-DIV_DONE:           052E DEFINED AT LINE 949 IN MINT.asm
-                    > USED AT LINE 944 IN MINT.asm
-MUL_END:            0534 DEFINED AT LINE 958 IN MINT.asm
-DIV_END:            0534 DEFINED AT LINE 959 IN MINT.asm
-STR:                0539 DEFINED AT LINE 970 IN MINT.asm
-                    > USED AT LINE 879 IN MINT.asm
-NEXTCHAR:           053A DEFINED AT LINE 973 IN MINT.asm
-                    > USED AT LINE 979 IN MINT.asm
-STRINGEND:          0545 DEFINED AT LINE 981 IN MINT.asm
-                    > USED AT LINE 977 IN MINT.asm
-BEGIN:              0548 DEFINED AT LINE 990 IN MINT.asm
+HEX_:               04BE DEFINED AT LINE 857 IN MINT.asm
+DOT_:               04C3 DEFINED AT LINE 860 IN MINT.asm
+DOT1:               04CF DEFINED AT LINE 867 IN MINT.asm
+                    > USED AT LINE 864 IN MINT.asm
+DOT2:               04D2 DEFINED AT LINE 869 IN MINT.asm
+                    > USED AT LINE 866 IN MINT.asm
                     > USED AT LINE 878 IN MINT.asm
-BEGIN1:             056E DEFINED AT LINE 1010 IN MINT.asm
-                    > USED AT LINE 997 IN MINT.asm
-                    > USED AT LINE 1197 IN MINT.asm
-                    > USED AT LINE 1331 IN MINT.asm
-BEGIN2:             0570 DEFINED AT LINE 1012 IN MINT.asm
-                    > USED AT LINE 1018 IN MINT.asm
-NUMBER:             057B DEFINED AT LINE 1034 IN MINT.asm
+GETREF_:            04D7 DEFINED AT LINE 873 IN MINT.asm
+HEXP_:              04DA DEFINED AT LINE 875 IN MINT.asm
+DEF_:               04E0 DEFINED AT LINE 880 IN MINT.asm
+AGAIN_:             04E3 DEFINED AT LINE 881 IN MINT.asm
+ARRDEF_:            04E6 DEFINED AT LINE 882 IN MINT.asm
+ARREND_:            04E9 DEFINED AT LINE 883 IN MINT.asm
+NOP_:               04EC DEFINED AT LINE 884 IN MINT.asm
+QUIT_:              04EF DEFINED AT LINE 885 IN MINT.asm
+BEGIN_:             04F0 DEFINED AT LINE 886 IN MINT.asm
+STR_:               04F2 DEFINED AT LINE 887 IN MINT.asm
+DIV_:               04F4 DEFINED AT LINE 888 IN MINT.asm
+MUL_:               04F6 DEFINED AT LINE 889 IN MINT.asm
+MUL:                04F6 DEFINED AT LINE 894 IN MINT.asm
+MUL_LOOP_1:         0500 DEFINED AT LINE 904 IN MINT.asm
+                    > USED AT LINE 913 IN MINT.asm
+DIV:                0512 DEFINED AT LINE 933 IN MINT.asm
+                    > USED AT LINE 888 IN MINT.asm
+DIV_LOOP:           051C DEFINED AT LINE 944 IN MINT.asm
+                    > USED AT LINE 959 IN MINT.asm
+DIV_ADJUST:         0529 DEFINED AT LINE 954 IN MINT.asm
+                    > USED AT LINE 950 IN MINT.asm
+DIV_DONE:           052A DEFINED AT LINE 957 IN MINT.asm
+                    > USED AT LINE 952 IN MINT.asm
+MUL_END:            0530 DEFINED AT LINE 966 IN MINT.asm
+DIV_END:            0530 DEFINED AT LINE 967 IN MINT.asm
+STR:                0535 DEFINED AT LINE 978 IN MINT.asm
+                    > USED AT LINE 887 IN MINT.asm
+NEXTCHAR:           0536 DEFINED AT LINE 981 IN MINT.asm
+                    > USED AT LINE 987 IN MINT.asm
+STRINGEND:          0541 DEFINED AT LINE 989 IN MINT.asm
+                    > USED AT LINE 985 IN MINT.asm
+BEGIN:              0544 DEFINED AT LINE 998 IN MINT.asm
+                    > USED AT LINE 886 IN MINT.asm
+BEGIN1:             056A DEFINED AT LINE 1018 IN MINT.asm
+                    > USED AT LINE 1005 IN MINT.asm
+                    > USED AT LINE 1205 IN MINT.asm
+                    > USED AT LINE 1340 IN MINT.asm
+BEGIN2:             056C DEFINED AT LINE 1020 IN MINT.asm
+                    > USED AT LINE 1026 IN MINT.asm
+NUMBER:             0577 DEFINED AT LINE 1042 IN MINT.asm
                     > USED AT LINE 660 IN MINT.asm
-NUMBER1:            057F DEFINED AT LINE 1038 IN MINT.asm
-                    > USED AT LINE 1063 IN MINT.asm
-TIMES10:            0591 DEFINED AT LINE 1054 IN MINT.asm
-ENDNUM:             0599 DEFINED AT LINE 1065 IN MINT.asm
-                    > USED AT LINE 1050 IN MINT.asm
-                    > USED AT LINE 1052 IN MINT.asm
-AGAIN:              059D DEFINED AT LINE 1070 IN MINT.asm
-                    > USED AT LINE 873 IN MINT.asm
-AGAIN1:             05C4 DEFINED AT LINE 1088 IN MINT.asm
-                    > USED AT LINE 1081 IN MINT.asm
-AGAIN2:             05C9 DEFINED AT LINE 1091 IN MINT.asm
-                    > USED AT LINE 1074 IN MINT.asm
-ALT1:               05CB DEFINED AT LINE 1094 IN MINT.asm
+NUMBER1:            057B DEFINED AT LINE 1046 IN MINT.asm
+                    > USED AT LINE 1071 IN MINT.asm
+TIMES10:            058D DEFINED AT LINE 1062 IN MINT.asm
+ENDNUM:             0595 DEFINED AT LINE 1073 IN MINT.asm
+                    > USED AT LINE 1058 IN MINT.asm
+                    > USED AT LINE 1060 IN MINT.asm
+AGAIN:              0599 DEFINED AT LINE 1078 IN MINT.asm
+                    > USED AT LINE 881 IN MINT.asm
+AGAIN1:             05C0 DEFINED AT LINE 1096 IN MINT.asm
+                    > USED AT LINE 1089 IN MINT.asm
+AGAIN2:             05C5 DEFINED AT LINE 1099 IN MINT.asm
+                    > USED AT LINE 1082 IN MINT.asm
+ALT1:               05C7 DEFINED AT LINE 1102 IN MINT.asm
                     > USED AT LINE 496 IN MINT.asm
-RPUSH:              05D6 DEFINED AT LINE 1104 IN MINT.asm
+RPUSH:              05D2 DEFINED AT LINE 1112 IN MINT.asm
                     > USED AT LINE 303 IN MINT.asm
                     > USED AT LINE 664 IN MINT.asm
-                    > USED AT LINE 1210 IN MINT.asm
-                    > USED AT LINE 1396 IN MINT.asm
-RPOP:               05E1 DEFINED AT LINE 1111 IN MINT.asm
+                    > USED AT LINE 1218 IN MINT.asm
+                    > USED AT LINE 1405 IN MINT.asm
+RPOP:               05DD DEFINED AT LINE 1119 IN MINT.asm
                     > USED AT LINE 654 IN MINT.asm
                     > USED AT LINE 679 IN MINT.asm
-                    > USED AT LINE 1401 IN MINT.asm
-CRLF:               05EC DEFINED AT LINE 1118 IN MINT.asm
+                    > USED AT LINE 1410 IN MINT.asm
+CRLF:               05E8 DEFINED AT LINE 1126 IN MINT.asm
                     > USED AT LINE 248 IN MINT.asm
-                    > USED AT LINE 1294 IN MINT.asm
-END_DEF:            05F6 DEFINED AT LINE 1124 IN MINT.asm
-                    > USED AT LINE 1448 IN MINT.asm
-PAGE5:              0600 DEFINED AT LINE 1133 IN MINT.asm
-CARRDEF_:           0600 DEFINED AT LINE 1135 IN MINT.asm
-CFETCH_:            0605 DEFINED AT LINE 1139 IN MINT.asm
-ANOP_:              060A DEFINED AT LINE 1144 IN MINT.asm
-CHARCODE_:          060C DEFINED AT LINE 1147 IN MINT.asm
-COMMENT_:           0614 DEFINED AT LINE 1155 IN MINT.asm
-                    > USED AT LINE 1159 IN MINT.asm
-CSTORE_:            061D DEFINED AT LINE 1163 IN MINT.asm
-DEPTH_:             0622 DEFINED AT LINE 1170 IN MINT.asm
-EMIT_:              0634 DEFINED AT LINE 1182 IN MINT.asm
-IFTE_:              063B DEFINED AT LINE 1188 IN MINT.asm
-EXEC_:              064D DEFINED AT LINE 1200 IN MINT.asm
-EXEC1:              0652 DEFINED AT LINE 1203 IN MINT.asm
-                    > USED AT LINE 1201 IN MINT.asm
-GO_:                0655 DEFINED AT LINE 1208 IN MINT.asm
-USERVAR_:           065E DEFINED AT LINE 1215 IN MINT.asm
-I_:                 0669 DEFINED AT LINE 1224 IN MINT.asm
-INCR_:              066D DEFINED AT LINE 1229 IN MINT.asm
-INPORT_:            0678 DEFINED AT LINE 1241 IN MINT.asm
-J_:                 0681 DEFINED AT LINE 1249 IN MINT.asm
-KEY_:               068B DEFINED AT LINE 1257 IN MINT.asm
-SYSCONST_:          0694 DEFINED AT LINE 1264 IN MINT.asm
-LEAST_:             069F DEFINED AT LINE 1272 IN MINT.asm
-MOST_:              06A7 DEFINED AT LINE 1280 IN MINT.asm
-MOST1:              06AC DEFINED AT LINE 1285 IN MINT.asm
-                    > USED AT LINE 1278 IN MINT.asm
-MOST2:              06B0 DEFINED AT LINE 1289 IN MINT.asm
-                    > USED AT LINE 1286 IN MINT.asm
-NEWLN_:             06B3 DEFINED AT LINE 1293 IN MINT.asm
-OUTPORT_:           06B8 DEFINED AT LINE 1297 IN MINT.asm
-ROT_:               06BF DEFINED AT LINE 1304 IN MINT.asm
-SIGN_:              06C6 DEFINED AT LINE 1312 IN MINT.asm
-SIGN2:              06CF DEFINED AT LINE 1318 IN MINT.asm
-                    > USED AT LINE 1316 IN MINT.asm
-WHILE_:             06D2 DEFINED AT LINE 1322 IN MINT.asm
-WHILE1:             06D9 DEFINED AT LINE 1328 IN MINT.asm
-                    > USED AT LINE 1326 IN MINT.asm
-EDITDEF_:           06E1 DEFINED AT LINE 1333 IN MINT.asm
-PRINTSTK_:          06E3 DEFINED AT LINE 1335 IN MINT.asm
-PRINTSTK:           06E3 DEFINED AT LINE 1340 IN MINT.asm
-EDITDEF:            0708 DEFINED AT LINE 1349 IN MINT.asm
-                    > USED AT LINE 1334 IN MINT.asm
-EDITDEF1:           0729 DEFINED AT LINE 1370 IN MINT.asm
-                    > USED AT LINE 1376 IN MINT.asm
-EDITDEF2:           072A DEFINED AT LINE 1372 IN MINT.asm
-                    > USED AT LINE 1369 IN MINT.asm
-EDITDEF3:           0732 DEFINED AT LINE 1377 IN MINT.asm
-                    > USED AT LINE 1364 IN MINT.asm
-ARRDEF:             073E DEFINED AT LINE 1390 IN MINT.asm
-                    > USED AT LINE 874 IN MINT.asm
-ARRDEF1:            0740 DEFINED AT LINE 1392 IN MINT.asm
-                    > USED AT LINE 1137 IN MINT.asm
-ARREND:             0750 DEFINED AT LINE 1400 IN MINT.asm
-                    > USED AT LINE 875 IN MINT.asm
-ARREND2:            0765 DEFINED AT LINE 1412 IN MINT.asm
-                    > USED AT LINE 1409 IN MINT.asm
-DEF:                076C DEFINED AT LINE 1426 IN MINT.asm
-                    > USED AT LINE 872 IN MINT.asm
-NEXTBYTE:           0782 DEFINED AT LINE 1442 IN MINT.asm
-                    > USED AT LINE 1449 IN MINT.asm
-GETREF:             078D DEFINED AT LINE 1451 IN MINT.asm
-                    > USED AT LINE 865 IN MINT.asm
-GET_HEX:            079C DEFINED AT LINE 1464 IN MINT.asm
-                    > USED AT LINE 849 IN MINT.asm
-GET_HEX1:           07A1 DEFINED AT LINE 1469 IN MINT.asm
-                    > USED AT LINE 1488 IN MINT.asm
-ASCHX1:             07A7 DEFINED AT LINE 1473 IN MINT.asm
-                    > USED AT LINE 1471 IN MINT.asm
-TIMES16:            07B1 DEFINED AT LINE 1482 IN MINT.asm
-ENDHEX:             07B7 DEFINED AT LINE 1490 IN MINT.asm
-                    > USED AT LINE 1480 IN MINT.asm
-PRINTHEX:           07B8 DEFINED AT LINE 1492 IN MINT.asm
+                    > USED AT LINE 1303 IN MINT.asm
+END_DEF:            05F2 DEFINED AT LINE 1132 IN MINT.asm
+                    > USED AT LINE 1464 IN MINT.asm
+PAGE5:              0600 DEFINED AT LINE 1141 IN MINT.asm
+CARRDEF_:           0600 DEFINED AT LINE 1143 IN MINT.asm
+CFETCH_:            0605 DEFINED AT LINE 1147 IN MINT.asm
+ANOP_:              060A DEFINED AT LINE 1152 IN MINT.asm
+CHARCODE_:          060C DEFINED AT LINE 1155 IN MINT.asm
+COMMENT_:           0614 DEFINED AT LINE 1163 IN MINT.asm
+                    > USED AT LINE 1167 IN MINT.asm
+CSTORE_:            061D DEFINED AT LINE 1171 IN MINT.asm
+DEPTH_:             0622 DEFINED AT LINE 1178 IN MINT.asm
+EMIT_:              0634 DEFINED AT LINE 1190 IN MINT.asm
+IFTE_:              063B DEFINED AT LINE 1196 IN MINT.asm
+EXEC_:              064D DEFINED AT LINE 1208 IN MINT.asm
+EXEC1:              0652 DEFINED AT LINE 1211 IN MINT.asm
+                    > USED AT LINE 1209 IN MINT.asm
+GO_:                0655 DEFINED AT LINE 1216 IN MINT.asm
+USERVAR_:           065E DEFINED AT LINE 1223 IN MINT.asm
+I_:                 0668 DEFINED AT LINE 1233 IN MINT.asm
+INCR_:              066C DEFINED AT LINE 1238 IN MINT.asm
+INPORT_:            0677 DEFINED AT LINE 1250 IN MINT.asm
+J_:                 0680 DEFINED AT LINE 1258 IN MINT.asm
+KEY_:               068A DEFINED AT LINE 1266 IN MINT.asm
+SYSCONST_:          0693 DEFINED AT LINE 1273 IN MINT.asm
+LEAST_:             069E DEFINED AT LINE 1281 IN MINT.asm
+MOST_:              06A6 DEFINED AT LINE 1289 IN MINT.asm
+MOST1:              06AB DEFINED AT LINE 1294 IN MINT.asm
+                    > USED AT LINE 1287 IN MINT.asm
+MOST2:              06AF DEFINED AT LINE 1298 IN MINT.asm
+                    > USED AT LINE 1295 IN MINT.asm
+NEWLN_:             06B2 DEFINED AT LINE 1302 IN MINT.asm
+OUTPORT_:           06B7 DEFINED AT LINE 1306 IN MINT.asm
+ROT_:               06BE DEFINED AT LINE 1313 IN MINT.asm
+SIGN_:              06C5 DEFINED AT LINE 1321 IN MINT.asm
+SIGN2:              06CE DEFINED AT LINE 1327 IN MINT.asm
+                    > USED AT LINE 1325 IN MINT.asm
+WHILE_:             06D1 DEFINED AT LINE 1331 IN MINT.asm
+WHILE1:             06D8 DEFINED AT LINE 1337 IN MINT.asm
+                    > USED AT LINE 1335 IN MINT.asm
+EDITDEF_:           06E0 DEFINED AT LINE 1342 IN MINT.asm
+PRINTSTK_:          06E2 DEFINED AT LINE 1344 IN MINT.asm
+PRINTSTK:           06E2 DEFINED AT LINE 1349 IN MINT.asm
+EDITDEF:            0707 DEFINED AT LINE 1358 IN MINT.asm
+                    > USED AT LINE 1343 IN MINT.asm
+EDITDEF1:           0728 DEFINED AT LINE 1379 IN MINT.asm
+                    > USED AT LINE 1385 IN MINT.asm
+EDITDEF2:           0729 DEFINED AT LINE 1381 IN MINT.asm
+                    > USED AT LINE 1378 IN MINT.asm
+EDITDEF3:           0731 DEFINED AT LINE 1386 IN MINT.asm
+                    > USED AT LINE 1373 IN MINT.asm
+ARRDEF:             073D DEFINED AT LINE 1399 IN MINT.asm
+                    > USED AT LINE 882 IN MINT.asm
+ARRDEF1:            073F DEFINED AT LINE 1401 IN MINT.asm
+                    > USED AT LINE 1145 IN MINT.asm
+ARREND:             074F DEFINED AT LINE 1409 IN MINT.asm
+                    > USED AT LINE 883 IN MINT.asm
+ARREND2:            0764 DEFINED AT LINE 1421 IN MINT.asm
+                    > USED AT LINE 1418 IN MINT.asm
+DEF:                076B DEFINED AT LINE 1435 IN MINT.asm
+                    > USED AT LINE 880 IN MINT.asm
+NEXTBYTE:           0780 DEFINED AT LINE 1458 IN MINT.asm
+                    > USED AT LINE 1465 IN MINT.asm
+GETREF:             078B DEFINED AT LINE 1467 IN MINT.asm
+                    > USED AT LINE 873 IN MINT.asm
+GET_HEX:            079A DEFINED AT LINE 1480 IN MINT.asm
                     > USED AT LINE 857 IN MINT.asm
-                    > USED AT LINE 869 IN MINT.asm
-PRINT_HEX8:         07C3 DEFINED AT LINE 1506 IN MINT.asm
-                    > USED AT LINE 1497 IN MINT.asm
-                    > USED AT LINE 1499 IN MINT.asm
-CONV:               07CC DEFINED AT LINE 1515 IN MINT.asm
-                    > USED AT LINE 1512 IN MINT.asm
-NESTING:            07D7 DEFINED AT LINE 1533 IN MINT.asm
+GET_HEX1:           079F DEFINED AT LINE 1485 IN MINT.asm
+                    > USED AT LINE 1504 IN MINT.asm
+ASCHX1:             07A5 DEFINED AT LINE 1489 IN MINT.asm
+                    > USED AT LINE 1487 IN MINT.asm
+TIMES16:            07AF DEFINED AT LINE 1498 IN MINT.asm
+ENDHEX:             07B5 DEFINED AT LINE 1506 IN MINT.asm
+                    > USED AT LINE 1496 IN MINT.asm
+PRINTHEX:           07B6 DEFINED AT LINE 1508 IN MINT.asm
+                    > USED AT LINE 865 IN MINT.asm
+                    > USED AT LINE 877 IN MINT.asm
+PRINT_HEX8:         07C1 DEFINED AT LINE 1522 IN MINT.asm
+                    > USED AT LINE 1513 IN MINT.asm
+                    > USED AT LINE 1515 IN MINT.asm
+CONV:               07CA DEFINED AT LINE 1531 IN MINT.asm
+                    > USED AT LINE 1528 IN MINT.asm
+NESTING:            07D5 DEFINED AT LINE 1549 IN MINT.asm
                     > USED AT LINE 210 IN MINT.asm
                     > USED AT LINE 240 IN MINT.asm
-                    > USED AT LINE 1015 IN MINT.asm
-NESTING1A:          07E2 DEFINED AT LINE 1540 IN MINT.asm
-                    > USED AT LINE 1537 IN MINT.asm
-NESTING1:           07E5 DEFINED AT LINE 1543 IN MINT.asm
-                    > USED AT LINE 1535 IN MINT.asm
-NESTING2:           07F1 DEFINED AT LINE 1550 IN MINT.asm
-                    > USED AT LINE 1545 IN MINT.asm
-                    > USED AT LINE 1547 IN MINT.asm
-NESTING3:           07F3 DEFINED AT LINE 1553 IN MINT.asm
-                    > USED AT LINE 1549 IN MINT.asm
-NESTING4:           07FE DEFINED AT LINE 1560 IN MINT.asm
-                    > USED AT LINE 1555 IN MINT.asm
-                    > USED AT LINE 1557 IN MINT.asm
+                    > USED AT LINE 1023 IN MINT.asm
+NESTING1A:          07E0 DEFINED AT LINE 1556 IN MINT.asm
+                    > USED AT LINE 1553 IN MINT.asm
+NESTING1:           07E3 DEFINED AT LINE 1559 IN MINT.asm
+                    > USED AT LINE 1551 IN MINT.asm
+NESTING2:           07EF DEFINED AT LINE 1566 IN MINT.asm
+                    > USED AT LINE 1561 IN MINT.asm
+                    > USED AT LINE 1563 IN MINT.asm
+NESTING3:           07F1 DEFINED AT LINE 1569 IN MINT.asm
+                    > USED AT LINE 1565 IN MINT.asm
+NESTING4:           07FC DEFINED AT LINE 1576 IN MINT.asm
+                    > USED AT LINE 1571 IN MINT.asm
+                    > USED AT LINE 1573 IN MINT.asm
 STACK:              0900 DEFINED AT LINE 4 IN ram.asm
                     > USED AT LINE 627 IN IOSerial.asm
 DSTACK:             0900 DEFINED AT LINE 5 IN ram.asm
                     > USED AT LINE 168 IN MINT.asm
                     > USED AT LINE 486 IN MINT.asm
-                    > USED AT LINE 1174 IN MINT.asm
+                    > USED AT LINE 1182 IN MINT.asm
 RSTACK:             0A00 DEFINED AT LINE 8 IN ram.asm
                     > USED AT LINE 175 IN MINT.asm
 TIB:                0A00 DEFINED AT LINE 10 IN ram.asm
@@ -2626,88 +2636,93 @@ TIB:                0A00 DEFINED AT LINE 10 IN ram.asm
                     > USED AT LINE 244 IN MINT.asm
                     > USED AT LINE 257 IN MINT.asm
                     > USED AT LINE 487 IN MINT.asm
-                    > USED AT LINE 1363 IN MINT.asm
-                    > USED AT LINE 1378 IN MINT.asm
-SYSCONSTS:          0B00 DEFINED AT LINE 17 IN ram.asm
+                    > USED AT LINE 1372 IN MINT.asm
+                    > USED AT LINE 1387 IN MINT.asm
+MINTVARS:           0B00 DEFINED AT LINE 14 IN ram.asm
+                    > USED AT LINE 693 IN MINT.asm
+                    > USED AT LINE 1226 IN MINT.asm
+                    > USED AT LINE 1448 IN MINT.asm
+SYSCONSTS:          0B00 DEFINED AT LINE 18 IN ram.asm
                     > USED AT LINE 178 IN MINT.asm
-                    > USED AT LINE 1268 IN MINT.asm
-CS0:                0B00 DEFINED AT LINE 19 IN ram.asm
-CTIB:               0B02 DEFINED AT LINE 20 IN ram.asm
-CDEFS:              0B04 DEFINED AT LINE 21 IN ram.asm
-CVARS:              0B06 DEFINED AT LINE 22 IN ram.asm
-COPCODES:           0B08 DEFINED AT LINE 23 IN ram.asm
-CMACROS:            0B0A DEFINED AT LINE 24 IN ram.asm
-CUSERVARS:          0B0C DEFINED AT LINE 25 IN ram.asm
-USERVARS:           0B10 DEFINED AT LINE 31 IN ram.asm
+                    > USED AT LINE 1277 IN MINT.asm
+CS0:                0B00 DEFINED AT LINE 20 IN ram.asm
+CTIB:               0B02 DEFINED AT LINE 21 IN ram.asm
+CDEFS:              0B04 DEFINED AT LINE 22 IN ram.asm
+CVARS:              0B06 DEFINED AT LINE 23 IN ram.asm
+COPCODES:           0B08 DEFINED AT LINE 24 IN ram.asm
+CMACROS:            0B0A DEFINED AT LINE 25 IN ram.asm
+CUSERVARS:          0B0C DEFINED AT LINE 26 IN ram.asm
+USERVARS:           0B10 DEFINED AT LINE 32 IN ram.asm
                     > USED AT LINE 492 IN MINT.asm
-                    > USED AT LINE 1219 IN MINT.asm
-VALT:               0B10 DEFINED AT LINE 33 IN ram.asm
+                    > USED AT LINE 1226 IN MINT.asm
+VALT:               0B10 DEFINED AT LINE 34 IN ram.asm
                     > USED AT LINE 648 IN MINT.asm
-VBASE16:            0B12 DEFINED AT LINE 34 IN ram.asm
-                    > USED AT LINE 854 IN MINT.asm
-VTIBPTR:            0B14 DEFINED AT LINE 35 IN ram.asm
+VBASE16:            0B12 DEFINED AT LINE 35 IN ram.asm
+                    > USED AT LINE 862 IN MINT.asm
+VTIBPTR:            0B14 DEFINED AT LINE 36 IN ram.asm
                     > USED AT LINE 197 IN MINT.asm
                     > USED AT LINE 256 IN MINT.asm
                     > USED AT LINE 359 IN MINT.asm
                     > USED AT LINE 368 IN MINT.asm
-                    > USED AT LINE 1382 IN MINT.asm
-VHEAPPTR:           0B1E DEFINED AT LINE 40 IN ram.asm
+                    > USED AT LINE 1391 IN MINT.asm
+VHEAPPTR:           0B1E DEFINED AT LINE 41 IN ram.asm
                     > USED AT LINE 337 IN MINT.asm
                     > USED AT LINE 346 IN MINT.asm
-                    > USED AT LINE 1125 IN MINT.asm
-                    > USED AT LINE 1395 IN MINT.asm
+                    > USED AT LINE 1133 IN MINT.asm
                     > USED AT LINE 1404 IN MINT.asm
-                    > USED AT LINE 1437 IN MINT.asm
-VARS:               0B44 DEFINED AT LINE 63 IN ram.asm
+                    > USED AT LINE 1413 IN MINT.asm
+                    > USED AT LINE 1453 IN MINT.asm
+VARS:               0B44 DEFINED AT LINE 64 IN ram.asm
                     > USED AT LINE 489 IN MINT.asm
-                    > USED AT LINE 687 IN MINT.asm
-DEFS:               0B78 DEFINED AT LINE 68 IN ram.asm
+                    > USED AT LINE 693 IN MINT.asm
+DEFS:               0B78 DEFINED AT LINE 69 IN ram.asm
                     > USED AT LINE 181 IN MINT.asm
                     > USED AT LINE 488 IN MINT.asm
                     > USED AT LINE 668 IN MINT.asm
-                    > USED AT LINE 1354 IN MINT.asm
-                    > USED AT LINE 1428 IN MINT.asm
-                    > USED AT LINE 1458 IN MINT.asm
-BUF:                0BAC DEFINED AT LINE 70 IN ram.asm
-VIFTEMODE:          0C2C DEFINED AT LINE 72 IN ram.asm
-                    > USED AT LINE 991 IN MINT.asm
-                    > USED AT LINE 1071 IN MINT.asm
-                    > USED AT LINE 1189 IN MINT.asm
-VBYTEMODE:          0C2E DEFINED AT LINE 73 IN ram.asm
+                    > USED AT LINE 1363 IN MINT.asm
+                    > USED AT LINE 1437 IN MINT.asm
+                    > USED AT LINE 1448 IN MINT.asm
+                    > USED AT LINE 1474 IN MINT.asm
+BUF:                0BAC DEFINED AT LINE 71 IN ram.asm
+VIFTEMODE:          0C2C DEFINED AT LINE 73 IN ram.asm
+                    > USED AT LINE 999 IN MINT.asm
+                    > USED AT LINE 1079 IN MINT.asm
+                    > USED AT LINE 1197 IN MINT.asm
+VBYTEMODE:          0C2E DEFINED AT LINE 74 IN ram.asm
                     > USED AT LINE 339 IN MINT.asm
-                    > USED AT LINE 1394 IN MINT.asm
-                    > USED AT LINE 1407 IN MINT.asm
-RST08:              0C30 DEFINED AT LINE 74 IN ram.asm
+                    > USED AT LINE 1403 IN MINT.asm
+                    > USED AT LINE 1416 IN MINT.asm
+RST08:              0C30 DEFINED AT LINE 75 IN ram.asm
                     > USED AT LINE 107 IN IOSerial.asm
                     > USED AT LINE 629 IN IOSerial.asm
-RST10:              0C32 DEFINED AT LINE 75 IN ram.asm
+RST10:              0C32 DEFINED AT LINE 76 IN ram.asm
                     > USED AT LINE 113 IN IOSerial.asm
                     > USED AT LINE 630 IN IOSerial.asm
-RST18:              0C34 DEFINED AT LINE 76 IN ram.asm
+RST18:              0C34 DEFINED AT LINE 77 IN ram.asm
                     > USED AT LINE 119 IN IOSerial.asm
                     > USED AT LINE 631 IN IOSerial.asm
-RST20:              0C36 DEFINED AT LINE 77 IN ram.asm
+RST20:              0C36 DEFINED AT LINE 78 IN ram.asm
                     > USED AT LINE 125 IN IOSerial.asm
                     > USED AT LINE 632 IN IOSerial.asm
-RST28:              0C38 DEFINED AT LINE 78 IN ram.asm
+RST28:              0C38 DEFINED AT LINE 79 IN ram.asm
                     > USED AT LINE 131 IN IOSerial.asm
                     > USED AT LINE 633 IN IOSerial.asm
-RST30:              0C3A DEFINED AT LINE 79 IN ram.asm
+RST30:              0C3A DEFINED AT LINE 80 IN ram.asm
                     > USED AT LINE 137 IN IOSerial.asm
                     > USED AT LINE 634 IN IOSerial.asm
-BAUD:               0C3C DEFINED AT LINE 80 IN ram.asm
-INTVEC:             0C3E DEFINED AT LINE 81 IN ram.asm
+BAUD:               0C3C DEFINED AT LINE 81 IN ram.asm
+INTVEC:             0C3E DEFINED AT LINE 82 IN ram.asm
                     > USED AT LINE 143 IN IOSerial.asm
                     > USED AT LINE 635 IN IOSerial.asm
-NMIVEC:             0C40 DEFINED AT LINE 82 IN ram.asm
+NMIVEC:             0C40 DEFINED AT LINE 83 IN ram.asm
                     > USED AT LINE 191 IN IOSerial.asm
                     > USED AT LINE 636 IN IOSerial.asm
-GETCVEC:            0C42 DEFINED AT LINE 83 IN ram.asm
+GETCVEC:            0C42 DEFINED AT LINE 84 IN ram.asm
                     > USED AT LINE 617 IN IOSerial.asm
                     > USED AT LINE 639 IN IOSerial.asm
-PUTCVEC:            0C44 DEFINED AT LINE 84 IN ram.asm
+PUTCVEC:            0C44 DEFINED AT LINE 85 IN ram.asm
                     > USED AT LINE 622 IN IOSerial.asm
                     > USED AT LINE 641 IN IOSerial.asm
-TBPTR:              0C46 DEFINED AT LINE 85 IN ram.asm
-HEAP:               0C80 DEFINED AT LINE 88 IN ram.asm
+TBPTR:              0C46 DEFINED AT LINE 86 IN ram.asm
+HEAP:               0C80 DEFINED AT LINE 89 IN ram.asm
                     > USED AT LINE 503 IN MINT.asm

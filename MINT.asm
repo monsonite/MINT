@@ -40,10 +40,10 @@
 ;        64 t states to 33 t states
 ;
 ;
-;        User defined commands and variables
+;        User defined commands and mintVars
 ;
 ;        User Commands  A-Z
-;        User Variables a-z
+;        User mintVars a-z
 ;
 ;        Commands now available:
 ;
@@ -125,7 +125,7 @@
 ;       Each time A is encountered (outside of a colon definition)
 ;       it will execute the code  located there i.e. 123 456 + .
 ;
-;       Variables are associated with lowercase characters a-z
+;       mintVars are associated with lowercase characters a-z
 ;       Each variable is allocated 2 bytes located on even addresses
 ;       They run contiguously from $A800 (a) to $A830 (z)
 ;       They are accessed using the fetch and store commands @ and !
@@ -480,7 +480,7 @@ opcodes:
         DB    lsb(nop_)    ;    backspace
 
 ; ***********************************************************************
-; Initial values for user variables		
+; Initial values for user mintVars		
 ; ***********************************************************************		
 iSysConsts:
         DW dStack               ; \0 cS0
@@ -682,14 +682,15 @@ ret_:
 
 var_:
         LD A,(BC)
-        SUB "a"                 ; Calc index
+        
+        SUB "a" - ((VARS - mintVars)/2)  
         ADD A,A
-        LD HL,VARS
-        LD E,A
-        LD D,0
-        ADD HL,DE
+        LD L,A
+        LD H,msb(mintVars)
+        
         PUSH HL
         JP (IY)
+        
         
 fetch_:                     ; Fetch the value from the address placed on the top of the stack      
         POP     HL          ; 10t
@@ -1214,10 +1215,10 @@ go_:
 
 userVar_:
         LD A,(BC)
-        SUB "a"-8               ; Calc index (deal with alignment)
+        SUB "a" - ((userVars - mintVars) / 2)  
         ADD A,A
-        LD HL,userVars
         LD L,A
+        LD H,msb(mintVars)
         PUSH HL
         JP  (IY)                ; Execute code from User def
 
@@ -1429,11 +1430,12 @@ def:                       ; Create a colon definition
         INC BC
         LD  A,(BC)          ; Get the next character
         INC BC
-        SUB "A"             ; Calc index
-        ADD A,A             ; Double A to index even addresses
-        LD E,A              ; Index into table
-        LD D,0
-        ADD HL,DE
+
+        SUB "A" - ((DEFS - mintVars)/2)  
+        ADD A,A
+        LD L,A
+        LD H,msb(mintVars)
+
         LD DE,(vHeapPtr)       ; start of defintion
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
