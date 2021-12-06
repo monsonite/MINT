@@ -1,4 +1,4 @@
-    .engine mycomputer
+.engine mycomputer
 
     .include "constants.asm"
     .include "test.mac.asm"
@@ -14,45 +14,45 @@
     
     .org $4000
     
-    .macro hash,name1,test1,test2 
-        CALL enter
-        DB ":H ( $ %@ 1+^ $ 2+)';"
-        DB test1, " H"
-        DB test2, " H"
-        DB "="
-        DB 0
-        expect name1, 1
-    .endm
-
-    .macro reduce,name1,fun1,test1,val1 
-        CALL enter
-        DB ":R \\f!( $%@ \\f@\\G $ 2+)';"
-        DB fun1
-        DB test1
-        DB 0
-        expect name1, val1
+    .macro utilDefs
+        DB ":Y",$22,";"                     ; convenient way to access " for tests
     .endm
     
-    ; .macro map,name1,fun1,test1,comp1 
-    ;     CALL enter
-    ;     DB ":M \\f! \\h@ \\R\\R (",$22,"@ \\f@ \\G \\h@! 2\\h\\+ 2+) ' \\h@ % -;"
-    ;     DB fun1
-    ;     DB test1
-    ;     DB comp1
-    ;     DB 0
-    ;     expect name1, val1
-    ; .endm
+    .macro testDefs
+        DB ":T `.`\\D\\d!;"                 ; Test ( -- ) Test 
+        DB ":K \\D\\d@- 0$ ($1+^);"         ; ( x1...xn num -- hash )
+        DB ":E K\\D\\d!;"                   ; End ( -- hash1 ) EndTest
+        DB ":X K=;"                         ; Expect ( hash1 x1...xn -- bool )
+    .endm
+    
+    .macro arrayDefs
+        DB ":R \\f! ( $%@ \\f@\\G $ 2+) ' ;"
+        DB ":M \\f! \\h@ \\R\\R (Y @ \\f@ \\G \\h@! 2\\h\\+ 2+) ' \\h@ % -;"
+    .endm
+    
+    .macro tester, name1, test1, expect1
+        DB "T"
+        DB test1
+        DB "E"
+        DB expect1
+        DB "X"
+        DB "0=(\\N`fail: ",name1," expected: ",expect1,"`\\N\\N",0,")\\P"
+    .endm
     
     testsStart:
-    hash "hash1",       "[1 2 3]",                      "[1 2 3]"
     
-    test ":G %%> \\($ ')($ '); 5 2 G", 5
-    
-    reduce "count",     ":C'1+;",                   "0 [1 4 3 6 2] ?C R", 5
-    reduce "greatest",  ":G %%> \\($ ')($ ') ;",    "1 [1 4 3 6 2] ?G R", 6
-    reduce "least",     ":L %%< \\($ ')($ ') ;",    "1 [1 4 3 6 2] ?L R", 1
-    reduce "sum",       ":S+;",                     "0 [1 4 3 6 2] ?S R", 16
-    reduce "hash",      ":H1+^;",                   "0 [1 4 3 6 2] ?H R", 7
+    CALL enter
+    utilDefs
+    testDefs
+    arrayDefs
+    tester "dup",      "1Y", "1 1"
+    tester "nums",     "1 2 3", "1 2 3"
+    tester "max",      ":G %%> \\($ ')($ '); 5 2 G", "5"
+    tester "count",    ":C'1+; 0 [1 4 3 6 2] ?C R", "5"
+    tester "sum",      ":P+; 0 [1 4 3 6 2] ?P R", "16"
+    tester "greatest", ":G %%> \\($ ')($ ') ; 1 [1 4 3 6 2] ?G R", "6"
+    tester "least",    ":L %%< \\($ ')($ ') ; 1 [1 4 3 6 2] ?L R", "1"
+    DB 0
     
     CALL enter
     .cstr "`Done!`"
