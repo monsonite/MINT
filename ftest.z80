@@ -15,7 +15,7 @@
     .org $4000
     
     .macro utilDefs
-        DB ":Y",$22,";"                     ; convenient way to access " for tests
+        DB ":Q",$22,";"                     ; convenient way to access " for tests
     .endm
     
     .macro testDefs
@@ -27,7 +27,8 @@
     
     .macro arrayDefs
         DB ":R \\f! ( $%@ \\f@\\G $ 2+) ' ;"
-        DB ":M \\f! \\h@ \\R\\R (Y @ \\f@ \\G \\h@! 2\\h\\+ 2+) ' \\h@ % -;"
+        DB ":M \\f! \\h@ \\R\\R (Q @ \\f@ \\G \\h@! 2\\h\\+ 2+) ' \\h@ % -;"
+        DB ":Z `[ `(Q @.2+)`]` ' ;"
     .endm
     
     .macro tester, name1, test1, expect1
@@ -45,13 +46,18 @@
     utilDefs
     testDefs
     arrayDefs
-    tester "dup",      "1Y", "1 1"
+    
+    DB "[1 2 3] Z"
+    
+    tester "dup",      "1Q", "1 1"
     tester "nums",     "1 2 3", "1 2 3"
     tester "max",      ":G %%> \\($ ')($ '); 5 2 G", "5"
     tester "count",    ":C'1+; 0 [1 4 3 6 2] ?C R", "5"
     tester "sum",      ":P+; 0 [1 4 3 6 2] ?P R", "16"
     tester "greatest", ":G %%> \\($ ')($ ') ; 1 [1 4 3 6 2] ?G R", "6"
     tester "least",    ":L %%< \\($ ')($ ') ; 1 [1 4 3 6 2] ?L R", "1"
+    
+    
     DB 0
     
     CALL enter
