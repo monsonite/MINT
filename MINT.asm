@@ -648,17 +648,56 @@ alt_:
         LD HL,(vAlt)
         JP (HL)
 
-exit_:
-        INC BC
-        LD DE,BC                
-        CALL rpop               ; Restore Instruction pointer
-        LD BC,HL
-        EX DE,HL
-        JP (HL)
+and_:        
+        POP     DE          ; 10t Bitwise AND the top 2 elements of the stack
+        POP     HL          ; 10t
+        LD      A,E         ; 4t
+        AND     L           ; 4t
+        LD      L,A         ; 4t
+        LD      A,D         ; 4t
+        AND     H           ; 4t
+and1:
+        LD      H,A         ; 4t
+        PUSH    HL          ; 11t
+        JP      (IY)        ; 8t
         
-num_:   
-        JP  number
+                            ; 63t
+or_: 		 
+        POP     DE             ; Bitwise OR the top 2 elements of the stack
+        POP     HL
+        LD      A,E
+        OR      L
+        LD      L,A
+        LD      A,D
+        OR      H
+        JR and1
 
+xor_:		 
+        POP     DE            ; Bitwise XOR the top 2 elements of the stack
+xor1:
+        POP     HL
+        LD      A,E
+        XOR     L
+        LD      L,A
+        LD      A,D
+        XOR     H
+        JR and1
+
+inv_:						    ; Bitwise INVert the top member of the stack
+        LD DE, $FFFF            ; by xoring with $FFFF
+        JR xor1        
+   
+add_:                          ; Add the top 2 members of the stack
+        POP     DE             ; 10t
+        POP     HL             ; 10t
+        ADD     HL,DE          ; 11t
+        PUSH    HL             ; 11t
+        JP      (IY)           ; 8t
+                               ; 50t
+
+arrDef_:    JP arrDef
+arrEnd_:    JP arrEnd
+begin_:     JP begin                   
 call_:
         LD HL,BC
         CALL rpush              ; save Instruction Pointer
@@ -675,22 +714,38 @@ call_:
         DEC BC
         JP  (IY)                ; Execute code from User def
 
-ret_:
-        CALL rpop               ; Restore Instruction pointer
-        LD BC,HL                
-        JP (IY)             
 
-var_:
-        LD A,(BC)
-        
-        SUB "a" - ((VARS - mintVars)/2)  
-        ADD A,A
-        LD L,A
-        LD H,msb(mintVars)
-        
-        PUSH HL
+def_:       JP def
+dot_:       
+        POP HL
+        LD A,(vBase16)
+        OR A
+        JR Z,dot1
+        CALL printhex
+        JR dot2
+dot1:
+        CALL printdec
+dot2:
+        CALL space
         JP (IY)
-        
+
+drop_:                      ; Discard the top member of the stack
+        POP     HL
+        JP      (IY)
+
+dup_:        
+        POP     HL          ; Duplicate the top member of the stack
+        PUSH    HL
+        PUSH    HL
+        JP (IY)
+
+exit_:
+        INC BC
+        LD DE,BC                
+        CALL rpop               ; Restore Instruction pointer
+        LD BC,HL
+        EX DE,HL
+        JP (HL)
         
 fetch_:                     ; Fetch the value from the address placed on the top of the stack      
         POP     HL          ; 10t
@@ -701,29 +756,19 @@ fetch1:
         PUSH    DE          ; 11t
         JP      (IY)        ; 8t
                             ; 49t 
-        
-store_:                     ; Store the value at the address placed on the top of the stack
-        POP    HL           ; 10t
-        POP    DE           ; 10t
-        LD     (HL),E       ; 7t
-        INC    HL           ; 6t
-        LD     (HL),D       ; 7t
-        JP     (IY)         ; 8t
-                            ; 48t
-    
-dup_:        
-        POP     HL          ; Duplicate the top member of the stack
-        PUSH    HL
-        PUSH    HL
-        JP (IY)
+hex_:   CALL     get_hex
+        JR       less           ; piggyback for ending
 
-; $ swap                    ; a b -- b a Swap the top 2 elements of the stack
-swap_:        
-        POP HL
-        EX (SP),HL
-        PUSH HL
-        JP (IY)
-        
+hexp_:                              ; print hexadecimal
+        POP     HL
+        CALL    printhex
+        JR   dot2
+
+nop_:       JP NEXT                 ; hardwire white space to always go to NEXT (important for arrays)
+
+num_:   
+        JP  number
+
 over_:  
         POP     HL          ; Duplicate 2nd element of the stack
         POP     DE
@@ -732,66 +777,28 @@ over_:
         PUSH    DE          ; And push it to top of stack
         JP (IY)        
     
-drop_:                      ; Discard the top member of the stack
-        POP     HL
-        JP      (IY)
+quit_:      RET                     ; exit interpreter
 
-and_:        
-        POP     DE          ; 10t Bitwise AND the top 2 elements of the stack
-        POP     HL          ; 10t
-        LD      A,E         ; 4t
-        AND     L           ; 4t
-        LD      L,A         ; 4t
-        LD      A,D         ; 4t
-        AND     H           ; 4t
-and1:
-        LD      H,A         ; 4t
-        PUSH    HL          ; 11t
-        JP      (IY)        ; 8t
+ret_:
+        CALL rpop               ; Restore Instruction pointer
+        LD BC,HL                
+        JP (IY)             
+
+store_:                     ; Store the value at the address placed on the top of the stack
+        POP    HL           ; 10t
+        POP    DE           ; 10t
+        LD     (HL),E       ; 7t
+        INC    HL           ; 6t
+        LD     (HL),D       ; 7t
+        JP     (IY)         ; 8t
+                            ; 48t
+; $ swap                    ; a b -- b a Swap the top 2 elements of the stack
+swap_:        
+        POP HL
+        EX (SP),HL
+        PUSH HL
+        JP (IY)
         
-                            ; 63t
-    
-    
-or_: 		 
-        POP     DE             ; Bitwise OR the top 2 elements of the stack
-        POP     HL
-        LD      A,E
-        OR      L
-        LD      L,A
-        LD      A,D
-        OR      H
-        JR and1
-        ; LD      H,A
-        ; PUSH    HL
-        ; JP      (IY)
-    
-    
-xor_:		 
-        POP     DE            ; Bitwise XOR the top 2 elements of the stack
-xor1:
-        POP     HL
-        LD      A,E
-        XOR     L
-        LD      L,A
-        LD      A,D
-        XOR     H
-        JR and1
-        ; LD      H,A
-        ; PUSH    HL
-        ; JP      (IY)
-
-inv_:						    ; Bitwise INVert the top member of the stack
-        LD DE, $FFFF            ; by xoring with $FFFF
-        JR xor1        
-   
-add_:                          ; Add the top 2 members of the stack
-        POP     DE             ; 10t
-        POP     HL             ; 10t
-        ADD     HL,DE          ; 11t
-        PUSH    HL             ; 11t
-        JP      (IY)           ; 8t
-                               ; 50t
-
 ;  Left shift { is multply by 2		
 shl_:   
         POP HL                  ; Duplicate the top member of the stack
@@ -799,7 +806,6 @@ shl_:
         PUSH HL                 ; shift left fallthrough into add_     
         JP (IY)                 ; 8t
     
-
 ;  Right shift } is a divide by 2		
 		
 shr_:    
@@ -847,45 +853,82 @@ less:
         PUSH     HL
         JP       (IY) 
         
-hex_:   CALL     get_hex
-        JR       less           ; piggyback for ending
-
-dot_:       
-        POP HL
-        LD A,(vBase16)
-        OR A
-        JR Z,dot1
-        CALL printhex
-        JR dot2
-dot1:
-        CALL printdec
-dot2:
-        CALL space
+var_:
+        LD A,(BC)
+        
+        SUB "a" - ((VARS - mintVars)/2)  
+        ADD A,A
+        LD L,A
+        LD H,msb(mintVars)
+        
+        PUSH HL
         JP (IY)
-
-getRef_:    JP getRef
-
-hexp_:                              ; print hexadecimal
-        POP     HL
-        CALL    printhex
-        JR   dot2
-
-def_:       JP def
-again_:     JP again
-arrDef_:    JP arrDef
-arrEnd_:    JP arrEnd
-nop_:       JP NEXT                 ; hardwire white space to always go to NEXT (important for arrays)
-quit_:      RET                     ; exit interpreter
-begin_:     JR begin                   
+        
 str_:       JR str
+again_:     JR again
+mul_:       JR mul      
 div_:       JR div
-mul_:       
+getRef_:    
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
         ;falls through 
-mul:                        ; 16-bit multiply  
+getRef:                         
+        INC BC
+        LD A,(BC)
+        SUB "A"
+        ADD A,A
+        LD E,A
+        LD D,0
+        LD HL,defs
+        ADD HL,DE
+        JP fetch1
 
+; **************************************************************************             
+; Print the string between the `backticks`
+
+str:                       
+        INC BC
+        
+nextchar:            
+        LD A, (BC)
+        INC BC
+        CP "`"              ; ` is the string terminator
+        JR Z,stringend
+        CALL putchar
+        JR   nextchar
+
+stringend:  
+        DEC BC
+        JP   (IY) 
+
+again:  ;20
+        LD HL,vIFTEMode
+        XOR A
+        OR (HL)
+        JR NZ,again2
+        LD E,(IX+0)                 ; peek loop var
+        LD D,(IX+1)                 
+        LD L,(IX+2)                 ; peek loop limit
+        LD H,(IX+3)                 
+        OR A
+        SBC HL,DE
+        JR Z,again1
+        INC DE
+        LD (IX+0),E                 ; poke loop var
+        LD (IX+1),D                 
+        LD C,(IX+4)                 ; peek loop address
+        LD B,(IX+5)                 
+        JP (IY)
+again1:   
+        LD DE,6                     ; drop loop frame
+        ADD IX,DE
+again2:
+        JP (IY)
+
+; ********************************************************************
+; 16-bit multiply  
+mul:    ; 19
         POP  DE             ; get first value
         POP  HL
         PUSH BC             ; Preserve the IP
@@ -923,8 +966,7 @@ Mul_Loop_1:
 ; 35 bytes (reduced from 48)
 		
 
-div:  
-
+div:    ; 24
         POP  DE             ; get first value
         POP  HL             ; get 2nd value
         PUSH BC             ; Preserve the IP
@@ -956,7 +998,6 @@ div_done:
         
         EX DE,HL            ; swap them over?
 			
-mul_end:
 div_end:    
         POP  BC             ; Restore the IP
    
@@ -965,46 +1006,27 @@ div_end:
 
         JP       (IY)
         
-; **************************************************************************             
-; Print the string between the `backticks`
-
-str:                       
-        INC BC
-        
-nextchar:            
-        LD A, (BC)
-        INC BC
-        CP "`"              ; ` is the string terminator
-        JR Z,stringend
-        CALL putchar
-        JR   nextchar
-
-stringend:  
-        DEC BC
-        JP   (IY) 
-
-        
 ; *************************************
 ; Loop Handling Code
 ; *************************************
         	        
-begin:                      ; Left parentesis begins a loop
+begin:  ;23                     ; Left parentesis begins a loop
         LD HL,vIFTEMode
         LD (HL),0
 
         POP HL
-        LD A,L              ; zero?
+        LD A,L                  ; zero?
         OR H
         JR Z,begin1
         
         DEC HL
         LD DE,-6
         ADD IX,DE
-        LD (IX+0),0                 ; loop var
+        LD (IX+0),0             ; loop var
         LD (IX+1),0                 
-        LD (IX+2),L                 ; loop limit
+        LD (IX+2),L             ; loop limit
         LD (IX+3),H                 
-        LD (IX+4),C                 ; loop address
+        LD (IX+4),C             ; loop address
         LD (IX+5),B                 
 
         JP (IY)
@@ -1031,8 +1053,7 @@ begin2:
 ; Push HL onto the stack and proceed to the dispatch routine.
 ; ********************************************************************************
          
-								 
-number:
+number: ; 23
 		LD HL,$0000				; 10t Clear HL to accept the number
 		LD A,(BC)				; 7t  Get the character which is a numeral
         
@@ -1068,40 +1089,6 @@ endnum:
         DEC BC
         JP (IY)                 ; and process the next character
 
-again:
-        LD HL,vIFTEMode
-        XOR A
-        OR (HL)
-        JR NZ,again2
-        LD E,(IX+0)                 ; peek loop var
-        LD D,(IX+1)                 
-        LD L,(IX+2)                 ; peek loop limit
-        LD H,(IX+3)                 
-        OR A
-        SBC HL,DE
-        JR Z,again1
-        INC DE
-        LD (IX+0),E                 ; poke loop var
-        LD (IX+1),D                 
-        LD C,(IX+4)                 ; peek loop address
-        LD B,(IX+5)                 
-        JP (IY)
-again1:   
-        LD DE,6                     ; drop loop frame
-        ADD IX,DE
-again2:
-        JP (IY)
-
-alt1:
-        INC BC
-        LD A,(BC)
-        LD HL,altCodes
-        ADD A,L
-        LD L,A
-        LD L,(HL)           ; 7t    get low jump address
-        LD H, msb(page5)    ; Load H with the 5th page address
-        JP  (HL)                    ; 4t    Jump to routine
-         
 rpush:
         DEC IX                  
         LD (IX+0),H
@@ -1122,16 +1109,21 @@ crlf:
         LD A, '\n'           
         JP putchar
 
-end_def:    
-        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
-        DEC BC
-        JP (IY)       
+alt1:
+        INC BC
+        LD A,(BC)
+        LD HL,altCodes
+        ADD A,L
+        LD L,A
+        LD L,(HL)           ; 7t    get low jump address
+        LD H, msb(page6)    ; Load H with the 5th page address
+        JP  (HL)                    ; 4t    Jump to routine
 
 ; **************************************************************************
 ; Page 6 Alt primitives
 ; **************************************************************************
         .align $100
-page5:
+page6:
 
 cArrDef_:                   ; define a byte array
         LD A,TRUE
@@ -1450,16 +1442,11 @@ nextbyte:                   ; Skip to end of definition
         JP z, end_def           ; end the definition
         JR  nextbyte            ; get the next element
 
-getRef:                         
-        INC BC
-        LD A,(BC)
-        SUB "A"
-        ADD A,A
-        LD E,A
-        LD D,0
-        LD HL,defs
-        ADD HL,DE
-        JP fetch1
+end_def:    
+        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
+        DEC BC
+        JP (IY)       
+
 
 ; ***************************************************************************
 
@@ -1492,7 +1479,6 @@ times16:                        ; Multiply digit(s) in HL by 16
 endhex: RET
         
 printhex:       
-
                                 ; Display HL as a 16-bit number in hex.
         PUSH BC                 ; preserve the IP
         LD	A,H
@@ -1543,6 +1529,8 @@ nesting1a:
         SET 7,E
         RET
 nesting1:
+        BIT 7,E             
+        RET NZ             
         CP ':'
         JR Z,nesting2
         CP '['
