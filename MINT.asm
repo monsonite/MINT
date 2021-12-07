@@ -996,8 +996,6 @@ div_done:
         LD D,B              ; Result from BC to DE
         LD E,C
         
-        EX DE,HL            ; swap them over?
-			
 div_end:    
         POP  BC             ; Restore the IP
    
