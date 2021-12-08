@@ -68,8 +68,6 @@ vars:       DS 26 * 2
 ; ****************************************************************
 defs:       DS 26 * 2
 
-BUF:        DS $80
-
 vIFTEMode   DW 0                ; 
 vByteMode:  DW 0                ; 
 RST08:      DW 0                ; 
@@ -84,6 +82,9 @@ NMIVEC:     DW 0                ;
 GETCVEC:    DW 0                ;   
 PUTCVEC:    DW 0                ;   
 tbPtr:      DW 0                ; reserved for tests
+
+BUF:        DS $80
+
 
             .align $40
 HEAP:         

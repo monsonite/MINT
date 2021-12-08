@@ -1,8 +1,4 @@
 notes.txt
 .vscode/
-ftest.z80.hex
-ftest.z80.lst
-rtest.z80.hex
-rtest.z80.lst
-test.z80.hex
-test.z80.lst
+*test.z80.hex
+*test.z80.lst

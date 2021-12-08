@@ -1,0 +1,98 @@
+    .engine mycomputer
+
+    .include "constants.asm"
+    .include "IOSerial.asm"
+
+    .macro tec17SegSymbols1
+        ; sp ! " # $ % & ' ( ) * + , - . /
+        DB "#00 #18 #00 #00 #00 #00 #00 #00 "
+        DB "#00 #04 #10 #00 #00 #00 #00 #00 " 
+    .endm
+    
+    .macro tec17SegNumbers
+        ; 0 1 2 3 4 5 6 7 8 9
+        DB "#EB #28 #CD #AD #2E #A7 #E7 #29 #EF #2F "
+    .endm
+    
+    .macro tec17SegSymbols2
+        ; : ; < = > ? @
+        DB "#00 #00 #00 #00 #00 #00 #00 "
+    .endm
+    
+    .macro tec17SegLetters
+        ;  A B C D E F G H
+        ;  I J K L M N O P  
+        ;  Q R S T U V W X 
+        ;  Y Z 
+        DB " #6F #E6 #C3 #EC #C7 #47 #E3 #6E "
+        DB " #28 #E8 #CE #C2 #6B #6B #EB #4F "
+        DB " #2F #43 #A7 #46 #EA #E0 #EA #6E "
+        DB " #AE #CD "           
+    .endm
+    
+    .macro tec1Tables
+        DB "\\["
+        tec17SegSymbols1
+        tec17SegNumbers
+        tec17SegSymbols2
+        tec17SegLetters
+        DB "]' c!"
+        DB "[0 0 0 0  0 0]' d!"           ; display buffer  
+    .endm  
+    
+    .macro tec1Defs
+        DB ":A #20 - c@ + \\@;"
+        
+        DB ":B"                             ; buf str -- 
+        DB "Q"                              ; buf str str 
+        DB "\\@"                            ; buf str [str] 
+        DB "A"                              ; buf str seg 
+        DB "\\R"                            ; str seg buf 
+        DB "$"                              ; str buf seg 
+        DB "%"                              ; str buf seg buf 
+        DB "\\!"                            ; str buf 
+        DB "$"                              ; buf str 
+        DB ";"                            
+
+        DB ":C"                             ; buf str -- 
+        DB "1+"                             ; buf str' 
+        DB "$"                              ; str' buf  
+        DB "1+"                             ; str' buf'  
+        DB "$"                              ; buf' str'   
+        DB ";"                            
+
+        DB ":D"                             ; buf str -- 
+        DB "10("                            ; buf str str 
+        DB "BC"                             ; buf' str' 
+        DB ")'';"                           ; 
+    .endm
+    
+    LD SP,DSTACK
+    CALL initialize
+    JP testsStart
+    
+    .include "MINT.asm"
+    .include "ram.asm"
+    .include "ftest.mac.asm"
+    
+    .org $4000
+    
+    testsStart:
+    
+    CALL enter
+
+    utilDefs
+    tec1Tables
+    tec1Defs
+    
+    DB ":XHello!;"
+    tester "", "#41 #20 - c@ + \\@", "#6F"
+    tester "", "72A", "#6E"
+    tester "", "?X\\@A", "#6E"    
+    tester "", "d@ ?X D d@\\@", "#6E"    
+        
+        
+    .cstr "`Done!`"
+    HALT
+
+    
