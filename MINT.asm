@@ -1289,11 +1289,11 @@ newln_:
 
 outPort_:
         POP HL
-        LD A,C
+        LD E,C
         LD C,L
         POP HL
         OUT (C),L
-        LD C,A
+        LD C,E
         JP (IY)        
 
 rot_:                               ; a b c -- b c a

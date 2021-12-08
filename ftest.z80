@@ -1,4 +1,4 @@
-.engine mycomputer
+    .engine mycomputer
 
     .include "constants.asm"
     .include "IOSerial.asm"
@@ -9,44 +9,9 @@
     
     .include "MINT.asm"
     .include "ram.asm"
+    .include "ftest.mac.asm"
     
     .org $4000
-    
-    .macro utilDefs
-        DB ":Q ",$22,";"                    ; ( n -- n n ) a convenient way to access " 
-        DB ":W \\h@! 2\\h\\+;"              ; ( n -- ) compiles a word to heap
-        DB ":K \\D\\d@- 0$ ($1+^);"         ; ( x1...xn num -- hash )
-    .endm
-    
-    .macro arrayDefs
-        DB  ":H 0\\R\\R ( $%@ 1+^ $ 2+)';"      ; arr len -- hash           hash array
-    
-        DB  ":R \\f! ( $%@ \\f@\\G $ 2+) ' ;"   ; v0 arr len fun -- val     reduce array
-    
-        DB  ":M \\f! \\h@\\R\\R "               ; arr len fun -- arr' len'  map array
-        DB      "(Q@"
-        DB      "\\f@\\G W 2+"
-        DB      ")" 
-        DB  "' \\h@ % -};"
-    
-        DB  ":F \\f! \\h@ \\R\\R "
-        DB      "(Q@Q " 
-        DB      "\\f@\\G "
-        DB      "\\($ W)(') 2+ "
-        DB      ")"
-        DB  " '  \\h@ % -};"
-    
-        DB  ":Z `[ `(Q @.2+)`]` ' ;"            ; arr len --                print array
-    .endm
-    
-    .macro tester, name1, test1, expect1
-        DB "`.`\\D\\d!"
-        DB " ",test1," "
-        DB "K\\D\\d!"                           ; ( -- hash1 )
-        DB " ",expect1," "
-        DB "K=0=(\\N`fail: ",name1," ",test1," expected: "
-        DB expect1,"`\\N\\N",0,")"
-    .endm
     
     testsStart:
     
@@ -54,15 +19,17 @@
     utilDefs
     arrayDefs
     
-    tester "odd",     ":O2/$ '; [1 2 3 4 5 6] ?O F H", "[1 3 5] H"
-    tester "dup",      "1Q", "1 1"
-    tester "nums",     "1 2 3", "1 2 3"
-    tester "max",      ":G %%> \\($ ')($ '); 5 2 G", "5"
-    tester "count",    ":C'1+; 0 [1 4 3 6 2] ?C R", "5"
-    tester "sum",      ":P+; 0 [1 4 3 6 2] ?P R", "16"
-    tester "greatest", ":G %%> \\($ ')($ ') ; 1 [1 4 3 6 2] ?G R", "6"
-    tester "least",    ":L %%< \\($ ')($ ') ; 1 [1 4 3 6 2] ?L R", "1"
-    tester "double",   ":D {; [1 2 3] ?D M H", "[2 4 6] H"
+    tester "TE11p20",   "1 1\\O 255(\\i@ 2\\O 1())", ""
+
+    tester "odd",       ":O2/$ '; [1 2 3 4 5 6] ?O F H", "[1 3 5] H"
+    tester "dup",       "1Q", "1 1"
+    tester "nums",      "1 2 3", "1 2 3"
+    tester "max",       ":G %%> \\($ ')($ '); 5 2 G", "5"
+    tester "count",     ":C'1+; 0 [1 4 3 6 2] ?C R", "5"
+    tester "sum",       ":P+; 0 [1 4 3 6 2] ?P R", "16"
+    tester "greatest",  ":G %%> \\($ ')($ ') ; 1 [1 4 3 6 2] ?G R", "6"
+    tester "least",     ":L %%< \\($ ')($ ') ; 1 [1 4 3 6 2] ?L R", "1"
+    tester "double",    ":D {; [1 2 3] ?D M H", "[2 4 6] H"
     
     tester "", "2 3<", "1"
     tester "", "3 3<", "0"
