@@ -188,6 +188,19 @@ init1:
         DJNZ init1
         RET
 
+macro:
+        LD (vTIBPtr),BC
+        LD HL,ctrlCodes
+        ADD A,L
+        LD L,A
+        LD E,(HL)
+        LD D,msb(macros)
+        PUSH DE
+        call ENTER
+        .cstr "\\G"
+        LD BC,(vTIBPtr)
+        JR interpret2
+
 interpret:
         call ENTER
         .cstr "\\N`> `"
@@ -229,7 +242,7 @@ waitchar:
         CP '\r'                 ; carriage return?
         JR Z,waitchar3
         LD D,0
-        JP macro    
+        JR macro    
 
 waitchar1:
         LD HL,TIB
@@ -244,6 +257,9 @@ waitchar3:
         LD HL,TIB
         ADD HL,BC
         LD (HL),"\r"            ; store the crlf in textbuf
+        INC HL
+        LD (HL),"\n"            
+        INC BC
         INC BC
         CALL crlf               ; echo character to screen
         LD A,E                  ; if zero nesting append and ETX after \r
@@ -354,19 +370,6 @@ writeChar:
         LD (DE),A
         INC DE
         JP putchar
-
-macro:
-        LD (vTIBPtr),BC
-        LD HL,ctrlCodes
-        ADD A,L
-        LD L,A
-        LD E,(HL)
-        LD D,msb(macros)
-        PUSH DE
-        call ENTER
-        .cstr "\\G"
-        LD BC,(vTIBPtr)
-        JP interpret2
 
 ; **************************************************************************
 ; Macros must be written in Mint and end with ; 
@@ -1145,7 +1148,9 @@ charCode_:
 comment_:
         INC BC              ; point to next char
         LD A,(BC)
-        CP "\r"             ; terminate at newline 
+        CP "\r"             ; terminate at cr 
+        JR NZ,comment_
+        CP "\n"             ; terminate at lf 
         JR NZ,comment_
         DEC BC
         JP   (IY) 
@@ -1452,7 +1457,7 @@ end_def:
 ; ***************************************************************************
 
 hex:
-		LD HL,$0000				; 10t Clear HL to accept the number
+	LD HL,$0000				; 10t Clear HL to accept the number
 hex1:
         INC BC
         LD A,(BC)				; 7t  Get the character which is a numeral
