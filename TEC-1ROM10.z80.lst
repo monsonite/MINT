@@ -130,43 +130,43 @@
 0003                             ;RST 1
 0008                          .ORG   ROMSTART+$08   
 0008   E5                     PUSH   HL   
-0009   2A B0 0A               LD   HL,(RST08)   
+0009   2A 80 0A               LD   HL,(RST08)   
 000C   E9                     JP   (HL)   
 000D                             ; 
 000D                             ;RST 2
 0010                          .ORG   ROMSTART+$10   
 0010   E5                     PUSH   HL   
-0011   2A B2 0A               LD   HL,(RST10)   
+0011   2A 82 0A               LD   HL,(RST10)   
 0014   E9                     JP   (HL)   
 0015                             ; 
 0015                             ;RST 3
 0018                          .ORG   ROMSTART+$18   
 0018   E5                     PUSH   HL   
-0019   2A B4 0A               LD   HL,(RST18)   
+0019   2A 84 0A               LD   HL,(RST18)   
 001C   E9                     JP   (HL)   
 001D                             ; 
 001D                             ;RST 4
 0020                          .ORG   ROMSTART+$20   
 0020   E5                     PUSH   HL   
-0021   2A B6 0A               LD   HL,(RST20)   
+0021   2A 86 0A               LD   HL,(RST20)   
 0024   E9                     JP   (HL)   
 0025                             ; 
 0025                             ;RST 5
 0028                          .ORG   ROMSTART+$28   
 0028   E5                     PUSH   HL   
-0029   2A B8 0A               LD   HL,(RST28)   
+0029   2A 88 0A               LD   HL,(RST28)   
 002C   E9                     JP   (HL)   
 002D                             ; 
 002D                             ;RST 6
 0030                          .ORG   ROMSTART+$30   
 0030   E5                     PUSH   HL   
-0031   2A BA 0A               LD   HL,(RST30)   
+0031   2A 8A 0A               LD   HL,(RST30)   
 0034   E9                     JP   (HL)   
 0035                             ; 
 0035                             ;RST 7 Interrupt
 0038                          .ORG   ROMSTART+$38   
 0038   E5                     PUSH   HL   
-0039   2A BE 0A               LD   HL,(INTVEC)   
+0039   2A 8E 0A               LD   HL,(INTVEC)   
 003C   E9                     JP   (HL)   
 003D   ED 4D                  RETI      
 003F                             ; 
@@ -214,7 +214,7 @@
 0060                             ;RST 8  Non Maskable Interrupt
 0066                          .ORG   ROMSTART+$66   
 0066   E5                     PUSH   HL   
-0067   2A C0 0A               LD   HL,(NMIVEC)   
+0067   2A 90 0A               LD   HL,(NMIVEC)   
 006A   E9                     JP   (HL)   
 006B                             ; 
 006B                             ; 
@@ -640,31 +640,31 @@
 0081                             ; .endif        
 0081                             ; 
 0081                GETCHAR:      
-0081   2A C2 0A               LD   HL,(GETCVEC)   
+0081   2A 92 0A               LD   HL,(GETCVEC)   
 0084   E9                     JP   (HL)   
 0085                             ; 
 0085                PUTCHAR:      
 0085   E5                     PUSH   HL   
-0086   2A C4 0A               LD   HL,(PUTCVEC)   
+0086   2A 94 0A               LD   HL,(PUTCVEC)   
 0089   E3                     EX   (SP),HL   
 008A   C9                     RET      
 008B                             ; 
 008B                RESET:       
 008B   31 80 08               LD   SP,stack   
 008E   21 5F 00               LD   HL,IntRet   
-0091   22 B0 0A               LD   (RST08),HL   
-0094   22 B2 0A               LD   (RST10),HL   
-0097   22 B4 0A               LD   (RST18),HL   
-009A   22 B6 0A               LD   (RST20),HL   
-009D   22 B8 0A               LD   (RST28),HL   
-00A0   22 BA 0A               LD   (RST30),HL   
-00A3   22 BE 0A               LD   (INTVEC),HL   
-00A6   22 C0 0A               LD   (NMIVEC),HL   
+0091   22 80 0A               LD   (RST08),HL   
+0094   22 82 0A               LD   (RST10),HL   
+0097   22 84 0A               LD   (RST18),HL   
+009A   22 86 0A               LD   (RST20),HL   
+009D   22 88 0A               LD   (RST28),HL   
+00A0   22 8A 0A               LD   (RST30),HL   
+00A3   22 8E 0A               LD   (INTVEC),HL   
+00A6   22 90 0A               LD   (NMIVEC),HL   
 00A9                             ; 
 00A9   21 78 00               LD   HL,RXDATA   
-00AC   22 C2 0A               LD   (GETCVEC),HL   
+00AC   22 92 0A               LD   (GETCVEC),HL   
 00AF   21 6B 00               LD   HL,TXDATA   
-00B2   22 C4 0A               LD   (PUTCVEC),HL   
+00B2   22 94 0A               LD   (PUTCVEC),HL   
 00B5                             ; 
 00B5                          IF   TEC_1   
 00B5                          IF   BITBANG = 0   
@@ -872,10 +872,10 @@
 019A   DD 21 00 09            LD   IX,RSTACK   
 019E   FD 21 36 02            LD   IY,NEXT   ; IY provides a faster jump to NEXT
 01A2   21 60 03               LD   HL,iSysConsts   
-01A5   11 00 0A               LD   DE,sysConsts   
+01A5   11 00 0B               LD   DE,sysConsts   
 01A8   01 20 00               LD   BC,16 * 2   
 01AB   ED B0                  LDIR      
-01AD   21 78 0A               LD   HL,defs   
+01AD   21 7C 0B               LD   HL,defs   
 01B0   06 1A                  LD   B,26   
 01B2                INIT1:       
 01B2   36 8D                  LD   (HL),lsb(empty_)   
@@ -885,7 +885,7 @@
 01B8   10 F8                  DJNZ   init1   
 01BA   C9                     RET      
 01BB                MACRO:       
-01BB   ED 43 14 0A            LD   (vTIBPtr),BC   
+01BB   ED 43 14 0B            LD   (vTIBPtr),BC   
 01BF   21 80 03               LD   HL,ctrlCodes   
 01C2   85                     ADD   A,L   
 01C3   6F                     LD   L,A   
@@ -894,14 +894,14 @@
 01C7   D5                     PUSH   DE   
 01C8   CD 70 02               CALL   ENTER   
 01CB   5C 47 00               .CSTR   "\\G"   
-01CE   ED 4B 14 0A            LD   BC,(vTIBPtr)   
+01CE   ED 4B 14 0B            LD   BC,(vTIBPtr)   
 01D2   18 11                  JR   interpret2   
 01D4                INTERPRET:      
 01D4   CD 70 02               CALL   ENTER   
 01D7   5C 4E 60 3E 20 60 00   .CSTR   "\\N`> `"   
 01DE                INTERPRET1:      ; used by tests
 01DE   01 00 00               LD   BC,0   ; load BC with offset into TIB
-01E1   ED 43 14 0A            LD   (vTIBPtr),BC   
+01E1   ED 43 14 0B            LD   (vTIBPtr),BC   
 01E5                INTERPRET2:      ; calc nesting (a macro might have changed it)
 01E5   1E 00                  LD   E,0   ; initilize nesting value
 01E7   C5                     PUSH   BC   ; save offset into TIB,
@@ -956,7 +956,7 @@
 022B   36 03                  LD   (HL),$03   ; store end of text ETX in text buffer
 022D   03                     INC   BC   
 022E                WAITCHAR4:      
-022E   ED 43 14 0A            LD   (vTIBPtr),BC   
+022E   ED 43 14 0B            LD   (vTIBPtr),BC   
 0232   01 00 09               LD   BC,TIB   ; Instructions stored on heap at address HERE
 0235   0B                     DEC   BC   
 0236                             ; Drop into the NEXT and dispatch routines
@@ -1028,16 +1028,16 @@
 0279                             ; ARRAY compilation routine
 0279                COMPNEXT:      
 0279   D1                     POP   DE   ; DE = return address
-027A   2A 1E 0A               LD   HL,(vHeapPtr)   ; load heap ptr
+027A   2A 1E 0B               LD   HL,(vHeapPtr)   ; load heap ptr
 027D   73                     LD   (HL),E   ; store lsb
-027E   3A AE 0A               LD   A,(vByteMode)   
+027E   3A 46 0B               LD   A,(vByteMode)   
 0281   23                     INC   HL   
 0282   B7                     OR   A   
 0283   20 02                  JR   NZ,compNext1   
 0285   72                     LD   (HL),D   
 0286   23                     INC   HL   
 0287                COMPNEXT1:      
-0287   22 1E 0A               LD   (vHeapPtr),HL   ; save heap ptr
+0287   22 1E 0B               LD   (vHeapPtr),HL   ; save heap ptr
 028A   C3 36 02               JP   NEXT   
 028D                             ; **************************************************************************
 028D                             ; Macros must be written in Mint and end with ;
@@ -1163,11 +1163,11 @@
 0360                ISYSCONSTS:      
 0360   80 08                  DW   dStack   ; \0 cS0
 0362   00 09                  DW   TIB   ; \1 cTIB
-0364   78 0A                  DW   defs   ; \2 cDefs
-0366   44 0A                  DW   vars   ; \3 cVars
+0364   7C 0B                  DW   defs   ; \2 cDefs
+0366   48 0B                  DW   vars   ; \3 cVars
 0368   00 03                  DW   opcodes   ; \4 cOpcodes
 036A   8D 02                  DW   macros   ; \5 cMacros
-036C   10 0A                  DW   userVars   ; \6 cUserVars
+036C   10 0B                  DW   userVars   ; \6 cUserVars
 036E   00 00                  DW   0   ; \7
 0370                IUSERVARS:      
 0370   65 02                  DW   alt1   ; a vAltCodes
@@ -1177,7 +1177,7 @@
 0378   00 00                  DW   0   ; e enter
 037A   00 00                  DW   0   ; f vIFTEMode
 037C   00 00                  DW   0   ; g vByteMode
-037E   80 0B                  DW   HEAP   ; h vHeapPtr
+037E   C0 0B                  DW   HEAP   ; h vHeapPtr
 0380                             ; ***********************************************************************
 0380                             ; Alternate function codes		
 0380                             ; ***********************************************************************		
@@ -1317,7 +1317,7 @@
 0400                          ALIGN   $100   
 0400                PAGE4:       
 0400                ALT_:        
-0400   2A 10 0A               LD   HL,(vAlt)   
+0400   2A 10 0B               LD   HL,(vAlt)   
 0403   E9                     JP   (HL)   
 0404                AND_:        
 0404   D1                     POP   DE   ; 10t Bitwise AND the top 2 elements of the stack
@@ -1368,10 +1368,10 @@
 0435   60 69                  LD   HL,BC   
 0437   CD 4F 02               CALL   rpush   ; save Instruction Pointer
 043A   0A                     LD   A,(BC)   
-043B   D6 05                  SUB   "A" - ((DEFS - mintVars)/2)   
+043B   D6 03                  SUB   "A" - ((DEFS - mintVars)/2)   
 043D   87                     ADD   A,A   
 043E   6F                     LD   L,A   
-043F   26 0A                  LD   H,msb(mintVars)   
+043F   26 0B                  LD   H,msb(mintVars)   
 0441   4E                     LD   C,(HL)   
 0442   23                     INC   HL   
 0443   46                     LD   B,(HL)   
@@ -1380,7 +1380,7 @@
 0447   C3 6A 07     DEF_:     JP   def   
 044A                DOT_:        
 044A   E1                     POP   HL   
-044B   3A 12 0A               LD   A,(vBase16)   
+044B   3A 12 0B               LD   A,(vBase16)   
 044E   B7                     OR   A   
 044F   28 05                  JR   Z,dot1   
 0451   CD AE 07               CALL   printhex   
@@ -1496,10 +1496,10 @@
 04DB   FD E9                  JP   (IY)   
 04DD                VAR_:        
 04DD   0A                     LD   A,(BC)   
-04DE   D6 3F                  SUB   "a" - ((VARS - mintVars)/2)   
+04DE   D6 3D                  SUB   "a" - ((VARS - mintVars)/2)   
 04E0   87                     ADD   A,A   
 04E1   6F                     LD   L,A   
-04E2   26 0A                  LD   H,msb(mintVars)   
+04E2   26 0B                  LD   H,msb(mintVars)   
 04E4   E5                     PUSH   HL   
 04E5   FD E9                  JP   (IY)   
 04E7   18 1E        AGAIN_:   JR   again   
@@ -1508,10 +1508,10 @@
 04ED                GETREF_:      
 04ED   03                     INC   BC   
 04EE   0A                     LD   A,(BC)   
-04EF   D6 05                  SUB   "A" - ((DEFS - mintVars)/2)   
+04EF   D6 03                  SUB   "A" - ((DEFS - mintVars)/2)   
 04F1   87                     ADD   A,A   
 04F2   6F                     LD   L,A   
-04F3   26 0A                  LD   H,msb(mintVars)   
+04F3   26 0B                  LD   H,msb(mintVars)   
 04F5   C3 71 04               JP   fetch1   
 04F8                             ;*******************************************************************
 04F8                             ; Page 5 primitive routines
@@ -1530,7 +1530,7 @@
 0504   0B                     DEC   BC   
 0505   FD E9                  JP   (IY)   
 0507                AGAIN:       ;20
-0507   21 AC 0A               LD   HL,vIFTEMode   
+0507   21 44 0B               LD   HL,vIFTEMode   
 050A   AF                     XOR   A   
 050B   B6                     OR   (HL)   
 050C   20 25                  JR   NZ,again2   
@@ -1621,7 +1621,7 @@
 0573                             ; *************************************
 0573                             ; 
 0573                BEGIN:       ;23                     ; Left parentesis begins a loop
-0573   21 AC 0A               LD   HL,vIFTEMode   
+0573   21 44 0B               LD   HL,vIFTEMode   
 0576   36 00                  LD   (HL),0   
 0578   E1                     POP   HL   
 0579   7D                     LD   A,L   ; zero?
@@ -1778,7 +1778,7 @@
 063A   CD 85 00               CALL   putchar   
 063D   FD E9                  JP   (IY)   
 063F                IFTE_:       
-063F   21 AC 0A               LD   HL,vIFTEMode   
+063F   21 44 0B               LD   HL,vIFTEMode   
 0642   36 01                  LD   (HL),TRUE   
 0644   B7                     OR   A   ; invert condition
 0645   ED 62                  SBC   HL,HL   
@@ -1807,7 +1807,7 @@
 0663   D6 59                  SUB   "a" - ((userVars - mintVars) / 2)   
 0665   87                     ADD   A,A   
 0666   6F                     LD   L,A   
-0667   26 0A                  LD   H,msb(mintVars)   
+0667   26 0B                  LD   H,msb(mintVars)   
 0669   E5                     PUSH   HL   
 066A   FD E9                  JP   (IY)   ; Execute code from User def
 066C                I_:          
@@ -1851,7 +1851,7 @@
 0699   0A                     LD   A,(BC)   
 069A   D6 30                  SUB   "0"   ; Calc index
 069C   87                     ADD   A,A   
-069D   21 00 0A               LD   HL,sysConsts   
+069D   21 00 0B               LD   HL,sysConsts   
 06A0   6F                     LD   L,A   
 06A1   C3 71 04               JP   fetch1   
 06A4                LEAST_:      ; a b -- c
@@ -1930,7 +1930,7 @@
 0708   D1                     POP   DE   
 0709   83                     ADD   A,E   
 070A   08                     EX   AF,AF'   
-070B   21 78 0A               LD   HL,defs   
+070B   21 7C 0B               LD   HL,defs   
 070E   19                     ADD   HL,DE   
 070F   19                     ADD   HL,DE   
 0710   5E                     LD   E,(HL)   
@@ -1958,7 +1958,7 @@
 0733   EB                     EX   DE,HL   
 0734   B7                     OR   A   
 0735   ED 52                  SBC   HL,DE   
-0737   22 14 0A               LD   (vTIBPtr),HL   
+0737   22 14 0B               LD   (vTIBPtr),HL   
 073A   FD E9                  JP   (IY)   
 073C                             ;*******************************************************************
 073C                             ; Page 5 primitive routines continued
@@ -1968,8 +1968,8 @@
 073C   3E 00                  LD   A,FALSE   
 073E                ARRDEF1:      
 073E   FD 21 79 02            LD   IY,compNEXT   
-0742   32 AE 0A               LD   (vByteMode),A   
-0745   2A 1E 0A               LD   HL,(vHeapPtr)   ; HL = heap ptr
+0742   32 46 0B               LD   (vByteMode),A   
+0745   2A 1E 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
 0748   CD 4F 02               CALL   rpush   ; save start of array \[  \]
 074B   C3 36 02               JP   NEXT   ; hardwired to NEXT
 074E                             ; end a word array
@@ -1977,10 +1977,10 @@
 074E   CD 5A 02               CALL   rpop   ; DE = start of array
 0751   E5                     PUSH   HL   
 0752   EB                     EX   DE,HL   
-0753   2A 1E 0A               LD   HL,(vHeapPtr)   ; HL = heap ptr
+0753   2A 1E 0B               LD   HL,(vHeapPtr)   ; HL = heap ptr
 0756   B7                     OR   A   
 0757   ED 52                  SBC   HL,DE   ; bytes on heap
-0759   3A AE 0A               LD   A,(vByteMode)   
+0759   3A 46 0B               LD   A,(vByteMode)   
 075C   B7                     OR   A   
 075D   20 04                  JR   NZ,arrEnd2   
 075F   CB 3C                  SRL   H   ; BC = m words
@@ -1999,15 +1999,15 @@
 076A                             ; ***************************************************************************
 076A                DEF:         ; Create a colon definition
 076A   E5                     PUSH   HL   ; Save HL
-076B   21 78 0A               LD   HL,DEFS   ; Start address of jump table
+076B   21 7C 0B               LD   HL,DEFS   ; Start address of jump table
 076E   03                     INC   BC   
 076F   0A                     LD   A,(BC)   ; Get the next character
 0770   03                     INC   BC   
-0771   D6 05                  SUB   "A" - ((DEFS - mintVars)/2)   
+0771   D6 03                  SUB   "A" - ((DEFS - mintVars)/2)   
 0773   87                     ADD   A,A   
 0774   6F                     LD   L,A   
-0775   26 0A                  LD   H,msb(mintVars)   
-0777   ED 5B 1E 0A            LD   DE,(vHeapPtr)   ; start of defintion
+0775   26 0B                  LD   H,msb(mintVars)   
+0777   ED 5B 1E 0B            LD   DE,(vHeapPtr)   ; start of defintion
 077B   73                     LD   (HL),E   ; Save low byte of address in CFA
 077C   23                     INC   HL   
 077D   72                     LD   (HL),D   ; Save high byte of address in CFA+1
@@ -2021,7 +2021,7 @@
 0785   CA 8A 07               JP   z,end_def   ; end the definition
 0788   18 F5                  JR   nextbyte   ; get the next element
 078A                END_DEF:      
-078A   ED 53 1E 0A            LD   (vHeapPtr),DE   ; bump heap ptr to after definiton
+078A   ED 53 1E 0B            LD   (vHeapPtr),DE   ; bump heap ptr to after definiton
 078E   0B                     DEC   BC   
 078F   FD E9                  JP   (IY)   
 0791                             ; ***************************************************************************
@@ -2119,77 +2119,76 @@
 0880                DSTACK:      
 0880                          DS   RSIZE   
 0900                RSTACK:      
-0900                TIB:         
-0900                          DS   TIBSIZE   
-0A00                          ALIGN   $100   
-0A00                MINTVARS:      
-0A00                             ; ****************************************************************
-0A00                             ; System constants
-0A00                             ; ****************************************************************
-0A00                SYSCONSTS:      
-0A00   00 00        CS0:      DW   0   ; 0
-0A02   00 00        CTIB:     DW   0   ; 1
-0A04   00 00        CDEFS:    DW   0   ; 2
-0A06   00 00        CVARS:    DW   0   ; 3
-0A08   00 00        COPCODES:   DW   0   ; 4
-0A0A   00 00        CMACROS:   DW   0   ; 5
-0A0C   00 00        CUSERVARS:   DW   0   ; 6
-0A0E   00 00                  DW   0   ; 7
-0A10                             ; ****************************************************************
-0A10                             ; USER variables
-0A10                             ; ****************************************************************
-0A10                USERVARS:      
-0A10   00 00        VALT:     DW   0   ; a
-0A12   00 00        VBASE16:   DW   0   ; b
-0A14   00 00        VTIBPTR:   DW   0   ; c
-0A16   00 00                  DW   0   ; d
-0A18   00 00                  DW   0   ; e
-0A1A   00 00                  DW   0   ; f
-0A1C   00 00                  DW   0   ; g
-0A1E   00 00        VHEAPPTR:   DW   0   ; h
-0A20   00 00                  DW   0   ; i
-0A22   00 00                  DW   0   ; j
-0A24   00 00                  DW   0   ; k
-0A26   00 00                  DW   0   ; l
-0A28   00 00                  DW   0   ; m
-0A2A   00 00                  DW   0   ; n
-0A2C   00 00                  DW   0   ; o
-0A2E   00 00                  DW   0   ; p
-0A30   00 00                  DW   0   ; q
-0A32   00 00                  DW   0   ; r
-0A34   00 00                  DW   0   ; s
-0A36   00 00                  DW   0   ; t
-0A38   00 00                  DW   0   ; u
-0A3A   00 00                  DW   0   ; v
-0A3C   00 00                  DW   0   ; w
-0A3E   00 00                  DW   0   ; x
-0A40   00 00                  DW   0   ; y
-0A42   00 00                  DW   0   ; z
-0A44                             ; ****************************************************************
-0A44                             ; VARS Table - holds 26 16-bit user variables
-0A44                             ; ****************************************************************
-0A44                VARS:     DS   26 * 2   
-0A78                             ; ****************************************************************
-0A78                             ; DEFS Table - holds 26 addresses of user routines
-0A78                             ; ****************************************************************
-0A78                DEFS:     DS   26 * 2   
-0AAC   00 00        VIFTEMODE:   DW   0   ; 
-0AAE   00 00        VBYTEMODE:   DW   0   ; 
-0AB0   00 00        RST08:    DW   0   ; 
-0AB2   00 00        RST10:    DW   0   ; 
-0AB4   00 00        RST18:    DW   0   ; 
-0AB6   00 00        RST20:    DW   0   ; 
-0AB8   00 00        RST28:    DW   0   ; 
-0ABA   00 00        RST30:    DW   0   ; 
-0ABC   00 00        BAUD:     DW   0   ; 
-0ABE   00 00        INTVEC:   DW   0   ; 
-0AC0   00 00        NMIVEC:   DW   0   ; 
-0AC2   00 00        GETCVEC:   DW   0   ; 
-0AC4   00 00        PUTCVEC:   DW   0   ; 
-0AC6   00 00        TBPTR:    DW   0   ; reserved for tests
-0AC8                BUF:      DS   $80   
-0B48                          ALIGN   $40   
-0B80                HEAP:        
+0900                TIB:      DS   TIBSIZE   
+0A00                BUF:      DS   $80   
+0A80   00 00        RST08:    DW   0   ; 
+0A82   00 00        RST10:    DW   0   ; 
+0A84   00 00        RST18:    DW   0   ; 
+0A86   00 00        RST20:    DW   0   ; 
+0A88   00 00        RST28:    DW   0   ; 
+0A8A   00 00        RST30:    DW   0   ; 
+0A8C   00 00        BAUD:     DW   0   ; 
+0A8E   00 00        INTVEC:   DW   0   ; 
+0A90   00 00        NMIVEC:   DW   0   ; 
+0A92   00 00        GETCVEC:   DW   0   ; 
+0A94   00 00        PUTCVEC:   DW   0   ; 
+0A96   00 00        TBPTR:    DW   0   ; reserved for tests
+0A98                          ALIGN   $100   
+0B00                MINTVARS:      
+0B00                             ; ****************************************************************
+0B00                             ; System constants
+0B00                             ; ****************************************************************
+0B00                SYSCONSTS:      
+0B00   00 00        CS0:      DW   0   ; 0
+0B02   00 00        CTIB:     DW   0   ; 1
+0B04   00 00        CDEFS:    DW   0   ; 2
+0B06   00 00        CVARS:    DW   0   ; 3
+0B08   00 00        COPCODES:   DW   0   ; 4
+0B0A   00 00        CMACROS:   DW   0   ; 5
+0B0C   00 00        CUSERVARS:   DW   0   ; 6
+0B0E   00 00                  DW   0   ; 7
+0B10                             ; ****************************************************************
+0B10                             ; USER variables
+0B10                             ; ****************************************************************
+0B10                USERVARS:      
+0B10   00 00        VALT:     DW   0   ; a
+0B12   00 00        VBASE16:   DW   0   ; b
+0B14   00 00        VTIBPTR:   DW   0   ; c
+0B16   00 00                  DW   0   ; d
+0B18   00 00                  DW   0   ; e
+0B1A   00 00                  DW   0   ; f
+0B1C   00 00                  DW   0   ; g
+0B1E   00 00        VHEAPPTR:   DW   0   ; h
+0B20   00 00                  DW   0   ; i
+0B22   00 00                  DW   0   ; j
+0B24   00 00                  DW   0   ; k
+0B26   00 00                  DW   0   ; l
+0B28   00 00                  DW   0   ; m
+0B2A   00 00                  DW   0   ; n
+0B2C   00 00                  DW   0   ; o
+0B2E   00 00                  DW   0   ; p
+0B30   00 00                  DW   0   ; q
+0B32   00 00                  DW   0   ; r
+0B34   00 00                  DW   0   ; s
+0B36   00 00                  DW   0   ; t
+0B38   00 00                  DW   0   ; u
+0B3A   00 00                  DW   0   ; v
+0B3C   00 00                  DW   0   ; w
+0B3E   00 00                  DW   0   ; x
+0B40   00 00                  DW   0   ; y
+0B42   00 00                  DW   0   ; z
+0B44   00 00        VIFTEMODE:   DW   0   ; 
+0B46   00 00        VBYTEMODE:   DW   0   ; 
+0B48                             ; ****************************************************************
+0B48                             ; VARS Table - holds 26 16-bit user variables
+0B48                             ; ****************************************************************
+0B48                VARS:     DS   26 * 2   
+0B7C                             ; ****************************************************************
+0B7C                             ; DEFS Table - holds 26 addresses of user routines
+0B7C                             ; ****************************************************************
+0B7C                DEFS:     DS   26 * 2   
+0BB0                          ALIGN   $40   
+0BC0                HEAP:        
 
 
 TEC_1:              0001 DEFINED AT LINE 1 IN constants.asm
@@ -2297,7 +2296,7 @@ DSIZE:              0080 DEFINED AT LINE 151 IN MINT.asm
 RSIZE:              0080 DEFINED AT LINE 152 IN MINT.asm
                     > USED AT LINE 7 IN ram.asm
 TIBSIZE:            0100 DEFINED AT LINE 153 IN MINT.asm
-                    > USED AT LINE 11 IN ram.asm
+                    > USED AT LINE 10 IN ram.asm
 TRUE:               0001 DEFINED AT LINE 154 IN MINT.asm
                     > USED AT LINE 1127 IN MINT.asm
                     > USED AT LINE 1183 IN MINT.asm
@@ -2614,46 +2613,87 @@ TIB:                0900 DEFINED AT LINE 10 IN ram.asm
                     > USED AT LINE 479 IN MINT.asm
                     > USED AT LINE 1360 IN MINT.asm
                     > USED AT LINE 1375 IN MINT.asm
-MINTVARS:           0A00 DEFINED AT LINE 14 IN ram.asm
+BUF:                0A00 DEFINED AT LINE 11 IN ram.asm
+RST08:              0A80 DEFINED AT LINE 13 IN ram.asm
+                    > USED AT LINE 107 IN IOSerial.asm
+                    > USED AT LINE 629 IN IOSerial.asm
+RST10:              0A82 DEFINED AT LINE 14 IN ram.asm
+                    > USED AT LINE 113 IN IOSerial.asm
+                    > USED AT LINE 630 IN IOSerial.asm
+RST18:              0A84 DEFINED AT LINE 15 IN ram.asm
+                    > USED AT LINE 119 IN IOSerial.asm
+                    > USED AT LINE 631 IN IOSerial.asm
+RST20:              0A86 DEFINED AT LINE 16 IN ram.asm
+                    > USED AT LINE 125 IN IOSerial.asm
+                    > USED AT LINE 632 IN IOSerial.asm
+RST28:              0A88 DEFINED AT LINE 17 IN ram.asm
+                    > USED AT LINE 131 IN IOSerial.asm
+                    > USED AT LINE 633 IN IOSerial.asm
+RST30:              0A8A DEFINED AT LINE 18 IN ram.asm
+                    > USED AT LINE 137 IN IOSerial.asm
+                    > USED AT LINE 634 IN IOSerial.asm
+BAUD:               0A8C DEFINED AT LINE 19 IN ram.asm
+INTVEC:             0A8E DEFINED AT LINE 20 IN ram.asm
+                    > USED AT LINE 143 IN IOSerial.asm
+                    > USED AT LINE 635 IN IOSerial.asm
+NMIVEC:             0A90 DEFINED AT LINE 21 IN ram.asm
+                    > USED AT LINE 191 IN IOSerial.asm
+                    > USED AT LINE 636 IN IOSerial.asm
+GETCVEC:            0A92 DEFINED AT LINE 22 IN ram.asm
+                    > USED AT LINE 617 IN IOSerial.asm
+                    > USED AT LINE 639 IN IOSerial.asm
+PUTCVEC:            0A94 DEFINED AT LINE 23 IN ram.asm
+                    > USED AT LINE 622 IN IOSerial.asm
+                    > USED AT LINE 641 IN IOSerial.asm
+TBPTR:              0A96 DEFINED AT LINE 24 IN ram.asm
+MINTVARS:           0B00 DEFINED AT LINE 27 IN ram.asm
                     > USED AT LINE 698 IN MINT.asm
                     > USED AT LINE 850 IN MINT.asm
                     > USED AT LINE 865 IN MINT.asm
                     > USED AT LINE 1210 IN MINT.asm
                     > USED AT LINE 1430 IN MINT.asm
-SYSCONSTS:          0A00 DEFINED AT LINE 18 IN ram.asm
+SYSCONSTS:          0B00 DEFINED AT LINE 31 IN ram.asm
                     > USED AT LINE 178 IN MINT.asm
                     > USED AT LINE 1263 IN MINT.asm
-CS0:                0A00 DEFINED AT LINE 20 IN ram.asm
-CTIB:               0A02 DEFINED AT LINE 21 IN ram.asm
-CDEFS:              0A04 DEFINED AT LINE 22 IN ram.asm
-CVARS:              0A06 DEFINED AT LINE 23 IN ram.asm
-COPCODES:           0A08 DEFINED AT LINE 24 IN ram.asm
-CMACROS:            0A0A DEFINED AT LINE 25 IN ram.asm
-CUSERVARS:          0A0C DEFINED AT LINE 26 IN ram.asm
-USERVARS:           0A10 DEFINED AT LINE 32 IN ram.asm
+CS0:                0B00 DEFINED AT LINE 33 IN ram.asm
+CTIB:               0B02 DEFINED AT LINE 34 IN ram.asm
+CDEFS:              0B04 DEFINED AT LINE 35 IN ram.asm
+CVARS:              0B06 DEFINED AT LINE 36 IN ram.asm
+COPCODES:           0B08 DEFINED AT LINE 37 IN ram.asm
+CMACROS:            0B0A DEFINED AT LINE 38 IN ram.asm
+CUSERVARS:          0B0C DEFINED AT LINE 39 IN ram.asm
+USERVARS:           0B10 DEFINED AT LINE 45 IN ram.asm
                     > USED AT LINE 484 IN MINT.asm
                     > USED AT LINE 1210 IN MINT.asm
-VALT:               0A10 DEFINED AT LINE 34 IN ram.asm
+VALT:               0B10 DEFINED AT LINE 47 IN ram.asm
                     > USED AT LINE 640 IN MINT.asm
-VBASE16:            0A12 DEFINED AT LINE 35 IN ram.asm
+VBASE16:            0B12 DEFINED AT LINE 48 IN ram.asm
                     > USED AT LINE 713 IN MINT.asm
-VTIBPTR:            0A14 DEFINED AT LINE 36 IN ram.asm
+VTIBPTR:            0B14 DEFINED AT LINE 49 IN ram.asm
                     > USED AT LINE 192 IN MINT.asm
                     > USED AT LINE 201 IN MINT.asm
                     > USED AT LINE 210 IN MINT.asm
                     > USED AT LINE 272 IN MINT.asm
                     > USED AT LINE 1379 IN MINT.asm
-VHEAPPTR:           0A1E DEFINED AT LINE 41 IN ram.asm
+VHEAPPTR:           0B1E DEFINED AT LINE 54 IN ram.asm
                     > USED AT LINE 351 IN MINT.asm
                     > USED AT LINE 360 IN MINT.asm
                     > USED AT LINE 1392 IN MINT.asm
                     > USED AT LINE 1401 IN MINT.asm
                     > USED AT LINE 1435 IN MINT.asm
                     > USED AT LINE 1450 IN MINT.asm
-VARS:               0A44 DEFINED AT LINE 64 IN ram.asm
+VIFTEMODE:          0B44 DEFINED AT LINE 74 IN ram.asm
+                    > USED AT LINE 891 IN MINT.asm
+                    > USED AT LINE 997 IN MINT.asm
+                    > USED AT LINE 1182 IN MINT.asm
+VBYTEMODE:          0B46 DEFINED AT LINE 75 IN ram.asm
+                    > USED AT LINE 353 IN MINT.asm
+                    > USED AT LINE 1391 IN MINT.asm
+                    > USED AT LINE 1404 IN MINT.asm
+VARS:               0B48 DEFINED AT LINE 80 IN ram.asm
                     > USED AT LINE 481 IN MINT.asm
                     > USED AT LINE 850 IN MINT.asm
-DEFS:               0A78 DEFINED AT LINE 69 IN ram.asm
+DEFS:               0B7C DEFINED AT LINE 85 IN ram.asm
                     > USED AT LINE 181 IN MINT.asm
                     > USED AT LINE 480 IN MINT.asm
                     > USED AT LINE 698 IN MINT.asm
@@ -2661,46 +2701,5 @@ DEFS:               0A78 DEFINED AT LINE 69 IN ram.asm
                     > USED AT LINE 1351 IN MINT.asm
                     > USED AT LINE 1425 IN MINT.asm
                     > USED AT LINE 1430 IN MINT.asm
-VIFTEMODE:          0AAC DEFINED AT LINE 71 IN ram.asm
-                    > USED AT LINE 891 IN MINT.asm
-                    > USED AT LINE 997 IN MINT.asm
-                    > USED AT LINE 1182 IN MINT.asm
-VBYTEMODE:          0AAE DEFINED AT LINE 72 IN ram.asm
-                    > USED AT LINE 353 IN MINT.asm
-                    > USED AT LINE 1391 IN MINT.asm
-                    > USED AT LINE 1404 IN MINT.asm
-RST08:              0AB0 DEFINED AT LINE 73 IN ram.asm
-                    > USED AT LINE 107 IN IOSerial.asm
-                    > USED AT LINE 629 IN IOSerial.asm
-RST10:              0AB2 DEFINED AT LINE 74 IN ram.asm
-                    > USED AT LINE 113 IN IOSerial.asm
-                    > USED AT LINE 630 IN IOSerial.asm
-RST18:              0AB4 DEFINED AT LINE 75 IN ram.asm
-                    > USED AT LINE 119 IN IOSerial.asm
-                    > USED AT LINE 631 IN IOSerial.asm
-RST20:              0AB6 DEFINED AT LINE 76 IN ram.asm
-                    > USED AT LINE 125 IN IOSerial.asm
-                    > USED AT LINE 632 IN IOSerial.asm
-RST28:              0AB8 DEFINED AT LINE 77 IN ram.asm
-                    > USED AT LINE 131 IN IOSerial.asm
-                    > USED AT LINE 633 IN IOSerial.asm
-RST30:              0ABA DEFINED AT LINE 78 IN ram.asm
-                    > USED AT LINE 137 IN IOSerial.asm
-                    > USED AT LINE 634 IN IOSerial.asm
-BAUD:               0ABC DEFINED AT LINE 79 IN ram.asm
-INTVEC:             0ABE DEFINED AT LINE 80 IN ram.asm
-                    > USED AT LINE 143 IN IOSerial.asm
-                    > USED AT LINE 635 IN IOSerial.asm
-NMIVEC:             0AC0 DEFINED AT LINE 81 IN ram.asm
-                    > USED AT LINE 191 IN IOSerial.asm
-                    > USED AT LINE 636 IN IOSerial.asm
-GETCVEC:            0AC2 DEFINED AT LINE 82 IN ram.asm
-                    > USED AT LINE 617 IN IOSerial.asm
-                    > USED AT LINE 639 IN IOSerial.asm
-PUTCVEC:            0AC4 DEFINED AT LINE 83 IN ram.asm
-                    > USED AT LINE 622 IN IOSerial.asm
-                    > USED AT LINE 641 IN IOSerial.asm
-TBPTR:              0AC6 DEFINED AT LINE 84 IN ram.asm
-BUF:                0AC8 DEFINED AT LINE 86 IN ram.asm
-HEAP:               0B80 DEFINED AT LINE 90 IN ram.asm
+HEAP:               0BC0 DEFINED AT LINE 88 IN ram.asm
                     > USED AT LINE 495 IN MINT.asm
