@@ -756,8 +756,7 @@ fetch1:
         PUSH    DE          ; 11t
         JP      (IY)        ; 8t
                             ; 49t 
-hex_:   CALL     get_hex
-        JR       less           ; piggyback for ending
+hex_:   JP hex
 
 hexp_:                              ; print hexadecimal
         POP     HL
@@ -894,11 +893,11 @@ nextchar:
         LD A, (BC)
         INC BC
         CP "`"              ; ` is the string terminator
-        JR Z,stringend
+        JR Z,str2
         CALL putchar
         JR   nextchar
 
-stringend:  
+str2:  
         DEC BC
         JP   (IY) 
 
@@ -1083,8 +1082,8 @@ times10:                        ; Multiply digit(s) in HL by 10
         JR  number1
                 
 endnum:
-        PUSH HL                 ; 11t   Put the number on the stack
         DEC BC
+        PUSH HL                 ; 11t   Put the number on the stack
         JP (IY)                 ; and process the next character
 
 rpush:
@@ -1452,34 +1451,27 @@ end_def:
 
 ; ***************************************************************************
 
-get_hex:
+hex:
 		LD HL,$0000				; 10t Clear HL to accept the number
+hex1:
         INC BC
         LD A,(BC)				; 7t  Get the character which is a numeral
-        
-get_hex1:
         BIT 6,A                 ; 7t    is it uppercase alpha?
-        JR Z, ASCHX1            ; no a decimal
+        JR Z, hex2              ; no a decimal
         SUB 7                   ; sub 7  to make $A - $F
-aschx1:
+hex2:
         SUB $30                 ; 7t    Form decimal digit
-        ADD A,L                 ; 4t    Add into bottom of HL
-        LD  L,A                 ; 4t
-        INC BC                  ; 6t    Increment IP
-        LD A, (BC)              ; 7t    and get the next character
-        CP $20                  ; 7t    is a terminating space?
-        JR Z, endhex            ; 7/12t Not a number / end of number
-
-times16:                        ; Multiply digit(s) in HL by 16
-        ADD HL,HL               ; 11t    2X
+        JP C,endnum
+        CP $0F+1
+        JP NC,endnum
+        ADD HL,HL               ; 11t    2X ; Multiply digit(s) in HL by 16
         ADD HL,HL               ; 11t    4X
         ADD HL,HL               ; 11t    8X
         ADD HL,HL               ; 11t   16X     
- 
-        JR  get_hex1
-                
-endhex: RET
-        
+        ADD A,L                 ; 4t    Add into bottom of HL
+        LD  L,A                 ; 4t
+        JR  hex1
+
 printhex:       
                                 ; Display HL as a 16-bit number in hex.
         PUSH BC                 ; preserve the IP

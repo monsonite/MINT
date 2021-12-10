@@ -3,23 +3,15 @@
     .include "constants.asm"
     .include "IOSerial.asm"
 
-    .macro tec17SegSymbols1
+    .macro tec1Tables
+        DB "\\["                            ; char to 7 segments
         ; sp ! " # $ % & ' ( ) * + , - . /
         DB "#00 #18 #00 #00 #00 #00 #00 #00 "
         DB "#00 #04 #10 #00 #00 #00 #00 #00 " 
-    .endm
-    
-    .macro tec17SegNumbers
         ; 0 1 2 3 4 5 6 7 8 9
         DB "#EB #28 #CD #AD #2E #A7 #E7 #29 #EF #2F "
-    .endm
-    
-    .macro tec17SegSymbols2
         ; : ; < = > ? @
         DB "#00 #00 #00 #00 #00 #00 #00 "
-    .endm
-    
-    .macro tec17SegLetters
         ;  A B C D E F G H
         ;  I J K L M N O P  
         ;  Q R S T U V W X 
@@ -28,43 +20,23 @@
         DB " #28 #E8 #CE #C2 #6B #6B #EB #4F "
         DB " #2F #43 #A7 #46 #EA #E0 #EA #6E "
         DB " #AE #CD "           
-    .endm
-    
-    .macro tec1Tables
-        DB "\\["
-        tec17SegSymbols1
-        tec17SegNumbers
-        tec17SegSymbols2
-        tec17SegLetters
         DB "]' c!"
-        DB "[0 0 0 0  0 0]' d!"           ; display buffer  
+        
+        DB "\\[0 0 0 0 0 0]' d!"            ; display buffer  
     .endm  
     
     .macro tec1Defs
-        DB ":A #20 - c@ + \\@;"
-        
-        DB ":B"                             ; buf str -- 
-        DB "Q"                              ; buf str str 
-        DB "\\@"                            ; buf str [str] 
-        DB "A"                              ; buf str seg 
-        DB "\\R"                            ; str seg buf 
-        DB "$"                              ; str buf seg 
-        DB "%"                              ; str buf seg buf 
-        DB "\\!"                            ; str buf 
-        DB "$"                              ; buf str 
-        DB ";"                            
+        DB ":A #20 - c@+ \\@;"              ; char -- seg           convert char to 7segments
+        DB ":B \\@A$\\!;"                   ; buf str --            read char from string convert to seg and write to buffer
+        DB ":C 1+$1+$;"                     ; buf str -- buf' str'  increment str ptr and buf ptr  
+        DB ":D 6(%%B C)'';"                 ; buf str --            copy 6 chars from str to seg buffer
 
-        DB ":C"                             ; buf str -- 
-        DB "1+"                             ; buf str' 
-        DB "$"                              ; str' buf  
-        DB "1+"                             ; str' buf'  
-        DB "$"                              ; buf' str'   
-        DB ";"                            
-
-        DB ":D"                             ; buf str -- 
-        DB "10("                            ; buf str str 
-        DB "BC"                             ; buf' str' 
-        DB ")'';"                           ; 
+        DB ":E #40 |1\\O;"                  ; dig --                write digit bit, keep bit 6 high
+        DB ":F \\@2\\O;"                    ; buf --                output segment + digit info to LEDs
+        DB ":G }$1+$;"                      ; buf dig -- buf' dig'  move to next segment, inc buf ptr
+        DB ":H \\d@ #20 6(%%EF G)'' ;"      ; --                    display scan 6 digits
+        DB ":I 100(H) 0E;"                  ; --                    scan 255 times, then reset digit bit to 0
+        DB ":J d@ ?X 3(%% \\i@+ DI)'';"    
     .endm
     
     LD SP,DSTACK
@@ -85,13 +57,14 @@
     tec1Tables
     tec1Defs
     
-    DB ":XHello!;"
-    tester "", "#41 #20 - c@ + \\@", "#6F"
+    DB ":XHELLO THERE ITS ME AGAIN!              ;"
+    tester "", "10000() #41 #20 - c@ + \\@", "#6F"
     tester "", "72A", "#6E"
     tester "", "?X\\@A", "#6E"    
     tester "", "d@ ?X D d@\\@", "#6E"    
-        
-        
+    tester "", "d@ ?X DI", ""    
+    tester "", "J\\P\\N", ""    
+
     .cstr "`Done!`"
     HALT
 
