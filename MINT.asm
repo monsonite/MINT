@@ -148,8 +148,8 @@
         ;EXTENDED    EQU 0
 
         ;ROMSIZE     EQU $800
-        DSIZE       EQU $100
-        RSIZE       EQU $100
+        DSIZE       EQU $80
+        RSIZE       EQU $80
         TIBSIZE     EQU $100
         TRUE        EQU 1
         FALSE       EQU 0
@@ -359,12 +359,6 @@ compNEXT:
 compNext1:
         LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
-
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JP putchar
 
 ; **************************************************************************
 ; Macros must be written in Mint and end with ; 
@@ -700,12 +694,12 @@ call_:
         LD HL,BC
         CALL rpush              ; save Instruction Pointer
         LD A,(BC)
-        SUB "A"                 ; Calc index
+
+        SUB "A" - ((DEFS - mintVars)/2)  
         ADD A,A
-        LD HL,DEFS
-        LD E,A
-        LD D,0
-        ADD HL,DE
+        LD L,A
+        LD H,msb(mintVars)
+
         LD C,(HL)
         INC HL
         LD B,(HL)
@@ -861,30 +855,24 @@ var_:
         PUSH HL
         JP (IY)
         
-str_:       JR str
 again_:     JR again
 mul_:       JR mul      
 div_:       JR div
 getRef_:    
+        INC BC
+        LD A,(BC)
+
+        SUB "A" - ((DEFS - mintVars)/2)  
+        ADD A,A
+        LD L,A
+        LD H,msb(mintVars)
+
+        JP fetch1
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
         ;falls through 
-getRef:                         
-        INC BC
-        LD A,(BC)
-        SUB "A"
-        ADD A,A
-        LD E,A
-        LD D,0
-        LD HL,defs
-        ADD HL,DE
-        JP fetch1
-
-; **************************************************************************             
-; Print the string between the `backticks`
-
-str:                       
+str_:                       
         INC BC
         
 nextchar:            
@@ -1110,6 +1098,12 @@ Num2:
         sbc	hl,de
         JP putchar
 
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JR writeChar1
+
 space:       
         LD A,' '           
         JR writeChar1
@@ -1119,6 +1113,7 @@ writeChar:
         INC DE
 writeChar1:
         JP putchar
+
 
 
 
