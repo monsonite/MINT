@@ -314,38 +314,36 @@ dispatch:
         LD L,A                      ; 4t    and put into L
         JP (HL)                     ; 4t    Jump to routine
 
+rpush:
+        DEC IX                  
+        LD (IX+0),H
+        DEC IX
+        LD (IX+0),L
+        RET
+
+rpop:
+        LD L,(IX+0)         
+        INC IX              
+        LD H,(IX+0)
+        INC IX                  
+        RET
+
+alt1:
+        INC BC
+        LD A,(BC)
+        LD HL,altCodes
+        ADD A,L
+        LD L,A
+        LD L,(HL)           ; 7t    get low jump address
+        LD H, msb(page6)    ; Load H with the 5th page address
+        JP  (HL)                    ; 4t    Jump to routine
+
 ENTER:
         LD HL,BC
         CALL rpush              ; save Instruction Pointer
         POP BC
         DEC BC
         JP  (IY)                ; Execute code from User def
-
-printdec:
-
-;Number in hl to decimal ASCII
-
-;inputs:	hl = number to ASCII
-;example: hl=300 outputs '00300'
-;destroys: af, de, hl
-DispHL:
-        ld	de,-10000
-        call	Num1
-        ld	de,-1000
-        call	Num1
-        ld	de,-100
-        call	Num1
-        ld	e,-10
-        call	Num1
-        ld	e,-1
-Num1:	    
-        ld	a,'0'-1
-Num2:	    
-        inc	a
-        add	hl,de
-        jr	c,Num2
-        sbc	hl,de
-        JP putchar
 
 ; ARRAY compilation routine
 compNEXT:
@@ -362,13 +360,10 @@ compNext1:
         LD (vHeapPtr),HL    ; save heap ptr
         JP NEXT
 
-space:       
-        LD A,' '           
-        JP putchar
-
-writeChar:
-        LD (DE),A
-        INC DE
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
         JP putchar
 
 ; **************************************************************************
@@ -1089,35 +1084,43 @@ endnum:
         PUSH HL                 ; 11t   Put the number on the stack
         JP (IY)                 ; and process the next character
 
-rpush:
-        DEC IX                  
-        LD (IX+0),H
-        DEC IX
-        LD (IX+0),L
-        RET
+printdec:
 
-rpop:
-        LD L,(IX+0)         
-        INC IX              
-        LD H,(IX+0)
-        INC IX                  
-        RET
+;Number in hl to decimal ASCII
 
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
+;inputs:	hl = number to ASCII
+;example: hl=300 outputs '00300'
+;destroys: af, de, hl
+DispHL:
+        ld	de,-10000
+        call	Num1
+        ld	de,-1000
+        call	Num1
+        ld	de,-100
+        call	Num1
+        ld	e,-10
+        call	Num1
+        ld	e,-1
+Num1:	    
+        ld	a,'0'-1
+Num2:	    
+        inc	a
+        add	hl,de
+        jr	c,Num2
+        sbc	hl,de
         JP putchar
 
-alt1:
-        INC BC
-        LD A,(BC)
-        LD HL,altCodes
-        ADD A,L
-        LD L,A
-        LD L,(HL)           ; 7t    get low jump address
-        LD H, msb(page6)    ; Load H with the 5th page address
-        JP  (HL)                    ; 4t    Jump to routine
+space:       
+        LD A,' '           
+        JR writeChar1
+
+writeChar:
+        LD (DE),A
+        INC DE
+writeChar1:
+        JP putchar
+
+
 
 ; **************************************************************************
 ; Page 6 Alt primitives
@@ -1338,7 +1341,7 @@ printStk_:
         ; falls through
 printStk:
         call ENTER
-        DB "\\02-\\D1-\\x!\\x@\\_0=(\\x@(",$22,"@.2-))'",0
+        DB "\\02-\\D1-",$22,"\\_0=((",$22,"@.2-))'"             
         JP (IY)
 
 ; **************************************************************************             
