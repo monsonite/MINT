@@ -328,24 +328,14 @@ NOTE: <CHAR> is an uppercase letter immediately following operation which is the
 | ]      | end an array definition                     | -- adr nwords |
 | \\[    | begin a byte array definition               | --            |
 
-### Constants
-
-| Symbol | Description               | Effect |
-| ------ | ------------------------- | ------ |
-| \\0    | data stack start address  | -- adr |
-| \\1    | text input buffer address | -- adr |
-| \\2    | defs address              | -- adr |
-| \\3    | vars address              | -- adr |
-| \\4    | operations address        | -- adr |
-| \\5    | macros address            | -- adr |
-| \\6    | user vars                 | -- adr |
-| \\7    | -                         | -- adr |
-
 ### Variables
 
-| \\b | base16 flag variable | -- adr |
-| \\c | text input buffer pointer variable | -- adr |
-| \\h | heap pointer variable | -- adr |
+| Symbol | Description                        | Effect |
+| ------ | ---------------------------------- | ------ |
+| \\a    | data stack start variable          | -- adr |
+| \\b    | base16 flag variable               | -- adr |
+| \\c    | text input buffer pointer variable | -- adr |
+| \\h    | heap pointer variable              | -- adr |
 
 ### Miscellaneous
 

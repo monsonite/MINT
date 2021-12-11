@@ -25,26 +25,9 @@ tbPtr:      DW 0                ; reserved for tests
 
             .align $100
 mintVars:
-; ****************************************************************
-; System constants
-; ****************************************************************
-sysConsts:
+sysVars:
 
-cS0:        DW 0                ; 0                        
-cTIB        DW 0                ; 1     
-cDefs:      DW 0                ; 2     
-cVars:      DW 0                ; 3     
-cOpcodes    DW 0                ; 4     
-cmacros:    DW 0                ; 5     
-cUserVars:  DW 0                ; 6     
-            DW 0                ; 7     
-
-; ****************************************************************
-; USER variables
-; ****************************************************************
-userVars:
-
-vAlt:       DW 0                ; a
+vS0:        DW 0                ; a
 vBase16:    DW 0                ; b
 vTIBPtr:    DW 0                ; c
             DW 0                ; d
