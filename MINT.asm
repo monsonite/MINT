@@ -313,8 +313,6 @@ waitchar4:
 NEXT:   
         INC BC                      ; 6t    Increment the IP
         LD A, (BC)                  ; 7t    Get the next character and dispatch
-		
-dispatch:                        
         LD L,A                      ; 4t    Index into table
         LD H,msb(opcodes)           ; 7t    Start address of jump table         
         LD L,(HL)                   ; 7t    get low jump address
