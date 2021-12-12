@@ -1334,18 +1334,13 @@ while1:
         ADD IX,DE
         JP begin1                   ; skip to end of loop        
 
-editDef_:
-        JR editDef
 printStk_:
+        JR printStk
+editDef_:
 ; **************************************************************************
 ; Page 6 primitive routines 
 ; **************************************************************************
         ; falls through
-printStk:
-        call ENTER
-        DB "\\a@2-\\D1-",$22,"\\_0=((",$22,"@.2-))'"             
-        JP (IY)
-
 ; **************************************************************************             
 ; copy definition to text input buffer
 ; update TIBPtr
@@ -1384,6 +1379,11 @@ editDef3:
         OR A
         SBC HL,DE
         LD (vTIBPtr),HL
+        JP (IY)
+
+printStk:
+        call ENTER
+        .cstr "\\a@2-\\D1-",$22,"\\_0=((",$22,"@.2-))'"             
         JP (IY)
 
 ;*******************************************************************
