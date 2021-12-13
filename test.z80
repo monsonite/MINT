@@ -16,6 +16,7 @@
 
 testsStart:
 
+    ; test "0t! 10(\\i@ 4>\\B \\i@ 1t\\+) t@",5
     ; CALL enter
     ; .cstr "`Done!!`"
     ; HALT
@@ -36,11 +37,6 @@ testsStart:
     test "1_~",0
 
     test "1 2 3 \\R'' ", 2
-    test "1 2 \\M", 2
-    test "2 1 \\M", 2
-    test "1 2 \\L", 1
-    test "2 1 \\L", 1
-
     test "\\^A",65
 
     test "3x! 1 x\\+ x@", 4
@@ -60,7 +56,7 @@ testsStart:
     test "1\\(100 $)(200)",100
 
     test "0t! 10(1t\\+) t@",10
-    test "0t! 10(\\i@ 5< \\W 1t\\+) t@",5
+    test "0t! 10(\\i@ 4>\\B \\i@ 1t\\+) t@",5
     test "100a! 1 a\\+ a@", 101
 
     test "[3] '@", 3

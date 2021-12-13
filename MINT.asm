@@ -154,8 +154,8 @@
         TRUE        EQU 1
         FALSE       EQU 0
 
-;        .ORG ROMSTART
-		
+        NUMGRPS     EQU 4
+        GRPSIZE     EQU $40
 ; **************************************************************************
 ; Page 0  Initialisation
 ; **************************************************************************		
@@ -193,7 +193,7 @@ initialize:
         LDIR
         
         LD HL,DEFS
-        LD B,26
+        LD B,GRPSIZE/2 * NUMGRPS
 init1:
         LD (HL),lsb(empty_)
         INC HL
@@ -369,7 +369,7 @@ compNEXT:
         INC HL
 compNext1:
         LD (vHeapPtr),HL    ; save heap ptr
-        JP NEXT
+        JR NEXT
 
 ; **************************************************************************
 ; Macros must be written in Mint and end with ; 
@@ -571,10 +571,10 @@ altCodes:
         DB     lsb(aNop_)      ;    -  
         DB     lsb(aNop_)      ;    .  
         DB     lsb(aNop_)      ;    /
-        DB     lsb(aNop_)      ;    0           
-        DB     lsb(aNop_)      ;    1  ; returns HERE variable
-        DB     lsb(aNop_)      ;    2  ( -- adr ) TIBPtr variable          
-        DB     lsb(aNop_)      ;    3  ( -- adr ) isHex variable
+        DB     lsb(group_)     ;    0           
+        DB     lsb(group_)     ;    1  
+        DB     lsb(group_)     ;    2            
+        DB     lsb(group_)     ;    3  
         DB     lsb(aNop_)      ;    4            
         DB     lsb(aNop_)      ;    5            
         DB     lsb(aNop_)      ;    6            
@@ -589,7 +589,7 @@ altCodes:
         DB     lsb(aNop_)      ;    ?
         DB     lsb(cFetch_)    ;    @      
         DB     lsb(aNop_)      ;    A    
-        DB     lsb(aNop_)      ;    B
+        DB     lsb(break_)      ;    B
         DB     lsb(nop_)       ;    C
         DB     lsb(depth_)     ;    D  ( -- val ) depth of data stack  
         DB     lsb(emit_)      ;    E   ( val -- ) emits a char to output
@@ -599,8 +599,8 @@ altCodes:
         DB     lsb(inPort_)    ;    I  ( port -- val )   
         DB     lsb(aNop_)      ;    J
         DB     lsb(key_)       ;    K  ( -- val )  read a char from input
-        DB     lsb(least_)     ;    L  ( a b -- c ) return the smallest value
-        DB     lsb(most_)      ;    M  ( a b -- c ) return the largest value
+        DB     lsb(aNop_)      ;    L  
+        DB     lsb(aNop_)      ;    M  
         DB     lsb(newln_)     ;    N   ; prints a newline to output
         DB     lsb(outPort_)   ;    O  ( val port -- )
         DB     lsb(printStk_)  ;    P  ( -- ) non-destructively prints stack
@@ -610,7 +610,7 @@ altCodes:
         DB     lsb(aNop_)      ;    T
         DB     lsb(aNop_)      ;    U
         DB     lsb(aNop_)      ;    V
-        DB     lsb(while_)     ;    W   ; ( b -- ) if false, skip to end of loop
+        DB     lsb(aNop_)     ;    W   ; ( b -- ) if false, skip to end of loop
         DB     lsb(exec_)      ;    X
         DB     lsb(aNop_)      ;    Y
         DB     lsb(editDef_)   ;    Z
@@ -772,7 +772,7 @@ fetch1:
         LD      D,(HL)      ; 7t
         PUSH    DE          ; 11t
         JP      (IY)        ; 8t
-                            ; 49t 
+
 hex_:   JP hex
 
 hexp_:                              ; print hexadecimal
@@ -851,7 +851,7 @@ eq_:    POP      HL
         JR       less           ; HL = 1    
 
 getRef_:    
-            JP getRef
+        JP getRef
        
 gt_:    POP      DE
         POP      HL
@@ -1155,8 +1155,8 @@ comment_:
         LD A,(BC)
         CP "\r"             ; terminate at cr 
         JR NZ,comment_
-        CP "\n"             ; terminate at lf 
-        JR NZ,comment_
+        ; CP "\n"             ; terminate at lf 
+        ; JR NZ,comment_
         DEC BC
         JP   (IY) 
 
@@ -1212,6 +1212,21 @@ go_:
         DEC BC
         JP  (IY)                ; Execute code from User def
 
+group_:
+group:
+        LD A,(BC)
+        SUB "0"
+        LD D,A
+        LD E,0
+        SRL D
+        RR E
+        SRL D
+        RR E
+        LD HL,DEFS
+        ADD HL,DE
+        LD (vDEFS),HL
+        JP  (IY)                ; Execute code from User def
+
 sysVar_:
         LD A,(BC)
         SUB "a" - ((sysVars - mintVars)/2) 
@@ -1263,27 +1278,6 @@ key_:
         PUSH HL
         JP (IY)
 
-least_:                           ; a b -- c
-        POP DE
-        POP HL
-        OR A
-        SBC HL,DE
-        CCF
-        JR most1
-
-most_:                           ; a b -- c
-        POP DE
-        POP HL
-        OR A
-        SBC HL,DE
-most1:
-        JR C,most2
-        ADD HL,DE
-        EX DE,HL
-most2:
-        PUSH DE
-        JP (IY)
-
 newln_:
         call crlf
         JP (IY)        
@@ -1315,13 +1309,13 @@ sign2:
         PUSH HL
         JP (IY)
 
-while_:
+break_:
         POP HL
         LD A,L                      ; zero?
         OR H
-        JR Z,while1
+        JR NZ,break1
         JP (IY)
-while1:
+break1:
         LD DE,6                     ; drop loop frame
         ADD IX,DE
         JP begin1                   ; skip to end of loop        
@@ -1420,7 +1414,6 @@ arrEnd2:
 ; ***************************************************************************
 
 def:                        ; Create a colon definition
-        ; PUSH HL             ; Save HL
         INC BC
         LD  A,(BC)          ; Get the next character
         INC BC
@@ -1436,7 +1429,6 @@ def:                        ; Create a colon definition
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
         LD (HL),D           ; Save high byte of address in CFA+1
-        ; POP HL              ; Restore HL
 nextbyte:                   ; Skip to end of definition   
         LD A,(BC)           ; Get the next character
         INC BC              ; Point to next character
@@ -1459,7 +1451,7 @@ getRef:
         ADD A,A
         LD E,A
         LD D,0
-        LD HL,DEFS
+        LD HL,(vDEFS)
         ADD HL,DE
 
         JP fetch1

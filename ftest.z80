@@ -19,6 +19,7 @@
     utilDefs
     arrayDefs
     
+    ; tester "", "0t! 10(\\i@ 4>\\B 1t\\+) t@","5"
     ; .cstr "`Done!`"
     ; HALT
 
@@ -50,11 +51,6 @@
     tester "", "1_~","0"
 
     tester "", "1 2 3 \\R'' ", "2"
-    tester "", "1 2 \\M", "2"
-    tester "", "2 1 \\M", "2"
-    tester "", "1 2 \\L", "1"
-    tester "", "2 1 \\L", "1"
-
     tester "", "\\^A","65"
 
     tester "", "3x! 1 x\\+ x@", "4"
@@ -74,7 +70,7 @@
     tester "", "1\\(100 $)(200)", "100"
 
     tester "", "0t! 10(1t\\+) t@", "10"
-    tester "", "0t! 10(\\i@ 5< \\W 1t\\+) t@", "5"
+    tester "", "0t! 10(\\i@ 4>\\B 1t\\+) t@","5"
     tester "", "100a! 1 a\\+ a@", "101"
 
     tester "", "[3] '@", "3"

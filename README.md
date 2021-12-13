@@ -252,8 +252,6 @@ There are roughly 30 punctuation and arithmetical symbols available in the print
 | }      | shift the number to the right (2/)        | a -- b   |
 | \\b    | base 16 flag variable                     | -- a     |
 | \\\_   | sign of number                            | n -- b   |
-| \\M    | most                                      | a b -- m |
-| \\L    | least                                     | a b -- m |
 
 ### Logical Operators
 
@@ -313,7 +311,7 @@ NOTE: <CHAR> is an uppercase letter immediately following operation which is the
 | \\(    | ifElse \\(`true`)(`false`)                        | n -- n |
 | \\i    | returns index variable of current loop            | -- val |
 | \\j    | returns index variable of outer loop              | -- val |
-| \\W    | if false then skip to end of loop                 | b --   |
+| \\B    | if true break out of loop                         | b --   |
 
 ### Memory and Variable Operations
 

@@ -13,51 +13,49 @@ TIB:        DS TIBSIZE
 mintVars:
 sysVars:
 
-vS0:        DW 0                ; a
-vBase16:    DW 0                ; b
-vTIBPtr:    DW 0                ; c
-vDefs:      DW 0                ; d
-            DW 0                ; e
-            DW 0                ; f
-            DW 0                ; g
-vHeapPtr:   DW 0                ; h
-            DW 0                ; i
-            DW 0                ; j
-            DW 0                ; k
-            DW 0                ; l  
-            DW 0                ; m  
-            DW 0                ; n
-            DW 0                ; o
-            DW 0                ; p
-            DW 0                ; q
-            DW 0                ; r     
-            DW 0                ; s
-            DW 0                ; t
-            DW 0                ; u
-            DW 0                ; v
-            DW 0                ; w
-            DW 0                ; x     
-            DW 0                ; y
-            DW 0                ; z
+vS0:        DS 2                ; a
+vBase16:    DS 2                ; b
+vTIBPtr:    DS 2                ; c
+vDefs:      DS 2                ; d
+            DS 2                ; e
+            DS 2                ; f
+            DS 2                ; g
+vHeapPtr:   DS 2                ; h
+            DS 2                ; i
+            DS 2                ; j
+            DS 2                ; k
+            DS 2                ; l  
+            DS 2                ; m  
+            DS 2                ; n
+            DS 2                ; o
+            DS 2                ; p
+            DS 2                ; q
+            DS 2                ; r     
+            DS 2                ; s
+            DS 2                ; t
+            DS 2                ; u
+            DS 2                ; v
+            DS 2                ; w
+            DS 2                ; x     
+            DS 2                ; y
+            DS 2                ; z
 
-vIFTEMode   DW 0                ; 
-vByteMode:  DW 0                ; 
+vIFTEMode   DS 2                ; 
+vByteMode:  DS 2                ; 
+            DS $30
+tbPtr:      DS 2                ; reserved for tests
 
-RST08:                      ; 
-RST10:                      ; 
-RST18:                      ; 
-RST20:                      ; 
-RST28:                      ; 
-RST30:      DW 0                ; 
-BAUD        DW 0                ; 
-INTVEC:     DW 0                ; 
-NMIVEC:     DW 0                ; 
-GETCVEC:    DW 0                ;   
-PUTCVEC:    DW 0                ;   
-tbPtr:      DW 0                ; reserved for tests
-            DW 0
-            DW 0
-            DW 0
+RST08:      DS 2                 
+RST10:      DS 2                 
+RST18:      DS 2                 
+RST20:      DS 2                 
+RST28:      DS 2                 
+RST30:      DS 2                ; 
+BAUD        DS 2                ; 
+INTVEC:     DS 2                ; 
+NMIVEC:     DS 2                ; 
+GETCVEC:    DS 2                ;   
+PUTCVEC:    DS 2                ;   
 ; ****************************************************************
 ; VARS Table - holds 26 16-bit user variables
 ; ****************************************************************
@@ -67,8 +65,8 @@ vars:       DS 26 * 2
 ; DEFS Table - holds 26 addresses of user routines
 ; ****************************************************************
             .align $40
-defs:       DS 26 * 2
+            .org $-12
+            DS 12               ; vars for group 0 
+defs:       DS GRPSIZE * NUMGRPS
 
-            .align $80
-BUF:        DS $80
 HEAP:         
