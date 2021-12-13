@@ -178,7 +178,7 @@ iSysVars:
         DW dStack               ; a vS0
         DW FALSE                ; b vBase16
         DW 0                    ; c vTIBPtr
-        DW 0                    ; d 
+        DW DEFS                 ; d vDEFS
         DW 0                    ; e 
         DW 0                    ; f 
         DW 0                    ; g 
@@ -192,7 +192,7 @@ initialize:
         LD BC,8 * 2
         LDIR
         
-        LD HL,defs
+        LD HL,DEFS
         LD B,26
 init1:
         LD (HL),lsb(empty_)
@@ -333,15 +333,21 @@ rpop:
         INC IX                  
         RET
 
-alt:
-        INC BC
-        LD A,(BC)
-        LD HL,altCodes
-        ADD A,L
-        LD L,A
-        LD L,(HL)           ; 7t    get low jump address
-        LD H, msb(page6)    ; Load H with the 5th page address
-        JP  (HL)                    ; 4t    Jump to routine
+crlf:       
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JR writeChar1
+
+space:       
+        LD A,' '           
+        JR writeChar1
+
+writeChar:
+        LD (DE),A
+        INC DE
+writeChar1:
+        JP putchar
 
 ENTER:
         LD HL,BC
@@ -711,10 +717,12 @@ call_:
         CALL rpush              ; save Instruction Pointer
         LD A,(BC)
 
-        SUB "A" - ((DEFS - mintVars)/2)  
+        SUB "A"  
         ADD A,A
-        LD L,A
-        LD H,msb(mintVars)
+        LD E,A
+        LD D,0
+        LD HL,DEFS
+        ADD HL,DE
 
         LD C,(HL)
         INC HL
@@ -842,6 +850,8 @@ eq_:    POP      HL
         LD       HL, 0
         JR       less           ; HL = 1    
 
+getRef_:    
+            JP getRef
        
 gt_:    POP      DE
         POP      HL
@@ -873,16 +883,6 @@ var_:
 again_:     JR again
 mul_:       JR mul      
 div_:       JR div
-getRef_:    
-        INC BC
-        LD A,(BC)
-
-        SUB "A" - ((DEFS - mintVars)/2)  
-        ADD A,A
-        LD L,A
-        LD H,msb(mintVars)
-
-        JP fetch1
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
@@ -925,6 +925,16 @@ again1:
         ADD IX,DE
 again2:
         JP (IY)
+
+alt:
+        INC BC
+        LD A,(BC)
+        LD HL,altCodes
+        ADD A,L
+        LD L,A
+        LD L,(HL)           ; 7t    get low jump address
+        LD H, msb(page6)    ; Load H with the 5th page address
+        JP  (HL)                    ; 4t    Jump to routine
 
 ; ********************************************************************
 ; 16-bit multiply  
@@ -1112,24 +1122,6 @@ Num2:
         jr	c,Num2
         sbc	hl,de
         JP putchar
-
-crlf:       
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JR writeChar1
-
-space:       
-        LD A,' '           
-        JR writeChar1
-
-writeChar:
-        LD (DE),A
-        INC DE
-writeChar1:
-        JP putchar
-
-
 
 
 ; **************************************************************************
@@ -1350,7 +1342,7 @@ editDef:                    ; lookup up def based on number
         POP DE
         ADD A,E
         EX AF,AF'
-        LD HL,defs
+        LD HL,DEFS
         ADD HL,DE
         ADD HL,DE
         LD E,(HL)
@@ -1427,19 +1419,20 @@ arrEnd2:
 ; is found.
 ; ***************************************************************************
 
-def:                       ; Create a colon definition
+def:                        ; Create a colon definition
         PUSH HL             ; Save HL
-        LD HL, DEFS         ; Start address of jump table         
         INC BC
         LD  A,(BC)          ; Get the next character
         INC BC
 
-        SUB "A" - ((DEFS - mintVars)/2)  
+        SUB "A"  
         ADD A,A
-        LD L,A
-        LD H,msb(mintVars)
+        LD E,A
+        LD D,0
+        LD HL,DEFS          ; Start address of jump table         
+        ADD HL,DE
 
-        LD DE,(vHeapPtr)       ; start of defintion
+        LD DE,(vHeapPtr)    ; start of defintion
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
         LD (HL),D           ; Save high byte of address in CFA+1
@@ -1458,6 +1451,18 @@ end_def:
         DEC BC
         JP (IY)       
 
+getRef:
+        INC BC
+        LD A,(BC)
+
+        SUB "A"  
+        ADD A,A
+        LD E,A
+        LD D,0
+        LD HL,DEFS
+        ADD HL,DE
+
+        JP fetch1
 
 ; ***************************************************************************
 

@@ -8,8 +8,7 @@
     ld (tbPtr),HL
     jr buf2%%M
 buf1%%M:
-    db s1
-    ;$5C,"q",$0D
+    DB s1,$0D
 buf2%%M:
 .endm
 
@@ -18,7 +17,7 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (GETCVEC),HL
 
-testInput {":A\r1\r;"}
+testInput {":A;A"}
 JP interpret
 
 testGetCharImpl:

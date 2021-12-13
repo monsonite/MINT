@@ -16,7 +16,7 @@ sysVars:
 vS0:        DW 0                ; a
 vBase16:    DW 0                ; b
 vTIBPtr:    DW 0                ; c
-            DW 0                ; d
+vDefs:      DW 0                ; d
             DW 0                ; e
             DW 0                ; f
             DW 0                ; g
