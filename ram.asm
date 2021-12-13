@@ -8,20 +8,6 @@ dStack:
 rStack:        
 
 TIB:        DS TIBSIZE
-BUF:        DS $80
-
-RST08:      DW 0                ; 
-RST10:      DW 0                ; 
-RST18:      DW 0                ; 
-RST20:      DW 0                ; 
-RST28:      DW 0                ; 
-RST30:      DW 0                ; 
-BAUD        DW 0                ; 
-INTVEC:     DW 0                ; 
-NMIVEC:     DW 0                ; 
-GETCVEC:    DW 0                ;   
-PUTCVEC:    DW 0                ;   
-tbPtr:      DW 0                ; reserved for tests
 
             .align $100
 mintVars:
@@ -57,6 +43,21 @@ vHeapPtr:   DW 0                ; h
 vIFTEMode   DW 0                ; 
 vByteMode:  DW 0                ; 
 
+RST08:                      ; 
+RST10:                      ; 
+RST18:                      ; 
+RST20:                      ; 
+RST28:                      ; 
+RST30:      DW 0                ; 
+BAUD        DW 0                ; 
+INTVEC:     DW 0                ; 
+NMIVEC:     DW 0                ; 
+GETCVEC:    DW 0                ;   
+PUTCVEC:    DW 0                ;   
+tbPtr:      DW 0                ; reserved for tests
+            DW 0
+            DW 0
+            DW 0
 ; ****************************************************************
 ; VARS Table - holds 26 16-bit user variables
 ; ****************************************************************
@@ -65,7 +66,9 @@ vars:       DS 26 * 2
 ; ****************************************************************
 ; DEFS Table - holds 26 addresses of user routines
 ; ****************************************************************
+            .align $40
 defs:       DS 26 * 2
 
-            .align $40
+            .align $80
+BUF:        DS $80
 HEAP:         
