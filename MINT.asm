@@ -1,145 +1,10 @@
 ; *************************************************************************
 ;
-;        MINT1_18 Micro-Interpreter for the Z80
+;       MINT1_18 Micro-Interpreter for the Z80
 ;
-;        Ken Boak John Hardy and Craig Jones  December 2nd 2021
+;       Ken Boak John Hardy and Craig Jones. December 14th 2021
 ;
-;		 Multiplication stack bug fixed 
-;
-;        Comparison Operators < and > return 0 (false) when equality is detected
-;        Printhex routine shortened
-;        
-;
-;        Hex entry bug fixed 28-11-21
-;        Decimal entry bug fixed  24-11-21
-;        Division routine shortened by 13 bytes 24/11
-;
-;
-;        Includes serial routines getchar and putchar
-;        printstring
-;        printdec
-;        printhex
-;        crlf
-;
-;        Register Assignment:
-;
-;        BC is the instruction pointer IP
-;        DE is a working register and 2nd on stack NOS
-;        HL is a working register and Top of stack TOS
-;        SP is data stack pointer
-;        IX is used to implement the return stack
-;        IY is used as a jump back to NEXT
-;
-;        All commands accessed via a byte wide look up table
-;
-;        Heap used for command storage (HERE)
-;
-;        Primitives are on two consecutive pages using a trampoline jump to the 2nd page.
-;        
-;        This allows single byte opcodes reducing the dispatch time from
-;        64 t states to 33 t states
-;
-;
-;        User defined commands and mintVars
-;
-;        User Commands  A-Z
-;        User mintVars a-z
-;
-;        Commands now available:
-;
-;        Maths
-;
-;        +     ADD
-;		 -     SUB
-;        *     MUL     (max product 65535)
-;        /     DIV     Returns quotient and remainder
-;        _     NEG
-;
-;        }     Shift Right (2/)
-;        {     Shift Left  (2*)
-;
-;        Comparison - compare the top two elements on the stack
-;        Puts 1 on the stack if condition is true, 0 if false
-;
-;        <     LT
-;        =     EQ
-;        >     GT
-;
-;        Logic
-;
-;        &     AND
-;        |     OR
-;        ^     XOR
-;        ~     INV
-;
-;        Stack
-;
-;        "     DUP
-;        '     DROP
-;        $     SWAP
-;		 %     OVER
-;        .     DOT     (Print the value of the top of stack as a decimal)
-;        ,     COMMA   (Print the value of the top of stack as a hexadecimal)
-;		 #     HEX     Accept a hexadecimal number 
-;
-;        Memory
-;
-;        @     FETCH
-;        !     STORE
-;
-;        User Definitions
-;
-;        :     Start a user definition
-;        ;     End a user definition
-;
-;        \     QUIT    (Print OK and return to monitor)
-;
-;
-;        Loops    - execute the code between parenthesis
-;
-;        The user variable i is used as the loop counter
-;        It is decremented every time the loop is executed
-;
-;        10(repeat this code 10 times)
-;
-;        0(skip this code)
-;
-;        1(execute this code only once)
-;
-;        a@ b@ = (_print this if a=b_)
-;
-;       1000(i@.)    Print out the value of i from 999 to 0
-;
-;       10(a@ 1+ a! a@ .)  Increment a 10 times and print it out
-;
-;       User Commands are allocated to uppercase alpha characters A to Z
-;
-;       A user command can be defined by starting with a colon and
-;       ending with a semicolon
-;
-;       Example  :A 123 456 + . ;
-;
-;       The A character represents a fixed address for the User routine
-;       The interpreter copies all the characters after the A to a text buffer
-;       located at address A
-;       Each time A is encountered (outside of a colon definition)
-;       it will execute the code  located there i.e. 123 456 + .
-;
-;       mintVars are associated with lowercase characters a-z
-;       Each variable is allocated 2 bytes located on even addresses
-;       They run contiguously from $A800 (a) to $A830 (z)
-;       They are accessed using the fetch and store commands @ and !
-;
-;       Examples:
-;
-;       1234 a!     store 1234 in a
-;
-;       b@ .        fetch the value from b and print it out
-;
-;       a@ b@ + .   fetch values from a and b, add them together and print the sum
-;
-;       a@ b!       copy the value in a and store it in b
-;
+;       CopyLeft: All Wrongs Reserved
 ;
 ; *****************************************************************************
 
@@ -156,10 +21,10 @@
 
         NUMGRPS     EQU 4
         GRPSIZE     EQU $40
+
 ; **************************************************************************
 ; Page 0  Initialisation
 ; **************************************************************************		
-;        JP start
 
 		.ORG ROMSTART + $180		
 
