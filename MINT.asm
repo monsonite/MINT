@@ -722,7 +722,6 @@ call_:
         LD E,A
         LD D,0
         LD HL,(vDEFS)
-        LD HL,DEFS
         ADD HL,DE
 
         LD C,(HL)
@@ -1343,7 +1342,7 @@ editDef:                    ; lookup up def based on number
         POP DE
         ADD A,E
         EX AF,AF'
-        LD HL,DEFS
+        LD HL,(vDEFS)
         ADD HL,DE
         ADD HL,DE
         LD E,(HL)
@@ -1421,7 +1420,7 @@ arrEnd2:
 ; ***************************************************************************
 
 def:                        ; Create a colon definition
-        PUSH HL             ; Save HL
+        ; PUSH HL             ; Save HL
         INC BC
         LD  A,(BC)          ; Get the next character
         INC BC
@@ -1430,14 +1429,14 @@ def:                        ; Create a colon definition
         ADD A,A
         LD E,A
         LD D,0
-        LD HL,DEFS          ; Start address of jump table         
+        LD HL,(vDEFS)       ; Start address of jump table         
         ADD HL,DE
 
         LD DE,(vHeapPtr)    ; start of defintion
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
         LD (HL),D           ; Save high byte of address in CFA+1
-        POP HL              ; Restore HL
+        ; POP HL              ; Restore HL
 nextbyte:                   ; Skip to end of definition   
         LD A,(BC)           ; Get the next character
         INC BC              ; Point to next character
