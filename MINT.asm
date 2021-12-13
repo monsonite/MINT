@@ -721,6 +721,7 @@ call_:
         ADD A,A
         LD E,A
         LD D,0
+        LD HL,(vDEFS)
         LD HL,DEFS
         ADD HL,DE
 

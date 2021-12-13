@@ -2,7 +2,7 @@
 .macro utilDefs
     DB ":Q ",$22,";"                    ; ( n -- n n ) a convenient way to access " 
     DB ":W \\h@! 2\\h\\+;"              ; ( n -- ) compiles a word to heap
-    DB ":K \\D\\d@- 0$ ($1+^);"         ; ( x1...xn num -- hash )
+    DB ":K \\D\\t@- 0$ ($1+^);"         ; ( x1...xn num -- hash )
 .endm
 
 .macro arrayDefs
@@ -27,9 +27,9 @@
 .endm
 
 .macro tester, name1, test1, expect1
-    DB "`.`\\D\\d!"
+    DB "`.`\\D\\t!"
     DB " ",test1," "
-    DB "K\\D\\d!"                           ; ( -- hash1 )
+    DB "K\\D\\t!"                           ; ( -- hash1 )
     DB " ",expect1," "
     DB "K=0=(\\N`fail: ",name1," ",test1," expected: "
     DB expect1,"`\\N\\N",0,")"
