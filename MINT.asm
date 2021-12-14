@@ -11,7 +11,6 @@
         ;ROMSTART    EQU $0
         ;RAMSTART    EQU $800
         ;EXTENDED    EQU 0
-
         ;ROMSIZE     EQU $800
         DSIZE       EQU $80
         RSIZE       EQU $80
@@ -1094,10 +1093,8 @@ endGroup_:
         JP (IY)
 
 group_:
-        INC BC
-        LD A,(BC)
-        SUB "0"
-        LD D,A
+        POP DE
+        LD D,E
         LD E,0
         SRL D
         RR E
