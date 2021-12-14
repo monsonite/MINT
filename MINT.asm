@@ -67,7 +67,7 @@ init1:
         DJNZ init1
         RET
 
-macro:
+macro:                          ; 25
         LD (vTIBPtr),BC
         LD HL,ctrlCodes
         ADD A,L
@@ -175,7 +175,7 @@ waitchar4:
 ;
 ; *********************************************************************************
 
-NEXT:   
+NEXT:                               ; 9 
         INC BC                      ; 6t    Increment the IP
         LD A, (BC)                  ; 7t    Get the next character and dispatch
         LD L,A                      ; 4t    Index into table
@@ -184,21 +184,21 @@ NEXT:
         LD H,msb(page4)             ; 7t    Load H with the 1st page address
         JP (HL)                     ; 4t    Jump to routine
 
-rpush:
+rpush:                              ; 11
         DEC IX                  
         LD (IX+0),H
         DEC IX
         LD (IX+0),L
         RET
 
-rpop:
+rpop:                               ; 11
         LD L,(IX+0)         
         INC IX              
         LD H,(IX+0)
         INC IX                  
         RET
 
-crlf:       
+crlf:                               ; 18
         LD A, '\r'
         CALL putchar
         LD A, '\n'           
@@ -214,7 +214,7 @@ writeChar:
 writeChar1:
         JP putchar
 
-ENTER:
+ENTER:                          ; 9
         LD HL,BC
         CALL rpush              ; save Instruction Pointer
         POP BC
@@ -222,7 +222,7 @@ ENTER:
         JP  (IY)                ; Execute code from User def
 
 ; ARRAY compilation routine
-compNEXT:
+compNEXT:                       ; 19
         POP DE          ; DE = return address
         LD HL,(vHeapPtr)    ; load heap ptr
         LD (HL),E       ; store lsb
@@ -581,14 +581,7 @@ call_:
         LD HL,BC
         CALL rpush              ; save Instruction Pointer
         LD A,(BC)
-
-        SUB "A"  
-        ADD A,A
-        LD E,A
-        LD D,0
-        LD HL,(vDEFS)
-        ADD HL,DE
-
+        CALL getGroup
         LD C,(HL)
         INC HL
         LD B,(HL)
@@ -596,15 +589,14 @@ call_:
         JP  (IY)                ; Execute code from User def
 
 
-def_:       JP def
+def_:   JP def
+
+hexp_:                              ; print hexadecimal
+        POP     HL
+        CALL    printhex
+        JR   dot2
 dot_:       
         POP HL
-        LD A,(vBase16)
-        OR A
-        JR Z,dot1
-        CALL printhex
-        JR dot2
-dot1:
         CALL printdec
 dot2:
         CALL space
@@ -639,11 +631,6 @@ fetch1:
         JP      (IY)        ; 8t
 
 hex_:   JP hex
-
-hexp_:                              ; print hexadecimal
-        POP     HL
-        CALL    printhex
-        JR   dot2
 
 nop_:       JP NEXT                 ; hardwire white space to always go to NEXT (important for arrays)
 
@@ -716,8 +703,12 @@ eq_:    POP      HL
         JR       less           ; HL = 1    
 
 getRef_:    
-        JP getRef
-       
+getRef:                         ; 8
+        INC BC
+        LD A,(BC)
+        CALL getGroup
+        JP fetch1
+
 gt_:    POP      DE
         POP      HL
         JR       cmp_
@@ -748,11 +739,13 @@ var_:
 again_:     JR again
 mul_:       JR mul      
 div_:       JR div
+
+str_:                       
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
         ;falls through 
-str_:                       
+str:                                ; 15
         INC BC
         
 nextchar:            
@@ -767,7 +760,7 @@ str2:
         DEC BC
         JP   (IY) 
 
-again:  ;20
+again:                              ;20
         LD HL,vIFTEMode
         XOR A
         OR (HL)
@@ -791,14 +784,14 @@ again1:
 again2:
         JP (IY)
 
-alt:
+alt:                                ; 11
         INC BC
         LD A,(BC)
         LD HL,altCodes
         ADD A,L
         LD L,A
-        LD L,(HL)           ; 7t    get low jump address
-        LD H, msb(page6)    ; Load H with the 5th page address
+        LD L,(HL)                   ; 7t    get low jump address
+        LD H, msb(page6)            ; Load H with the 5th page address
         JP  (HL)                    ; 4t    Jump to routine
 
 ; ********************************************************************
@@ -882,8 +875,8 @@ div_end:
 ; *************************************
 ; Loop Handling Code
 ; *************************************
-        	        
-begin:  ;23                     ; Left parentesis begins a loop
+        	                    ;23                     
+begin:                          ; Left parentesis begins a loop
         LD HL,vIFTEMode
         LD (HL),0
 
@@ -926,7 +919,7 @@ begin2:
 ; Push HL onto the stack and proceed to the dispatch routine.
 ; ********************************************************************************
          
-number: ; 23
+number:                         ; 23
 		LD HL,$0000				; 10t Clear HL to accept the number
 		LD A,(BC)				; 7t  Get the character which is a numeral
         
@@ -969,7 +962,7 @@ printdec:
 ;inputs:	hl = number to ASCII
 ;example: hl=300 outputs '00300'
 ;destroys: af, de, hl
-DispHL:
+DispHL:                         ; 36
         ld	de,-10000
         call	Num1
         ld	de,-1000
@@ -988,6 +981,24 @@ Num2:
         sbc	hl,de
         JP putchar
 
+printhex:                       ; 11  
+                                ; Display HL as a 16-bit number in hex.
+        PUSH BC                 ; preserve the IP
+        LD	A,H
+		CALL	Print_Hex8
+		LD	A,L
+		CALL	Print_Hex8
+		POP BC
+		RET
+
+getGroup:                       ; 11
+        SUB "A"  
+        ADD A,A
+        LD E,A
+        LD D,0
+        LD HL,(vDEFS)
+        ADD HL,DE
+        RET
 
 ; **************************************************************************
 ; Page 6 Alt primitives
@@ -1053,10 +1064,10 @@ emit_:
 ifte_:
         LD HL,vIFTEMode
         LD (HL),TRUE
-        OR A                ; invert condition
-        SBC HL,HL
         POP DE
-        SBC HL,DE
+        OR A
+        SBC HL,HL                   ; invert condition
+        SBC HL,DE                   ; affects Z flag    
         INC HL
         PUSH HL
         JP Z,begin1
@@ -1080,17 +1091,25 @@ go_:
 group_:
 group:
         LD A,(BC)
-        SUB "0"
+        SUB "1"
+        JR C,group1
         LD D,A
         LD E,0
         SRL D
         RR E
         SRL D
         RR E
+        LD HL,(vDEFS)
+        call rpush
         LD HL,DEFS
         ADD HL,DE
         LD (vDEFS),HL
         JP  (IY)                ; Execute code from User def
+
+group1:
+        call rpop
+        LD (vDEFS),HL
+        JP (IY)
 
 sysVar_:
         LD A,(BC)
@@ -1196,6 +1215,7 @@ editDef_:
 ; copy definition to text input buffer
 ; update TIBPtr
 ; **************************************************************************             
+                            ; 54
 editDef:                    ; lookup up def based on number
         LD A,"A"
         POP DE
@@ -1232,9 +1252,9 @@ editDef3:
         LD (vTIBPtr),HL
         JP (IY)
 
-printStk:
+printStk:                   ; 40
         call ENTER
-        .cstr "\\a@2-\\D1-",$22,"\\_0=((",$22,"@.2-))'"             
+        .cstr "\\a@2-\\D1-",$22,"\\_0=((",$22,"@\\b@\\($.)(,)2-))'"             
         JP (IY)
 
 ;*******************************************************************
@@ -1242,7 +1262,7 @@ printStk:
 ;*******************************************************************
 
 ; define a word array
-arrDef:      
+arrDef:                     ; 18
         LD A,FALSE
 arrDef1:      
         LD IY,compNEXT
@@ -1252,7 +1272,7 @@ arrDef1:
         JP NEXT         ; hardwired to NEXT
 
 ; end a word array
-arrEnd:
+arrEnd:                     ; 27
         CALL rpop               ; DE = start of array
         PUSH HL
         EX DE,HL
@@ -1277,19 +1297,12 @@ arrEnd2:
 ; The remainder of the characters are then skipped until after a semicolon  
 ; is found.
 ; ***************************************************************************
-
+                            ; 31
 def:                        ; Create a colon definition
         INC BC
         LD  A,(BC)          ; Get the next character
         INC BC
-
-        SUB "A"  
-        ADD A,A
-        LD E,A
-        LD D,0
-        LD HL,(vDEFS)       ; Start address of jump table         
-        ADD HL,DE
-
+        CALL getGroup
         LD DE,(vHeapPtr)    ; start of defintion
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
@@ -1308,23 +1321,10 @@ end_def:
         DEC BC
         JP (IY)       
 
-getRef:
-        INC BC
-        LD A,(BC)
-
-        SUB "A"  
-        ADD A,A
-        LD E,A
-        LD D,0
-        LD HL,(vDEFS)
-        ADD HL,DE
-
-        JP fetch1
-
 ; ***************************************************************************
 
-hex:
-	LD HL,$0000				; 10t Clear HL to accept the number
+hex:                            ; 26
+	    LD HL,0		    		; 10t Clear HL to accept the number
 hex1:
         INC BC
         LD A,(BC)				; 7t  Get the character which is a numeral
@@ -1344,20 +1344,10 @@ hex2:
         LD  L,A                 ; 4t
         JR  hex1
 
-printhex:       
-                                ; Display HL as a 16-bit number in hex.
-        PUSH BC                 ; preserve the IP
-        LD	A,H
-		CALL	Print_Hex8
-		LD	A,L
-		CALL	Print_Hex8
-		POP BC
-		RET
-
 ; Print an 8-bit HEX number  - shortened KB 25/11/21
 ; A: Number to print
 ;
-Print_Hex8:		
+Print_Hex8:		                ; 20
         LD	C,A
 		RRA 
 		RRA 
@@ -1384,7 +1374,7 @@ conv:
 ; limited to 127 levels
 ; **************************************************************************             
 
-nesting:
+nesting:                        ; 44
         CP '`'
         JR NZ,nesting1
         BIT 7,E

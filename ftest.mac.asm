@@ -6,6 +6,8 @@
 .endm
 
 .macro arrayDefs
+    ; DB  "\\4"
+
     DB  ":H 0\\R\\R ( $%@ 1+^ $ 2+)';"      ; arr len -- hash           hash array
 
     DB  ":R \\f! ( $%@ \\f@\\G $ 2+) ' ;"   ; v0 arr len fun -- val     reduce array
@@ -24,6 +26,8 @@
     DB  " '  \\h@ % -};"
 
     DB  ":Z `[ `(Q @.2+)`]` ' ;"            ; arr len --                print array
+
+    ; DB  "\\0"
 .endm
 
 .macro tester, name1, test1, expect1
