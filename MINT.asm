@@ -427,7 +427,7 @@ altCodes:
         DB     lsb(aNop_)       ;    %            
         DB     lsb(aNop_)       ;    &
         DB     lsb(aNop_)       ;    '
-        DB     lsb(ifte_)       ;    (        
+        DB     lsb(ifte_)       ;    (  ( b -- )            ; sets IFTEMode true      
         DB     lsb(aNop_)       ;    )
         DB     lsb(aNop_)       ;    *            
         DB     lsb(incr_)       ;    +  ( adr -- ) decrements variable at address
@@ -702,12 +702,7 @@ eq_:    POP      HL
         JR       less           ; HL = 1    
 
 getRef_:    
-getRef:                         ; 8
-        INC BC
-        LD A,(BC)
-        CALL getGroup
-        JP fetch1
-
+        JP getRef
 gt_:    POP      DE
         POP      HL
         JR       cmp_
@@ -735,16 +730,11 @@ var_:
         PUSH HL
         JP (IY)
         
-again_:     JR again
-mul_:       JR mul      
 div_:       JR div
+mul_:   JR mul      
 
 str_:                       
-;*******************************************************************
-; Page 5 primitive routines 
-;*******************************************************************
-        ;falls through 
-str:                                ; 15
+str:                                ;= 15
         INC BC
         
 nextchar:            
@@ -759,31 +749,40 @@ str2:
         DEC BC
         JP   (IY) 
 
-again:                              ;20
+again_:     JR again
+;*******************************************************************
+; Page 5 primitive routines 
+;*******************************************************************
+        ;falls through 
+again:                              ;= 20
         LD HL,vIFTEMode
-        XOR A
-        OR (HL)
-        JR NZ,again2
+        LD A,(HL)
+        OR A
+        JR Z,again1
+        LD HL,FALSE                 ; push FALSE condition on stack
+        PUSH HL
+        JP (IY)
+
+again1:   
         LD E,(IX+0)                 ; peek loop var
         LD D,(IX+1)                 
         LD L,(IX+2)                 ; peek loop limit
         LD H,(IX+3)                 
         OR A
         SBC HL,DE
-        JR Z,again1
+        JR Z,again2
         INC DE
         LD (IX+0),E                 ; poke loop var
         LD (IX+1),D                 
         LD C,(IX+4)                 ; peek loop address
         LD B,(IX+5)                 
         JP (IY)
-again1:   
+again2:   
         LD DE,6                     ; drop loop frame
         ADD IX,DE
-again2:
         JP (IY)
 
-alt:                                ; 11
+alt:                                ;= 11
         INC BC
         LD A,(BC)
         LD HL,altCodes
@@ -874,7 +873,7 @@ div_end:
 ; *************************************
 ; Loop Handling Code
 ; *************************************
-        	                    ;23                     
+        	                    ;= 23                     
 begin:                          ; Left parentesis begins a loop
         LD HL,vIFTEMode
         LD (HL),0
@@ -904,6 +903,14 @@ begin2:
         XOR A
         OR E
         JR NZ,begin2
+        
+        LD HL,vIFTEMode
+        LD A,(HL)
+        OR A
+        JR Z,begin3
+        LD HL,TRUE                 ; push FALSE condition on stack
+        PUSH HL
+begin3:
         JP (IY)
 
 ; ********************************************************************************
@@ -918,7 +925,7 @@ begin2:
 ; Push HL onto the stack and proceed to the dispatch routine.
 ; ********************************************************************************
          
-number:                         ; 23
+number:                         ;= 23
 		LD HL,$0000				; 10t Clear HL to accept the number
 		LD A,(BC)				; 7t  Get the character which is a numeral
         
@@ -961,7 +968,7 @@ printdec:
 ;inputs:	hl = number to ASCII
 ;example: hl=300 outputs '00300'
 ;destroys: af, de, hl
-DispHL:                         ; 36
+DispHL:                         ;= 36
         ld	de,-10000
         call	Num1
         ld	de,-1000
@@ -980,17 +987,7 @@ Num2:
         sbc	hl,de
         JP putchar
 
-printhex:                       ; 11  
-                                ; Display HL as a 16-bit number in hex.
-        PUSH BC                 ; preserve the IP
-        LD	A,H
-		CALL	Print_Hex8
-		LD	A,L
-		CALL	Print_Hex8
-		POP BC
-		RET
-
-getGroup:                       ; 11
+getGroup:                       ;= 11
         SUB "A"  
         ADD A,A
         LD E,A
@@ -1064,11 +1061,8 @@ ifte_:
         LD HL,vIFTEMode
         LD (HL),TRUE
         POP DE
-        OR A
-        SBC HL,HL                   ; invert condition
-        SBC HL,DE                   ; affects Z flag    
-        INC HL
-        PUSH HL
+        LD A,E
+        OR D
         JP Z,begin1
         JP (IY)
 		
@@ -1211,7 +1205,7 @@ editDef_:
 ; copy definition to text input buffer
 ; update TIBPtr
 ; **************************************************************************             
-                            ; 54
+                            ;= 54
 editDef:                    ; lookup up def based on number
         LD A,"A"
         POP DE
@@ -1248,7 +1242,7 @@ editDef3:
         LD (vTIBPtr),HL
         JP (IY)
 
-printStk:                   ; 40
+printStk:                   ;= 40
         call ENTER
         .cstr "\\a@2-\\D1-",$22,"\\_0=((",$22,"@\\b@\\($.)(,)2-))'"             
         JP (IY)
@@ -1258,7 +1252,7 @@ printStk:                   ; 40
 ;*******************************************************************
 
 ; define a word array
-arrDef:                     ; 18
+arrDef:                     ;= 18
         LD A,FALSE
 arrDef1:      
         LD IY,compNEXT
@@ -1268,7 +1262,7 @@ arrDef1:
         JP NEXT         ; hardwired to NEXT
 
 ; end a word array
-arrEnd:                     ; 27
+arrEnd:                     ;= 27
         CALL rpop               ; DE = start of array
         PUSH HL
         EX DE,HL
@@ -1293,7 +1287,7 @@ arrEnd2:
 ; The remainder of the characters are then skipped until after a semicolon  
 ; is found.
 ; ***************************************************************************
-                            ; 31
+                            ;= 31
 def:                        ; Create a colon definition
         INC BC
         LD  A,(BC)          ; Get the next character
@@ -1319,7 +1313,7 @@ end_def:
 
 ; ***************************************************************************
 
-hex:                            ; 26
+hex:                            ;= 26
 	    LD HL,0		    		; 10t Clear HL to accept the number
 hex1:
         INC BC
@@ -1343,7 +1337,7 @@ hex2:
 ; Print an 8-bit HEX number  - shortened KB 25/11/21
 ; A: Number to print
 ;
-Print_Hex8:		                ; 20
+Print_Hex8:		                ;= 20
         LD	C,A
 		RRA 
 		RRA 
@@ -1370,7 +1364,7 @@ conv:
 ; limited to 127 levels
 ; **************************************************************************             
 
-nesting:                        ; 44
+nesting:                        ;= 44
         CP '`'
         JR NZ,nesting1
         BIT 7,E
@@ -1402,3 +1396,20 @@ nesting3:
 nesting4:
         DEC E
         RET 
+        
+printhex:                       ;= 11  
+                                ; Display HL as a 16-bit number in hex.
+        PUSH BC                 ; preserve the IP
+        LD	A,H
+		CALL	Print_Hex8
+		LD	A,L
+		CALL	Print_Hex8
+		POP BC
+		RET
+
+getRef:                         ;= 8
+        INC BC
+        LD A,(BC)
+        CALL getGroup
+        JP fetch1
+

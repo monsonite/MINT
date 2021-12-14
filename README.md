@@ -299,10 +299,12 @@ Note: logical NOT can be achieved with 0=
 | :<CHAR> | define a new word DEF      |        |
 | ;       | end of user definition END |        |
 | ?<CHAR> | get the address of the def | -- adr |
-| \{<NUM> | enter group NUM            | --     |
+| \{      | enter group NUM            | num -- |
 | \}      | exit group                 | --     |
 
-NOTE: <CHAR> is an uppercase letter immediately following operation which is the name of the definition
+NOTE: 
+<CHAR> is an uppercase letter immediately following operation which is the name of the definition
+<NUM> is the group number. There are currently 5 groups numbered 0 - 4
 
 ### Loops and conditional execution
 
