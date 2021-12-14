@@ -312,7 +312,7 @@ NOTE:
 | ------ | ------------------------------------------------- | ------ |
 | (      | BEGIN a loop or conditionally executed code block | n --   |
 | )      | END a loop or conditionally executed code block   | --     |
-| \\(    | ifElse \\(`true`)(`false`)                        | n -- n |
+| \\(    | ifElse \\(`true`)(`false`)                        | b --   |
 | \\i    | returns index variable of current loop            | -- val |
 | \\j    | returns index variable of outer loop              | -- val |
 | \\B    | if true break out of loop                         | b --   |
