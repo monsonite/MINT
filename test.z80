@@ -15,10 +15,10 @@
     .org $4000
 
 testsStart:
-    test "10 1\\($,)(.)",0 
-    CALL enter
-    .cstr "`Done!!`"
-    HALT
+    ; test "10 1\\($,)(.)",0 
+    ; CALL enter
+    ; .cstr "`Done!!`"
+    ; HALT
     
     test "2 3<", 1
     test "3 3<", 0

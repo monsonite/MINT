@@ -19,7 +19,7 @@
         TRUE        EQU 1
         FALSE       EQU 0
 
-        NUMGRPS     EQU 4
+        NUMGRPS     EQU 5
         GRPSIZE     EQU $40
 
 ; **************************************************************************
@@ -388,134 +388,134 @@ opcodes:
 ; ***********************************************************************		
 ctrlCodes:
 altCodes:
-        DB     lsb(empty_)     ; NUL ^@
-        DB     lsb(empty_)     ; SOH ^A
-        DB     lsb(toggleBase_); STX ^B
-        DB     lsb(empty_)     ; ETX ^C
-        DB     lsb(empty_)     ; EOT ^D
-        DB     lsb(edit_)      ; ENQ ^E
-        DB     lsb(empty_)     ; ACK ^F
-        DB     lsb(empty_)     ; BEL ^G
-        DB     lsb(backsp_)    ; BS  ^H
-        DB     lsb(empty_)     ; TAB ^I
-        DB     lsb(empty_)     ; LF  ^J
-        DB     lsb(empty_)     ; VT  ^K
-        DB     lsb(list_)      ; FF  ^L
-        DB     lsb(empty_)     ; CR  ^M
-        DB     lsb(empty_)     ; SO  ^N
-        DB     lsb(empty_)     ; SI  ^O
-        DB     lsb(printStack_); DLE ^P
-        DB     lsb(empty_)     ; DC1 ^Q
-        DB     lsb(empty_)     ; DC2 ^R
-        DB     lsb(empty_)     ; DC3 ^S
-        DB     lsb(empty_)     ; DC4 ^T
-        DB     lsb(empty_)     ; NAK ^U
-        DB     lsb(empty_)     ; SYN ^V
-        DB     lsb(empty_)     ; ETB ^W
-        DB     lsb(empty_)     ; CAN ^X
-        DB     lsb(empty_)     ; EM  ^Y
-        DB     lsb(empty_)     ; SUB ^Z
-        DB     lsb(empty_)     ; ESC ^[
-        DB     lsb(empty_)     ; FS  ^\
-        DB     lsb(empty_)     ; GS  ^]
-        DB     lsb(empty_)     ; RS  ^^
-        DB     lsb(empty_)     ; US  ^_)
-        DB     lsb(aNop_)      ; SP  ^`
-        DB     lsb(cStore_)    ;    !            
-        DB     lsb(aNop_)      ;    "
-        DB     lsb(aNop_)      ;    #
-        DB     lsb(aNop_)      ;    $  ( -- adr ) text input ptr           
-        DB     lsb(aNop_)      ;    %            
-        DB     lsb(aNop_)      ;    &
-        DB     lsb(aNop_)      ;    '
-        DB     lsb(ifte_)      ;    (        
-        DB     lsb(aNop_)      ;    )
-        DB     lsb(aNop_)      ;    *            
-        DB     lsb(incr_)      ;    +  ( adr -- ) decrements variable at address
-        DB     lsb(aNop_)      ;    ,            
-        DB     lsb(aNop_)      ;    -  
-        DB     lsb(aNop_)      ;    .  
-        DB     lsb(aNop_)      ;    /
-        DB     lsb(group_)     ;    0           
-        DB     lsb(group_)     ;    1  
-        DB     lsb(group_)     ;    2            
-        DB     lsb(group_)     ;    3  
-        DB     lsb(aNop_)      ;    4            
-        DB     lsb(aNop_)      ;    5            
-        DB     lsb(aNop_)      ;    6            
-        DB     lsb(aNop_)      ;    7
-        DB     lsb(aNop_)      ;    8            
-        DB     lsb(aNop_)      ;    9        
-        DB     lsb(aNop_)      ;    :  start defining a macro        
-        DB     lsb(aNop_)      ;    ;  
-        DB     lsb(aNop_)      ;    <
-        DB     lsb(aNop_)      ;    =            
-        DB     lsb(aNop_)      ;    >            
-        DB     lsb(aNop_)      ;    ?
-        DB     lsb(cFetch_)    ;    @      
-        DB     lsb(aNop_)      ;    A    
+        DB     lsb(empty_)      ; NUL ^@
+        DB     lsb(empty_)      ; SOH ^A
+        DB     lsb(toggleBase_) ; STX ^B
+        DB     lsb(empty_)      ; ETX ^C
+        DB     lsb(empty_)      ; EOT ^D
+        DB     lsb(edit_)       ; ENQ ^E
+        DB     lsb(empty_)      ; ACK ^F
+        DB     lsb(empty_)      ; BEL ^G
+        DB     lsb(backsp_)     ; BS  ^H
+        DB     lsb(empty_)      ; TAB ^I
+        DB     lsb(empty_)      ; LF  ^J
+        DB     lsb(empty_)      ; VT  ^K
+        DB     lsb(list_)       ; FF  ^L
+        DB     lsb(empty_)      ; CR  ^M
+        DB     lsb(empty_)      ; SO  ^N
+        DB     lsb(empty_)      ; SI  ^O
+        DB     lsb(printStack_) ; DLE ^P
+        DB     lsb(empty_)      ; DC1 ^Q
+        DB     lsb(empty_)      ; DC2 ^R
+        DB     lsb(empty_)      ; DC3 ^S
+        DB     lsb(empty_)      ; DC4 ^T
+        DB     lsb(empty_)      ; NAK ^U
+        DB     lsb(empty_)      ; SYN ^V
+        DB     lsb(empty_)      ; ETB ^W
+        DB     lsb(empty_)      ; CAN ^X
+        DB     lsb(empty_)      ; EM  ^Y
+        DB     lsb(empty_)      ; SUB ^Z
+        DB     lsb(empty_)      ; ESC ^[
+        DB     lsb(empty_)      ; FS  ^\
+        DB     lsb(empty_)      ; GS  ^]
+        DB     lsb(empty_)      ; RS  ^^
+        DB     lsb(empty_)      ; US  ^_)
+        DB     lsb(aNop_)       ; SP  ^`
+        DB     lsb(cStore_)     ;    !            
+        DB     lsb(aNop_)       ;    "
+        DB     lsb(aNop_)       ;    #
+        DB     lsb(aNop_)       ;    $  ( -- adr ) text input ptr           
+        DB     lsb(aNop_)       ;    %            
+        DB     lsb(aNop_)       ;    &
+        DB     lsb(aNop_)       ;    '
+        DB     lsb(ifte_)       ;    (        
+        DB     lsb(aNop_)       ;    )
+        DB     lsb(aNop_)       ;    *            
+        DB     lsb(incr_)       ;    +  ( adr -- ) decrements variable at address
+        DB     lsb(aNop_)       ;    ,            
+        DB     lsb(aNop_)       ;    -  
+        DB     lsb(aNop_)       ;    .  
+        DB     lsb(aNop_)       ;    /
+        DB     lsb(aNop_)       ;    0           
+        DB     lsb(aNop_)       ;    1  
+        DB     lsb(aNop_)       ;    2            
+        DB     lsb(aNop_)       ;    3  
+        DB     lsb(aNop_)       ;    4            
+        DB     lsb(aNop_)       ;    5            
+        DB     lsb(aNop_)       ;    6            
+        DB     lsb(aNop_)       ;    7
+        DB     lsb(aNop_)       ;    8            
+        DB     lsb(aNop_)       ;    9        
+        DB     lsb(aNop_)       ;    :  start defining a macro        
+        DB     lsb(aNop_)       ;    ;  
+        DB     lsb(aNop_)       ;    <
+        DB     lsb(aNop_)       ;    =            
+        DB     lsb(aNop_)       ;    >            
+        DB     lsb(aNop_)       ;    ?
+        DB     lsb(cFetch_)     ;    @      
+        DB     lsb(aNop_)       ;    A    
         DB     lsb(break_)      ;    B
-        DB     lsb(nop_)       ;    C
-        DB     lsb(depth_)     ;    D  ( -- val ) depth of data stack  
-        DB     lsb(emit_)      ;    E   ( val -- ) emits a char to output
-        DB     lsb(aNop_)      ;    F
-        DB     lsb(go_)        ;    G   ( -- ? ) execute mint definition
-        DB     lsb(aNop_)      ;    H  
-        DB     lsb(inPort_)    ;    I  ( port -- val )   
-        DB     lsb(aNop_)      ;    J
-        DB     lsb(key_)       ;    K  ( -- val )  read a char from input
-        DB     lsb(aNop_)      ;    L  
-        DB     lsb(aNop_)      ;    M  
-        DB     lsb(newln_)     ;    N   ; prints a newline to output
-        DB     lsb(outPort_)   ;    O  ( val port -- )
-        DB     lsb(printStk_)  ;    P  ( -- ) non-destructively prints stack
-        DB     lsb(aNop_)      ;    Q  quits from Mint REPL
-        DB     lsb(rot_)       ;    R  ( a b c -- b c a )
-        DB     lsb(aNop_)      ;    S
-        DB     lsb(aNop_)      ;    T
-        DB     lsb(aNop_)      ;    U
-        DB     lsb(aNop_)      ;    V
-        DB     lsb(aNop_)     ;    W   ; ( b -- ) if false, skip to end of loop
-        DB     lsb(exec_)      ;    X
-        DB     lsb(aNop_)      ;    Y
-        DB     lsb(editDef_)   ;    Z
-        DB     lsb(cArrDef_)   ;    [
-        DB     lsb(comment_)   ;    \  comment text, skips reading until end of line
-        DB     lsb(aNop_)      ;    ]
-        DB     lsb(charCode_)  ;    ^
-        DB     lsb(sign_)      ;    _)  ( n -- b ) returns true if -ve 
-        DB     lsb(aNop_)      ;    `            
-        DB     lsb(sysVar_)   ;    a  ; start of data stack variable
-        DB     lsb(sysVar_)   ;    b  ; base16 variable
-        DB     lsb(sysVar_)   ;    c  ; TIBPtr variable
-        DB     lsb(sysVar_)   ;    d  
-        DB     lsb(sysVar_)   ;    e  
-        DB     lsb(sysVar_)   ;    f
-        DB     lsb(sysVar_)   ;    g  
-        DB     lsb(sysVar_)   ;    h  ; heap ptr variable
-        DB     lsb(i_)         ;    i  ; returns index variable of current loop          
-        DB     lsb(j_)         ;    j  ; returns index variable of outer loop
-        DB     lsb(sysVar_)   ;    k  
-        DB     lsb(sysVar_)   ;    l
-        DB     lsb(sysVar_)   ;    m  ( a b -- c ) return the minimum value
-        DB     lsb(sysVar_)   ;    n  
-        DB     lsb(sysVar_)   ;    o
-        DB     lsb(sysVar_)   ;    p  
-        DB     lsb(sysVar_)   ;    q           
-        DB     lsb(sysVar_)   ;    r
-        DB     lsb(sysVar_)   ;    s 
-        DB     lsb(sysVar_)   ;    t
-        DB     lsb(sysVar_)   ;    u
-        DB     lsb(sysVar_)   ;    v   
-        DB     lsb(sysVar_)   ;    w   
-        DB     lsb(sysVar_)   ;    x
-        DB     lsb(sysVar_)   ;    y
-        DB     lsb(sysVar_)   ;    z
-        DB     lsb(aNop_)      ;    {
-        DB     lsb(aNop_)      ;    |            
-        DB     lsb(aNop_)      ;    }            
-        DB     lsb(aNop_)      ;    ~           
-        DB     lsb(aNop_)      ;    BS		
+        DB     lsb(nop_)        ;    C
+        DB     lsb(depth_)      ;    D  ( -- val ) depth of data stack  
+        DB     lsb(emit_)       ;    E   ( val -- ) emits a char to output
+        DB     lsb(aNop_)       ;    F
+        DB     lsb(go_)         ;    G   ( -- ? ) execute mint definition
+        DB     lsb(aNop_)       ;    H  
+        DB     lsb(inPort_)     ;    I  ( port -- val )   
+        DB     lsb(aNop_)       ;    J
+        DB     lsb(key_)        ;    K  ( -- val )  read a char from input
+        DB     lsb(aNop_)       ;    L  
+        DB     lsb(aNop_)       ;    M  
+        DB     lsb(newln_)      ;    N   ; prints a newline to output
+        DB     lsb(outPort_)    ;    O  ( val port -- )
+        DB     lsb(printStk_)   ;    P  ( -- ) non-destructively prints stack
+        DB     lsb(aNop_)       ;    Q  quits from Mint REPL
+        DB     lsb(rot_)        ;    R  ( a b c -- b c a )
+        DB     lsb(aNop_)       ;    S
+        DB     lsb(aNop_)       ;    T
+        DB     lsb(aNop_)       ;    U
+        DB     lsb(aNop_)       ;    V
+        DB     lsb(aNop_)       ;    W   ; ( b -- ) if false, skip to end of loop
+        DB     lsb(exec_)       ;    X
+        DB     lsb(aNop_)       ;    Y
+        DB     lsb(editDef_)    ;    Z
+        DB     lsb(cArrDef_)    ;    [
+        DB     lsb(comment_)    ;    \  comment text, skips reading until end of line
+        DB     lsb(aNop_)       ;    ]
+        DB     lsb(charCode_)   ;    ^
+        DB     lsb(sign_)       ;    _)  ( n -- b ) returns true if -ve 
+        DB     lsb(aNop_)       ;    `            
+        DB     lsb(sysVar_)     ;    a  ; start of data stack variable
+        DB     lsb(sysVar_)     ;    b  ; base16 variable
+        DB     lsb(sysVar_)     ;    c  ; TIBPtr variable
+        DB     lsb(sysVar_)     ;    d  
+        DB     lsb(sysVar_)     ;    e  
+        DB     lsb(sysVar_)     ;    f
+        DB     lsb(sysVar_)     ;    g  
+        DB     lsb(sysVar_)     ;    h  ; heap ptr variable
+        DB     lsb(i_)          ;    i  ; returns index variable of current loop          
+        DB     lsb(j_)          ;    j  ; returns index variable of outer loop
+        DB     lsb(sysVar_)     ;    k  
+        DB     lsb(sysVar_)     ;    l
+        DB     lsb(sysVar_)     ;    m  ( a b -- c ) return the minimum value
+        DB     lsb(sysVar_)     ;    n  
+        DB     lsb(sysVar_)     ;    o
+        DB     lsb(sysVar_)     ;    p  
+        DB     lsb(sysVar_)     ;    q           
+        DB     lsb(sysVar_)     ;    r
+        DB     lsb(sysVar_)     ;    s 
+        DB     lsb(sysVar_)     ;    t
+        DB     lsb(sysVar_)     ;    u
+        DB     lsb(sysVar_)     ;    v   
+        DB     lsb(sysVar_)     ;    w   
+        DB     lsb(sysVar_)     ;    x
+        DB     lsb(sysVar_)     ;    y
+        DB     lsb(sysVar_)     ;    z
+        DB     lsb(group_)      ;    {
+        DB     lsb(aNop_)       ;    |            
+        DB     lsb(endGroup_)   ;    }            
+        DB     lsb(aNop_)       ;    ~           
+        DB     lsb(aNop_)       ;    BS		
 
 
 ; **********************************************************************			 
@@ -1088,11 +1088,15 @@ go_:
         DEC BC
         JP  (IY)                ; Execute code from User def
 
+endGroup_:
+        call rpop
+        LD (vDEFS),HL
+        JP (IY)
+
 group_:
-group:
+        INC BC
         LD A,(BC)
-        SUB "1"
-        JR C,group1
+        SUB "0"
         LD D,A
         LD E,0
         SRL D
@@ -1105,11 +1109,6 @@ group:
         ADD HL,DE
         LD (vDEFS),HL
         JP  (IY)                ; Execute code from User def
-
-group1:
-        call rpop
-        LD (vDEFS),HL
-        JP (IY)
 
 sysVar_:
         LD A,(BC)
