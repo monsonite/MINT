@@ -2,6 +2,10 @@
 
 A Minimal Interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
 
+On the RC2014, use the Small Computer Monitor (SCM) to load the Intel Hex file RC2014_MINT.hex and execute it using G8000.
+
+The character font is included in 800 bytes from address $E000
+
 ## What is MINT ?
 
 MINT is a tiny, stack based language based on Forth. On the Z80 it can be implemented in fewer than 2048 bytes of machine code - and it is relatively quick compared to other interpreted languages.
