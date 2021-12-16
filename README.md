@@ -2,10 +2,6 @@
 
 A Minimal Interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
 
-On the RC2014, use the Small Computer Monitor (SCM) to load the Intel Hex file RC2014_MINT.hex and execute it using G8000.
-
-The character font is included in 800 bytes from address $E000
-
 ## What is MINT ?
 
 MINT is a tiny, stack based language based on Forth. On the Z80 it can be implemented in fewer than 2048 bytes of machine code - and it is relatively quick compared to other interpreted languages.
@@ -83,7 +79,9 @@ In total, MINT contains 33 primitives which are executed when the interpreter fi
 
 ## Using MINT on the RC2014
 
-MINT was developed for the RC2014 Micro Z80 Single Board Computer. This board is supplied with a comprehensive Monitor program (The Small Computer Monitor (SCM) by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
+MINT was developed for the RC2014 Micro Z80 Single Board Computer. This board is supplied with a comprehensive Monitor program (The Small Computer Monitor (SCM) by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8000.
+
+Install the Intel Hex file RC2014_MINT.hex by pasting it into the SCM. At the Ready prompt, type G8000 to execute.
 
 If necessary, you can use the serial getchar and putchar routines that are available within the Small Computer Monitor
 
@@ -93,9 +91,14 @@ https://smallcomputercentral.files.wordpress.com/2018/05/scmon-v1-0-userguide-e1
 
 MINT was assembled using asm80.com, an online 8-bit assembler. It will generate an Intel Hex file that can be pasted into RAM at address $8000 using a serial terminal program. I use TeraTerm when working within the windows environment.
 
-Once the MINT code image is pasted into RAM you can run it using the Go command "G8100"
+Once the MINT code image is pasted into RAM you can run it using the Go command "G8000"
 
-On initialisation it will present a user prompt ">" followed by a CR and LF. It is now ready to accept commands from the keyboard. MINT currently uses decimal numbers for calculations - a maximum integer of 65535.
+On initialisation it will respond:
+
+MINT V1.0
+
+>
+The user prompt ">" is followed by a CR and LF. It is now ready to accept commands from the keyboard. MINT currently uses decimal numbers for calculations - a maximum integer of 65535.
 
 MINT has about 30 built in commands called primitives. They are mostly allocated to arithmetical and punctuation symbols.
 
