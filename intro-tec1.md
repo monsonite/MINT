@@ -17,5 +17,6 @@ We are launching MINT first for the TEC-1 as an exclusive first look. Our goal h
 The MINT repo with the TEC-1 ROM and other builds can be found with the [tec1group](https://github.com/tec1group/MINT) repos on GitHub.
 The documentation, which is still a work in progress, can be found [here](https://github.com/tec1group/MINT-Documentation)
 
-Below you can see a video of Craig Jones running a MINT program on the TEC-1F
+Below you can see a [video](intro-tec1.mp4) of Craig Jones running a MINT program on the TEC-1F
+
 [![Watch the video](intro-tec1.png)](intro-tec1.mp4)
