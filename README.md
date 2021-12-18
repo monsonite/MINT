@@ -1,6 +1,6 @@
 # MINT
 
-A Minimal Interpreter in Z80 assembly language for the RC2014 Micro and other simple Z80 systems such as the TEC-1.
+A Minimal Interpreter in Z80 assembly language for small Z80 systems such as the TEC-1 and RC2014.
 
 ## What is MINT ?
 
@@ -44,10 +44,13 @@ In total there are approximately 30 characters that are recognised as the intern
 
 MINT is an interpreted language that uses printable ascii characters as its "instructions". There are 95 such characters:
 
-26 Uppercase letters - used as User Commands
-26 Lowercase letters - used as User Variables
-10 Numerals - used for number entry
-33 arithmetic and punctuation symbols - used to select the program operation
+- 10 Numerals - 0-9 used for decimal number entry
+- 11 Alphanumerics - 0-F used for hexadecimal number entry (only uppercase chars are recognized as hex digits)
+- 26 lowercase letters - used as User Variables
+- 26 system variables - most are available for general use
+- 33 arithmetic and punctuation codes - used to select the program operation aka "primitives"
+- 22 "alternate" codes - to extend the basic set of alphanumeric characters, these are prefixed by \
+- 26 uppercase letters - used as User Commands
 
 The interpreter scans a text string, held in a text buffer, one character at a time. It then uses a look-up table to broadly categorise the current character into one of the above groups.
 
@@ -61,25 +64,35 @@ VARIABLES
 
 User Variables are assigned to the lowercase alpha characters using a routine called var\_ The user variables are stored in an array of 26 pairs of bytes in RAM. The lowercase character is a shorthand way of addressing the pair of bytes that holds the variable. It is not usually necessary to know specifically at what address the variable is held at, as it can always be accessed using its name.
 
-For example, the variable addressed by the lowercase character "a" is held in RAM locations 34816 and 34817. Variable "b" will be held in the next locations 34818 and 34819 and so on up to "z".
-
 When a lowercase character is interpreted the variable handler routine converts it to a 16-bit address, and places that address on the top of the stack.
 
-COMMANDS
-
-User Commands are what gives MINT its power and flexibility. Each uppercase letter is a substitute for an address in RAM, where the users code routines are held. For example you may have a routine which produces a hexadecimal dump of the contents of memory. You choose to use the D command to initiate this routine, D for DUMP. You may also pass parameters to a user routine via the stack. In the case of a hex dump routine it would be common to give it the starting address of the section you want to dump, and this might be written 1234 D. On pressing return, the command will be interpreted and the dump routine will commence printing from location 1234. There are clearly 26 User Commands which is usually enough for most small applications.
+SYSTEM VARIABLES
+System variables contain values which MINT uses internally but are available for programmatic use. These are the lowercase letters preceded by a \ e.g. \a, \b, \c etc. However Mint only uses a few of these variables so the user may use the other ones as they like.
 
 PRIMITIVES
 
-A primitive is a built in function, normally stored in ROM and not usually needed to be modified by the User. Primitives will include the familiar mathematical functions such as ADD, SUBtract, MULtiply and DIVide, and also boolean logic operations such as AND, OR, XOR and INVert.
+A primitive is a built-in function, normally stored in ROM and not usually needed to be modified by the User. Primitives will include the familiar mathematical functions such as ADD, SUBtract, MULtiply and DIVide, and also boolean logic operations such as AND, OR, XOR and INVert.
 
 There are also a small group of primitives that perform operations on the stack, DUP is used to duplicate the top item, DROP will remove the top item, making the second item available. SWAP will exchange the top two items, effectively placing the second item on top.
 
 In total, MINT contains 33 primitives which are executed when the interpreter finds the relevant symbol. Some of these will be commonly used arithmetic symbols like "+" and "-" Others are allocated to punctuation symbols. The full-stop, or dot character is used to print out the number held on the top of the stack.
 
+ALTERNATE CODES
+Because ASCII provides only a limited set of symbols to use as primitives, MINT extends the basic set with a set of symbols prefixed by a \. An alternate code is any symbol or uppercase letter starting with a \ e.g. \+ \D etc. Alternate lowercase letters serve as system variables
+
+USER COMMANDS
+
+User Commands are what gives MINT its power and flexibility. Each uppercase letter can be assigned a routine written by the user in the Mint language. For example you may have a routine which produces a hexadecimal dump of the contents of memory. You could define a routine at D for this DUMP operation. You may also pass parameters to a user routine via the stack. In the case of a hex dump routine it would be common to give it the starting address of the section you want to dump, and this might be written 1234 D. On pressing return, the command will be interpreted and the dump routine will commence printing from location 1234. There are clearly 26 User Commands which is usually enough for most small applications.
+
+## Using MINT on the TEC-1
+
+MINT was designed for for small Z80 based systems but specifically with the small memory configuration of the TEC-1 single board computer. It is only 2K to work with the original TEC-1 and interfaces to the serial interface via a simple adapter.
+
+On initialisation it will present a user prompt ">" followed by a CR and LF. It is now ready to accept commands from the keyboard.
+
 ## Using MINT on the RC2014
 
-MINT was developed for the RC2014 Micro Z80 Single Board Computer. This board is supplied with a comprehensive Monitor program (The Small Computer Monitor (SCM) by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
+MINT was also developed to run on the RC2014 Single Board Computer. This board is supplied with a comprehensive Monitor program (The Small Computer Monitor (SCM) by Stephen Cousins). A 32K ROM contains the monitor and BASIC between $0000 and $7FFF. The 32K RAM starts at $8000, and MINT is loaded in to run from address $8100.
 
 If necessary, you can use the serial getchar and putchar routines that are available within the Small Computer Monitor
 
@@ -91,15 +104,7 @@ MINT was assembled using asm80.com, an online 8-bit assembler. It will generate 
 
 Once the MINT code image is pasted into RAM you can run it using the Go command "G8100"
 
-On initialisation it will present a user prompt ">" followed by a CR and LF. It is now ready to accept commands from the keyboard. MINT currently uses decimal numbers for calculations - a maximum integer of 65535.
-
-MINT has about 30 built in commands called primitives. They are mostly allocated to arithmetical and punctuation symbols.
-
-There are 26 User Defined Commands that use uppercase alpha characters A-Z
-
-There are 26 User Variables that are assigned to lowercase alpha characters a-z
-
-MINT turns the Z80 into a 16-bit Virtual Machine with 30 instructions, 26 Macros and 26 Registers (variables). This relieves you from the tedium of Z80 assembly language, and presents the user with a very compact, human readable, interactive, extendable bytecode language.
+On initialisation it will present a user prompt ">" followed by a CR and LF. It is now ready to accept commands from the keyboard.
 
 ## Examples
 
@@ -145,97 +150,9 @@ To fetch the Nth member of the array, we can create a colon definition N
 
 :N @ $ {+ @. ;
 
-LIST OF PRIMITIVES
-
-Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ascii characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
-
-There are roughly 32 punctuation and arithmetic symbols available in the printable ascii codes. These are assigned to the primitive functions, from which more complex programs can be built.
-
-Maths Operators:
-
-- 16-bit integer addition ADD
-
-* 16-bit integer subtraction SUB
-
-- 8-bit by 8-bit integer multiplication MUL
-
-/ 16-bit by 8-bit division DIV
-
-} Perform a right shift on the TOS (2/)
-
-{ Perform a left shift on the TOS (2\*)
-
-< 16-bit comparison LT
-
-= 16 bit comparison EQ
-
-> 16-bit comparison GT
-
-Logical Operators:
-
-~ 16-bit bitwise inversion INVert
-
-\_ 16-bit negation (2's complement) NEGate
-
-& 16-bit bitwise AND
-
-| 16-bit bitwise OR
-
-^ 16-bit bitwise XOR
-
-Stack Operations:
-
-" Duplicate the top member of the stack DUP
-
-' Drop the top member of the stack DROP
-
-$ Swap the top 2 members of the stack SWAP
-
-% Over - take the 2nd member of the stack and copy it onto the top of the stack
-
-. DOT Print the top member of the stack as a decimal number, and remove the top element.
-
-, HEXPRINT Print the TOS as a Hexadecimal Number
-
-"#" HEX Accept numbers in hexadecimal format
-
-Memory (and variable) Operations:
-
-@ FETCH a value from memory
-
-! STORE a value to memory
-
-User Definitions:
-
-: Define a new word DEF
-
-; End of user definition END
-
-Loops and conditional execution:
-
-( BEGIN a loop or conditionally executed code block
-
-) END a loop or conditionally executed code block
-
-[ OPEN an array
-
-] CLOSE an array
-
-Miscellaneous:
-
-`STRING` Everything between the "ticks" is printed as a string\_
-
-\ ESCAPE allows non-printable characters such as \n newline
-
-? QUERY await keyboard entry
-
-=======
-
 ### LIST OF PRIMITIVES
 
 Mint is a bytecode interpreter - this means that all of its instructions are 1 byte long. However, the choice of instruction uses printable ASCII characters, as a human readable alternative to assembly language. The interpreter handles 16-bit integers and addresses which is sufficient for small applications running on an 8-bit cpu.
-
-There are roughly 30 punctuation and arithmetical symbols available in the printable ASCII codes. These are assigned to the primitive functions, from which more complex programs can be built.
 
 ### Maths Operators
 
@@ -302,7 +219,7 @@ Note: logical NOT can be achieved with 0=
 | \{      | enter group NUM            | num -- |
 | \}      | exit group                 | --     |
 
-NOTE: 
+NOTE:
 <CHAR> is an uppercase letter immediately following operation which is the name of the definition
 <NUM> is the group number. There are currently 5 groups numbered 0 - 4
 
@@ -330,13 +247,14 @@ NOTE:
 | ]      | end an array definition                     | -- adr nwords |
 | \\[    | begin a byte array definition               | --            |
 
-### Variables
+### System Variables
 
 | Symbol | Description                        | Effect |
 | ------ | ---------------------------------- | ------ |
 | \\a    | data stack start variable          | -- adr |
 | \\b    | base16 flag variable               | -- adr |
 | \\c    | text input buffer pointer variable | -- adr |
+| \\d    | start of user definitions           | -- adr |
 | \\h    | heap pointer variable              | -- adr |
 
 ### Miscellaneous
