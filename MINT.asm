@@ -427,8 +427,8 @@ altCodes:
         DB     lsb(aNop_)       ;    %            
         DB     lsb(aNop_)       ;    &
         DB     lsb(aNop_)       ;    '
-        DB     lsb(ifte_)       ;    (  ( b -- )            ; sets IFTEMode true      
-        DB     lsb(aNop_)       ;    )
+        DB     lsb(ifte_)       ;    (  ( b -- )              
+        DB     lsb(ifteEnd_)    ;    )
         DB     lsb(aNop_)       ;    *            
         DB     lsb(incr_)       ;    +  ( adr -- ) decrements variable at address
         DB     lsb(aNop_)       ;    ,            
@@ -754,16 +754,7 @@ again_:     JR again
 ; Page 5 primitive routines 
 ;*******************************************************************
         ;falls through 
-again:                              ;= 20
-        LD HL,vIFTEMode
-        LD A,(HL)
-        OR A
-        JR Z,again1
-        LD HL,FALSE                 ; push FALSE condition on stack
-        PUSH HL
-        JP (IY)
-
-again1:   
+again:   
         LD E,(IX+0)                 ; peek loop var
         LD D,(IX+1)                 
         LD L,(IX+2)                 ; peek loop limit
@@ -791,6 +782,24 @@ alt:                                ;= 11
         LD L,(HL)                   ; 7t    get low jump address
         LD H, msb(page6)            ; Load H with the 5th page address
         JP  (HL)                    ; 4t    Jump to routine
+
+; end a word array
+arrEnd:                     ;= 27
+        CALL rpop               ; DE = start of array
+        PUSH HL
+        EX DE,HL
+        LD HL,(vHeapPtr)        ; HL = heap ptr
+        OR A
+        SBC HL,DE               ; bytes on heap 
+        LD A,(vByteMode)
+        OR A
+        JR NZ,arrEnd2
+        SRL H           ; BC = m words
+        RR L
+arrEnd2:
+        PUSH HL 
+        LD IY,NEXT
+        JP (IY)         ; hardwired to NEXT
 
 ; ********************************************************************
 ; 16-bit multiply  
@@ -875,9 +884,6 @@ div_end:
 ; *************************************
         	                    ;= 23                     
 begin:                          ; Left parentesis begins a loop
-        LD HL,vIFTEMode
-        LD (HL),0
-
         POP HL
         LD A,L                  ; zero?
         OR H
@@ -903,13 +909,6 @@ begin2:
         XOR A
         OR E
         JR NZ,begin2
-        
-        LD HL,vIFTEMode
-        LD A,(HL)
-        OR A
-        JR Z,begin3
-        LD HL,TRUE                 ; push FALSE condition on stack
-        PUSH HL
 begin3:
         JP (IY)
 
@@ -1058,14 +1057,21 @@ emit_:
         JP (IY)
 
 ifte_:
-        LD HL,vIFTEMode
-        LD (HL),TRUE
         POP DE
         LD A,E
         OR D
-        JP Z,begin1
+        JP NZ,ifte1
+        INC DE
+        PUSH DE                     ; push TRUE on stack for else clause
+        JP begin1                   ; skip to closing ) works with \) too 
+ifte1:
         JP (IY)
-		
+
+ifteEnd_:                           ;
+        LD HL,FALSE                 ; push FALSE condition on stack
+        PUSH HL
+        JP (IY)
+
 exec_:
         CALL exec1
         JP (IY)
@@ -1261,23 +1267,6 @@ arrDef1:
         CALL rpush          ; save start of array \[  \]
         JP NEXT         ; hardwired to NEXT
 
-; end a word array
-arrEnd:                     ;= 27
-        CALL rpop               ; DE = start of array
-        PUSH HL
-        EX DE,HL
-        LD HL,(vHeapPtr)        ; HL = heap ptr
-        OR A
-        SBC HL,DE               ; bytes on heap 
-        LD A,(vByteMode)
-        OR A
-        JR NZ,arrEnd2
-        SRL H           ; BC = m words
-        RR L
-arrEnd2:
-        PUSH HL 
-        LD IY,NEXT
-        JP (IY)         ; hardwired to NEXT
 
 ; **************************************************************************             
 ; def is used to create a colon definition

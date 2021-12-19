@@ -235,7 +235,8 @@ NOTE:
 | ------ | ------------------------------------------------- | ------ |
 | (      | BEGIN a loop or conditionally executed code block | n --   |
 | )      | END a loop or conditionally executed code block   | --     |
-| \\(    | ifElse \\(`true`)(`false`)                        | b --   |
+| \\(    | beginIFTE \\(`true`\\)(`false`)                   | b --   |
+| \\)    | endIFTE \\(`true`\\)(`false`)                     | --   |
 | \\i    | returns index variable of current loop            | -- val |
 | \\j    | returns index variable of outer loop              | -- val |
 | \\B    | if true break out of loop                         | b --   |
@@ -260,7 +261,7 @@ NOTE:
 | \\a    | data stack start variable          | -- adr |
 | \\b    | base16 flag variable               | -- adr |
 | \\c    | text input buffer pointer variable | -- adr |
-| \\d    | start of user definitions           | -- adr |
+| \\d    | start of user definitions          | -- adr |
 | \\h    | heap pointer variable              | -- adr |
 
 ### Miscellaneous
