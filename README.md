@@ -190,13 +190,13 @@ Note: logical NOT can be achieved with 0=
 
 ### Stack Operations
 
-| Symbol | Description                                                                   | Effect         |
-| ------ | ----------------------------------------------------------------------------- | -------------- |
-| "      | duplicate the top member of the stack DUP                                     | a -- a a       |
-| '      | drop the top member of the stack DROP                                         | a a -- a       |
-| $      | swap the top 2 members of the stack SWAP                                      | a b -- b a     |
-| %      | over - take the 2nd member of the stack and copy it onto the top of the stack | a b -- a b a   |
-| \\R    | rotate the top 2 members of the stack ROT                                     | a b c -- b c a |
+| Symbol | Description                                                          | Effect         |
+| ------ | -------------------------------------------------------------------- | -------------- |
+| "      | duplicate the top member of the stack DUP                            | a -- a a       |
+| '      | drop the top member of the stack DROP                                | a a -- a       |
+| $      | swap the top 2 members of the stack SWAP                             | a b -- b a     |
+| %      | over - take the 2nd member of the stack and copy to top of the stack | a b -- a b a   |
+| \\R    | rotate the top 2 members of the stack ROT                            | a b c -- b c a |
 
 ### Input & Output Operations
 
@@ -205,7 +205,7 @@ Note: logical NOT can be achieved with 0=
 | #      | the following number is in hexadecimal                    | a --        |
 | .      | print the top member of the stack as a decimal number DOT | a --        |
 | ,      | print the number on the stack as a hexadecimal            | a --        |
-| \`     | \`Everything between ticks is printed as a string\`       | --          |
+| \`     | print the literal string between \` and \`                | --          |
 | \\$    | text input pointer variable                               | -- adr      |
 | \\E    | emits a char to output                                    | val --      |
 | \\I    | input from a I/O port                                     | port -- val |
@@ -236,7 +236,7 @@ NOTE:
 | (      | BEGIN a loop or conditionally executed code block | n --   |
 | )      | END a loop or conditionally executed code block   | --     |
 | \\(    | beginIFTE \\(`true`\\)(`false`)                   | b --   |
-| \\)    | endIFTE \\(`true`\\)(`false`)                     | --   |
+| \\)    | endIFTE \\(`true`\\)(`false`)                     | --     |
 | \\i    | returns index variable of current loop            | -- val |
 | \\j    | returns index variable of outer loop              | -- val |
 | \\B    | if true break out of loop                         | b --   |
@@ -253,6 +253,7 @@ NOTE:
 | [      | begin an array definition                   | --            |
 | ]      | end an array definition                     | -- adr nwords |
 | \\[    | begin a byte array definition               | --            |
+| \\`    | allocate a literal null-terminated string   | -- cstr       |
 
 ### System Variables
 
