@@ -428,7 +428,7 @@ altCodes:
         DB     lsb(aNop_)       ;    &
         DB     lsb(aNop_)       ;    '
         DB     lsb(ifte_)       ;    (  ( b -- )              
-        DB     lsb(ifteEnd_)    ;    )
+        DB     lsb(aNop_)       ;    )
         DB     lsb(aNop_)       ;    *            
         DB     lsb(incr_)       ;    +  ( adr -- ) decrements variable at address
         DB     lsb(aNop_)       ;    ,            
@@ -483,7 +483,7 @@ altCodes:
         DB     lsb(aNop_)       ;    ]
         DB     lsb(charCode_)   ;    ^
         DB     lsb(sign_)       ;    _)  ( n -- b ) returns true if -ve 
-        DB     lsb(strDef_)     ;    `            
+        DB     lsb(aNop_)       ;    `            
         DB     lsb(sysVar_)     ;    a  ; start of data stack variable
         DB     lsb(sysVar_)     ;    b  ; base16 variable
         DB     lsb(sysVar_)     ;    c  ; TIBPtr variable
@@ -733,6 +733,7 @@ var_:
 div_:       JR div
 mul_:   JR mul      
 
+again_:     JP again
 str_:                       
 str:                                ;= 15
         INC BC
@@ -749,30 +750,10 @@ str2:
         DEC BC
         JP   (IY) 
 
-again_:     JR again
 ;*******************************************************************
 ; Page 5 primitive routines 
 ;*******************************************************************
         ;falls through 
-again:   
-        LD E,(IX+0)                 ; peek loop var
-        LD D,(IX+1)                 
-        LD L,(IX+2)                 ; peek loop limit
-        LD H,(IX+3)                 
-        OR A
-        SBC HL,DE
-        JR Z,again2
-        INC DE
-        LD (IX+0),E                 ; poke loop var
-        LD (IX+1),D                 
-        LD C,(IX+4)                 ; peek loop address
-        LD B,(IX+5)                 
-        JP (IY)
-again2:   
-        LD DE,6                     ; drop loop frame
-        ADD IX,DE
-        JP (IY)
-
 alt:                                ;= 11
         INC BC
         LD A,(BC)
@@ -912,6 +893,37 @@ begin2:
 begin3:
         JP (IY)
 
+again:   
+        LD E,(IX+0)                 ; peek loop var
+        LD D,(IX+1)                 
+        
+        LD A,D
+        OR E
+        INC A
+        JR NZ,again1
+        INC DE
+        PUSH DE                     ; push FALSE condition
+        LD DE,2
+        JR again3                   ; drop mini stackframe
+again1:
+        LD L,(IX+2)                 ; peek loop limit
+        LD H,(IX+3)                 
+        OR A
+        SBC HL,DE
+        JR Z,again2
+        INC DE
+        LD (IX+0),E                 ; poke loop var
+        LD (IX+1),D                 
+        LD C,(IX+4)                 ; peek loop address
+        LD B,(IX+5)                 
+        JP (IY)
+again2:   
+        LD DE,6                     ; drop loop frame
+again3:
+        ADD IX,DE
+        JP (IY)
+
+
 ; ********************************************************************************
 ; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
 ; Read the first character. 
@@ -986,15 +998,6 @@ Num2:
         sbc	hl,de
         JP putchar
 
-getGroup:                       ;= 11
-        SUB "A"  
-        ADD A,A
-        LD E,A
-        LD D,0
-        LD HL,(vDEFS)
-        ADD HL,DE
-        RET
-
 ; **************************************************************************
 ; Page 6 Alt primitives
 ; **************************************************************************
@@ -1057,6 +1060,8 @@ emit_:
         JP (IY)
 
 ifte_:
+        LD HL,-1                    ; push -1 on return stack to indicate IFTEMode
+        CALL rpush
         POP DE
         LD A,E
         OR D
@@ -1067,10 +1072,10 @@ ifte_:
 ifte1:
         JP (IY)
 
-ifteEnd_:                           ;
-        LD HL,FALSE                 ; push FALSE condition on stack
-        PUSH HL
-        JP (IY)
+; ifteEnd_:                           ;
+;         LD HL,FALSE                 ; push FALSE condition on stack
+;         PUSH HL
+;         JP (IY)
 
 exec_:
         CALL exec1
@@ -1106,8 +1111,7 @@ group_:
         ADD HL,DE
         LD (vDEFS),HL
         JP  (IY)                ; Execute code from User def
-strDef_:
-        JP strDef
+
 sysVar_:
         LD A,(BC)
         SUB "a" - ((sysVars - mintVars)/2) 
@@ -1268,6 +1272,14 @@ arrDef1:
         CALL rpush          ; save start of array \[  \]
         JP NEXT         ; hardwired to NEXT
 
+getGroup:                       ;= 11
+        SUB "A"  
+        ADD A,A
+        LD E,A
+        LD D,0
+        LD HL,(vDEFS)
+        ADD HL,DE
+        RET
 
 ; **************************************************************************             
 ; def is used to create a colon definition
@@ -1301,28 +1313,6 @@ def2:
 def3:
         LD (vHeapPtr),DE        ; bump heap ptr to after definiton
         JP (IY)       
-
-; ***************************************************************************
-
-strDef:                         ;=21
-        LD DE,(vHeapPtr)        ; HL = heap ptr
-        PUSH DE                 ; save start of string 
-        INC BC                  ; point to next char
-        JR strDef2
-strDef1:
-        LD (DE),A
-        INC DE                  ; increase count
-        INC BC                  ; point to next char
-strDef2:
-        LD A,(BC)
-        CP "`"                  ; ` is the string terminator
-        JR NZ,strDef1
-        XOR A
-        LD (DE),A
-        INC DE
-        JR def3
-
-; ***************************************************************************
 
 hex:                            ;= 26
 	    LD HL,0		    		; 10t Clear HL to accept the number
