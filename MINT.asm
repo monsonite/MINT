@@ -483,7 +483,7 @@ altCodes:
         DB     lsb(aNop_)       ;    ]
         DB     lsb(charCode_)   ;    ^
         DB     lsb(sign_)       ;    _)  ( n -- b ) returns true if -ve 
-        DB     lsb(aNop_)       ;    `            
+        DB     lsb(strDef_)     ;    `            
         DB     lsb(sysVar_)     ;    a  ; start of data stack variable
         DB     lsb(sysVar_)     ;    b  ; base16 variable
         DB     lsb(sysVar_)     ;    c  ; TIBPtr variable
@@ -1106,7 +1106,8 @@ group_:
         ADD HL,DE
         LD (vDEFS),HL
         JP  (IY)                ; Execute code from User def
-
+strDef_:
+        JP strDef
 sysVar_:
         LD A,(BC)
         SUB "a" - ((sysVars - mintVars)/2) 
@@ -1286,19 +1287,40 @@ def:                        ; Create a colon definition
         LD (HL),E           ; Save low byte of address in CFA
         INC HL              
         LD (HL),D           ; Save high byte of address in CFA+1
-nextbyte:                   ; Skip to end of definition   
+def1:                   ; Skip to end of definition   
         LD A,(BC)           ; Get the next character
         INC BC              ; Point to next character
         LD (DE),A
         INC DE
         CP ";"                  ; Is it a semicolon 
-        JP z, end_def           ; end the definition
-        JR  nextbyte            ; get the next element
+        JP z, def2           ; end the definition
+        JR  def1            ; get the next element
 
-end_def:    
-        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
+def2:    
         DEC BC
+def3:
+        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
         JP (IY)       
+
+; ***************************************************************************
+
+strDef:                         ;=21
+        LD DE,(vHeapPtr)        ; HL = heap ptr
+        PUSH DE                 ; save start of string 
+        INC BC                  ; point to next char
+        JR strDef2
+strDef1:
+        LD (DE),A
+        INC DE                  ; increase count
+        INC BC                  ; point to next char
+strDef2:
+        LD A,(BC)
+        CP "`"                  ; ` is the string terminator
+        JR NZ,strDef1
+        XOR A
+        LD (DE),A
+        INC DE
+        JR def3
 
 ; ***************************************************************************
 
@@ -1389,16 +1411,15 @@ nesting4:
 printhex:                       ;= 11  
                                 ; Display HL as a 16-bit number in hex.
         PUSH BC                 ; preserve the IP
-        LD	A,H
-		CALL	Print_Hex8
-		LD	A,L
-		CALL	Print_Hex8
-		POP BC
-		RET
+        LD A,H
+        CALL Print_Hex8
+        LD A,L
+        CALL Print_Hex8
+        POP BC
+        RET
 
 getRef:                         ;= 8
         INC BC
         LD A,(BC)
         CALL getGroup
         JP fetch1
-
