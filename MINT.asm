@@ -897,14 +897,15 @@ again:
         LD E,(IX+0)                 ; peek loop var
         LD D,(IX+1)                 
         
-        LD A,D
-        OR E
+        LD A,D                      ; check if IFTEMode
+        AND E
         INC A
         JR NZ,again1
         INC DE
         PUSH DE                     ; push FALSE condition
         LD DE,2
-        JR again3                   ; drop mini stackframe
+        JR again3                   ; drop IFTEMode
+
 again1:
         LD L,(IX+2)                 ; peek loop limit
         LD H,(IX+3)                 
@@ -1060,8 +1061,6 @@ emit_:
         JP (IY)
 
 ifte_:
-        LD HL,-1                    ; push -1 on return stack to indicate IFTEMode
-        CALL rpush
         POP DE
         LD A,E
         OR D
@@ -1070,6 +1069,8 @@ ifte_:
         PUSH DE                     ; push TRUE on stack for else clause
         JP begin1                   ; skip to closing ) works with \) too 
 ifte1:
+        LD HL,-1                    ; push -1 on return stack to indicate IFTEMode
+        CALL rpush
         JP (IY)
 
 ; ifteEnd_:                           ;
@@ -1255,7 +1256,7 @@ editDef3:
 
 printStk:                   ;= 40
         call ENTER
-        .cstr "\\a@2-\\D1-",$22,"\\_0=((",$22,"@ . 2-))'"             
+        .cstr "\\a@2-\\D1-",$22,"\\_0=((",$22,"@\\b@\\(,)(.)2-))'"             
         JP (IY)
 
 ;*******************************************************************
