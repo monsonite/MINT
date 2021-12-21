@@ -1,12 +1,10 @@
 ; *************************************************************************
 ;
-;       MINT1_18 Micro-Interpreter for the Z80
+;       MINT Minimal Interpreter for the Z80 
 ;
-;       Ken Boak John Hardy and Craig Jones. December 14th 2021
+;       Ken Boak, John Hardy and Craig Jones. 
 ;
 ;       GNU GENERAL PUBLIC LICENSE                   Version 3, 29 June 2007
-;
-;       Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
 ;
 ;       see the LICENSE file in this repo for more information 
 ;
