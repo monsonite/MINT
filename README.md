@@ -197,6 +197,7 @@ Note: logical NOT can be achieved with 0=
 | $      | swap the top 2 members of the stack SWAP                             | a b -- b a     |
 | %      | over - take the 2nd member of the stack and copy to top of the stack | a b -- a b a   |
 | \\R    | rotate the top 2 members of the stack ROT                            | a b c -- b c a |
+| \\D    | returns the depth of the stack                                       | -- n           |
 
 ### Input & Output Operations
 
