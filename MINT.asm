@@ -1,10 +1,12 @@
 ; *************************************************************************
 ;
-;       MINT1_18 Micro-Interpreter for the Z80
+;       MINT Minimal Interpreter for the Z80 
 ;
-;       Ken Boak John Hardy and Craig Jones. December 14th 2021
+;       Ken Boak, John Hardy and Craig Jones. 
 ;
-;       CopyLeft: All Wrongs Reserved
+;       GNU GENERAL PUBLIC LICENSE                   Version 3, 29 June 2007
+;
+;       see the LICENSE file in this repo for more information 
 ;
 ; *****************************************************************************
 
@@ -1049,8 +1051,10 @@ depth_:
         LD HL,DSTACK
         OR A
         SBC HL,DE
+        JR C,depth1
         SRL H
         RR L
+depth1:
         PUSH HL
         JP (IY)
 
@@ -1072,11 +1076,6 @@ ifte1:
         LD HL,-1                    ; push -1 on return stack to indicate IFTEMode
         CALL rpush
         JP (IY)
-
-; ifteEnd_:                           ;
-;         LD HL,FALSE                 ; push FALSE condition on stack
-;         PUSH HL
-;         JP (IY)
 
 exec_:
         CALL exec1
