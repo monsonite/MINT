@@ -280,5 +280,6 @@ NOTE:
 | ^B     | toggle base decimal/hexadecimal |
 | ^E     | edit a definition               |
 | ^H     | backspace                       |
+| ^J     | re-edit                         |
 | ^L     | list definitions                |
 | ^P     | print stack                     |
