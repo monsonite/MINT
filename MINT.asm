@@ -613,7 +613,8 @@ dup_:
         PUSH    HL
         JP (IY)
 etx_:
-        JP interpret
+        JP etx
+        
 exit_:
         INC BC
         LD DE,BC                
@@ -1043,7 +1044,6 @@ cStore_:
         LD     (HL),E       ; 7t
         JP     (IY)         ; 8t
                             ; 48t
-        
 depth_:
         LD HL,0
         ADD HL,SP
@@ -1051,10 +1051,10 @@ depth_:
         LD HL,DSTACK
         OR A
         SBC HL,DE
-        JR C,depth1
+        JR C,depth2
         SRL H
         RR L
-depth1:
+depth2:
         PUSH HL
         JP (IY)
 
@@ -1261,6 +1261,13 @@ printStk:                   ;= 40
 ;*******************************************************************
 ; Page 5 primitive routines continued
 ;*******************************************************************
+etx:
+        LD HL,-DSTACK
+        ADD HL,SP
+        JP NC,etx1
+        LD SP,DSTACK
+etx1:
+        JP interpret
 
 ; define a word array
 arrDef:                     ;= 18
