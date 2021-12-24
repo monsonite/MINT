@@ -1,19 +1,22 @@
 empty_:
-        .cstr ";"
+        DB ";"
 
 backsp_:
-        .cstr "\\c@0=0=(1_\\c\\+8\\E` `8\\E);"
+        DB "\\c@0=0=(1_\\c\\+`\b \b`);"
 
 edit_:
-        .cstr "`?`\\K\\N`> `\\^A-\\Z;"
+        DB "`?`\\K\\N`> `\\^A-\\Z;"
+
+reedit_:
+        DB "\\e\\@\\Z;"
 
 list_:
-        .cstr "\\N26(\\i@\\Z\\c@0>(\\N))\\N`> `;"
+        DB "\\N26(\\i@\\Z\\c@0>(\\N));"
 
 printStack_:
-        .cstr "`=> `\\P\\N\\N`> `;"        
+        DB "`=> `\\P\\N;"        
 
 toggleBase_:
-        .cstr "\\b@0=\\b!;"
+        DB "\\b@0=\\b!;"
 
 

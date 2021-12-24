@@ -45,7 +45,7 @@ iSysVars:
         DW FALSE                ; b vBase16
         DW 0                    ; c vTIBPtr
         DW DEFS                 ; d vDEFS
-        DW 0                    ; e 
+        DW 0                    ; e vEdited the last command to be edited
         DW 0                    ; f 
         DW 0                    ; g 
         DW HEAP                 ; h vHeapPtr
@@ -139,6 +139,7 @@ waitchar3:
         LD (HL),"\r"            ; store the crlf in textbuf
         INC HL
         LD (HL),"\n"            
+        INC HL                  ; ????
         INC BC
         INC BC
         CALL crlf               ; echo character to screen
@@ -214,6 +215,24 @@ writeChar:
         INC DE
 writeChar1:
         JP putchar
+
+; Print an 8-bit HEX number  - shortened KB 25/11/21
+; A: Number to print
+Print_Hex8:		                ;= 20
+        LD	C,A
+		RRA 
+		RRA 
+		RRA 
+		RRA 
+	    CALL conv
+	    LD A,C
+conv:		
+        AND	0x0F
+		ADD	A,0x90
+		DAA
+		ADC	A,0x40
+		DAA
+		JP putchar
 
 ENTER:                          ; 9
         LD HL,BC
@@ -298,7 +317,7 @@ opcodes:
         DB    lsb(again_)  ;    )
         DB    lsb(mul_)    ;    *            
         DB    lsb(add_)    ;    +
-        DB    lsb(hexp_)   ;    ,            
+        DB    lsb(hdot_)   ;    ,            
         DB    lsb(sub_)    ;    -
         DB    lsb(dot_)    ;    .
         DB    lsb(div_)    ;    /
@@ -399,7 +418,7 @@ altCodes:
         DB     lsb(empty_)      ; BEL ^G
         DB     lsb(backsp_)     ; BS  ^H
         DB     lsb(empty_)      ; TAB ^I
-        DB     lsb(empty_)      ; LF  ^J
+        DB     lsb(reedit_)     ; LF  ^J
         DB     lsb(empty_)      ; VT  ^K
         DB     lsb(list_)       ; FF  ^L
         DB     lsb(empty_)      ; CR  ^M
@@ -582,7 +601,7 @@ call_:
         LD HL,BC
         CALL rpush              ; save Instruction Pointer
         LD A,(BC)
-        CALL getGroup
+        CALL getGroup1
         LD C,(HL)
         INC HL
         LD B,(HL)
@@ -592,7 +611,7 @@ call_:
 
 def_:   JP def
 
-hexp_:                              ; print hexadecimal
+hdot_:                              ; print hexadecimal
         POP     HL
         CALL    printhex
         JR   dot2
@@ -1218,9 +1237,9 @@ editDef_:
 ; **************************************************************************             
                             ;= 54
 editDef:                    ; lookup up def based on number
-        LD A,"A"
         POP DE
-        ADD A,E
+        LD A,E
+        ADD A,"A"
         EX AF,AF'
         LD HL,(vDEFS)
         ADD HL,DE
@@ -1251,11 +1270,12 @@ editDef3:
         OR A
         SBC HL,DE
         LD (vTIBPtr),HL
-        JP (IY)
+        LD BC,HL
+        JP waitchar
 
 printStk:                   ;= 40
         call ENTER
-        .cstr "\\a@2-\\D1-",$22,"\\_0=((",$22,"@\\b@\\(,)(.)2-))'"             
+        .cstr "\\a@2-\\D1-(",$22,"@\\b@\\(,)(.)2-)'"             
         JP (IY)
 
 ;*******************************************************************
@@ -1281,6 +1301,11 @@ arrDef1:
 
 getGroup:                       ;= 11
         SUB "A"  
+        LD (vEdited),A      
+        JR getGroup2
+getGroup1:
+        SUB "A"  
+getGroup2:
         ADD A,A
         LD E,A
         LD D,0
@@ -1341,26 +1366,6 @@ hex2:
         ADD A,L                 ; 4t    Add into bottom of HL
         LD  L,A                 ; 4t
         JR  hex1
-
-; Print an 8-bit HEX number  - shortened KB 25/11/21
-; A: Number to print
-;
-Print_Hex8:		                ;= 20
-        LD	C,A
-		RRA 
-		RRA 
-		RRA 
-		RRA 
-	    CALL conv
-	    LD A,C
-
-conv:		
-        AND	0x0F
-		ADD	A,0x90
-		DAA
-		ADC	A,0x40
-		DAA
-		JP putchar
 
 ; **************************************************************************             
 ; calculate nesting value

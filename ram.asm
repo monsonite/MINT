@@ -17,7 +17,7 @@ vS0:        DS 2                ; a
 vBase16:    DS 2                ; b
 vTIBPtr:    DS 2                ; c
 vDefs:      DS 2                ; d
-            DS 2                ; e
+vEdited:    DS 2                ; e
             DS 2                ; f
             DS 2                ; g
 vHeapPtr:   DS 2                ; h
