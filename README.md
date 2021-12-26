@@ -171,7 +171,6 @@ Mint is a bytecode interpreter - this means that all of its instructions are 1 b
 | \_     | 16-bit negation (2's complement) NEG      | a -- b   |
 | \*     | 8-bit by 8-bit integer multiplication MUL | a b -- c |
 | \\\_   | sign of number                            | n -- b   |
-| \\b    | base 16 flag variable                     | -- a     |
 | \>     | 16-bit comparison GT                      | a b -- c |
 | +      | 16-bit integer addition ADD               | a b -- c |
 | <      | 16-bit comparison LT                      | a b -- c |
@@ -205,7 +204,6 @@ Note: logical NOT can be achieved with 0=
 | ------ | --------------------------------------------------------- | ----------- |
 | ,      | print the number on the stack as a hexadecimal            | a --        |
 | .      | print the top member of the stack as a decimal number DOT | a --        |
-| \\$    | text input pointer variable                               | -- adr      |
 | \\E    | emits a char to output                                    | val --      |
 | \\I    | input from a I/O port                                     | port -- val |
 | \\K    | read a char from input                                    | -- val      |
@@ -238,8 +236,8 @@ NOTE:
 | )      | END a loop or conditionally executed code block   | --     |
 | \\(    | beginIFTE \\(`true`)(`false`)                     | b --   |
 | \\B    | if true break out of loop                         | b --   |
-| \\i    | returns index variable of current loop            | -- val |
-| \\j    | returns index variable of outer loop              | -- val |
+| \\i    | loop counter variable                             | -- adr |
+| \\j    | outer loop counter variable                       | -- adr |
 
 ### Memory and Variable Operations
 
@@ -256,13 +254,15 @@ NOTE:
 
 ### System Variables
 
-| Symbol | Description                        | Effect |
-| ------ | ---------------------------------- | ------ |
-| \\a    | data stack start variable          | -- adr |
-| \\b    | base16 flag variable               | -- adr |
-| \\c    | text input buffer pointer variable | -- adr |
-| \\d    | start of user definitions          | -- adr |
-| \\h    | heap pointer variable              | -- adr |
+| Symbol | Description                          | Effect |
+| ------ | ------------------------------------ | ------ |
+| \\a    | data stack start variable            | -- adr |
+| \\b    | base16 flag variable                 | -- adr |
+| \\c    | text input buffer pointer variable   | -- adr |
+| \\d    | start of user definitions            | -- adr |
+| \\h    | heap pointer variable                | -- adr |
+| \\i    | See: Loops and conditional execution | -- adr |
+| \\j    | See: Loops and conditional execution | -- adr |
 
 ### Miscellaneous
 
