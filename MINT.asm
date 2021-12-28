@@ -155,36 +155,21 @@ waitchar4:
         DEC BC
                                 ; Drop into the NEXT and dispatch routines
 
-; ********************************************************************************
-;
-; Dispatch Routine.
-;
-; Get the next character and form a 1 byte jump address
-;
-; This target jump address is loaded into HL, and using JP (HL) to quickly 
-; jump to the selected function.
-;
-; Individual handler routines will deal with each category:
-;
-; 1. Detect characters A-Z and jump to the User Command handler routine
-;
-; 2. Detect characters a-z and jump to the variable handler routine
-;
-; 3. All other characters are punctuation and cause a jump to the associated
-; primitive code.
-;
-; Instruction Pointer IP BC is incremented
-;
-; *********************************************************************************
 
-NEXT:                               ; 9 
-        INC BC                      ; 6t    Increment the IP
-        LD A, (BC)                  ; 7t    Get the next character and dispatch
-        LD L,A                      ; 4t    Index into table
-        LD H,msb(opcodes)           ; 7t    Start address of jump table         
-        LD L,(HL)                   ; 7t    get low jump address
-        LD H,msb(page4)             ; 7t    Load H with the 1st page address
-        JP (HL)                     ; 4t    Jump to routine
+; ARRAY compilation routine
+compNEXT:                       ; 20
+        POP DE          ; DE = return address
+        LD HL,(vHeapPtr)    ; load heap ptr
+        LD (HL),E       ; store lsb
+        LD A,(vByteMode)
+        INC HL          
+        OR A
+        JR NZ,compNext1
+        LD (HL),D
+        INC HL
+compNext1:
+        LD (vHeapPtr),HL    ; save heap ptr
+        JP NEXT
 
 rpush:                              ; 11
         DEC IX                  
@@ -199,22 +184,6 @@ rpop:                               ; 11
         LD H,(IX+0)
         INC IX                  
         RET
-
-crlf:                               ; 18
-        LD A, '\r'
-        CALL putchar
-        LD A, '\n'           
-        JR writeChar1
-
-space:       
-        LD A,' '           
-        JR writeChar1
-
-writeChar:
-        LD (DE),A
-        INC DE
-writeChar1:
-        JP putchar
 
 ; Print an 8-bit HEX number  - shortened KB 25/11/21
 ; A: Number to print
@@ -241,20 +210,15 @@ ENTER:                          ; 9
         DEC BC
         JP  (IY)                ; Execute code from User def
 
-; ARRAY compilation routine
-compNEXT:                       ; 19
-        POP DE          ; DE = return address
-        LD HL,(vHeapPtr)    ; load heap ptr
-        LD (HL),E       ; store lsb
-        LD A,(vByteMode)
-        INC HL          
-        OR A
-        JR NZ,compNext1
-        LD (HL),D
-        INC HL
-compNext1:
-        LD (vHeapPtr),HL    ; save heap ptr
-        JR NEXT
+printhex:                       ;= 11  
+                                ; Display HL as a 16-bit number in hex.
+        PUSH BC                 ; preserve the IP
+        LD A,H
+        CALL Print_Hex8
+        LD A,L
+        CALL Print_Hex8
+        POP BC
+        RET
 
 ; **************************************************************************
 ; Macros must be written in Mint and end with ; 
@@ -1235,11 +1199,11 @@ editDef_:
 ; copy definition to text input buffer
 ; update TIBPtr
 ; **************************************************************************             
-                            ;= 54
+
 editDef:                    ; lookup up def based on number
+        LD A,"A"
         POP DE
-        LD A,E
-        ADD A,"A"
+        ADD A,E
         EX AF,AF'
         LD HL,(vDEFS)
         ADD HL,DE
@@ -1270,8 +1234,44 @@ editDef3:
         OR A
         SBC HL,DE
         LD (vTIBPtr),HL
-        LD BC,HL
-        JP waitchar
+        JP (IY)
+
+                            ;= 54
+; editDef:                    ; lookup up def based on number
+;         POP DE
+;         LD A,E
+;         ADD A,"A"
+;         EX AF,AF'
+;         LD HL,(vDEFS)
+;         ADD HL,DE
+;         ADD HL,DE
+;         LD E,(HL)
+;         INC HL
+;         LD D,(HL)
+;         EX DE,HL
+;         LD A,(HL)
+;         CP ";"
+;         LD DE,TIB
+;         JR Z,editDef3
+;         LD A,":"
+;         CALL writeChar
+;         EX AF,AF'
+;         CALL writeChar
+;         JR editDef2
+; editDef1:
+;         INC HL
+; editDef2:        
+;         LD A,(HL)
+;         CALL writeChar
+;         CP ";"
+;         JR NZ,editDef1
+; editDef3:        
+;         LD HL,TIB
+;         EX DE,HL
+;         OR A
+;         SBC HL,DE
+;         LD (vTIBPtr),HL
+;         JP (IY)
 
 printStk:                   ;= 40
         call ENTER
@@ -1410,18 +1410,56 @@ nesting4:
         DEC E
         RET 
         
-printhex:                       ;= 11  
-                                ; Display HL as a 16-bit number in hex.
-        PUSH BC                 ; preserve the IP
-        LD A,H
-        CALL Print_Hex8
-        LD A,L
-        CALL Print_Hex8
-        POP BC
-        RET
-
 getRef:                         ;= 8
         INC BC
         LD A,(BC)
         CALL getGroup
         JP fetch1
+
+crlf:                               ; 18
+        LD A, '\r'
+        CALL putchar
+        LD A, '\n'           
+        JR writeChar1
+
+space:       
+        LD A,' '           
+        JR writeChar1
+
+writeChar:
+        LD (DE),A
+        INC DE
+writeChar1:
+        JP putchar
+
+; ********************************************************************************
+;
+; Dispatch Routine.
+;
+; Get the next character and form a 1 byte jump address
+;
+; This target jump address is loaded into HL, and using JP (HL) to quickly 
+; jump to the selected function.
+;
+; Individual handler routines will deal with each category:
+;
+; 1. Detect characters A-Z and jump to the User Command handler routine
+;
+; 2. Detect characters a-z and jump to the variable handler routine
+;
+; 3. All other characters are punctuation and cause a jump to the associated
+; primitive code.
+;
+; Instruction Pointer IP BC is incremented
+;
+; *********************************************************************************
+
+NEXT:                               ; 9 
+        INC BC                      ; 6t    Increment the IP
+        LD A, (BC)                  ; 7t    Get the next character and dispatch
+        LD L,A                      ; 4t    Index into table
+        LD H,msb(opcodes)           ; 7t    Start address of jump table         
+        LD L,(HL)                   ; 7t    get low jump address
+        LD H,msb(page4)             ; 7t    Load H with the 1st page address
+        JP (HL)                     ; 4t    Jump to routine
+

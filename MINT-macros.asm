@@ -4,19 +4,18 @@ empty_:
 backsp_:
         DB "\\c@0=0=(1_\\c\\+`\b \b`);"
 
-edit_:
-        DB "`?`\\K\\N`> `\\^A-\\Z;"
-
 reedit_:
         DB "\\e\\@\\Z;"
 
+edit_:
+        .cstr "`?`\\K\\N`> `\\^A-\\Z;"
+
 list_:
-        DB "\\N26(\\i@\\Z\\c@0>(\\N));"
+        .cstr "\\N26(\\i@\\Z\\c@0>(\\N))\\N`> `;"
 
 printStack_:
-        DB "`=> `\\P\\N;"        
+        .cstr "`=> `\\P\\N\\N`> `;"        
 
 toggleBase_:
-        DB "\\b@0=\\b!;"
-
+        .cstr "\\b@0=\\b!;"
 
