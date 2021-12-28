@@ -32,7 +32,7 @@ testsStart:
     test "1 2+", 3
     test "123 456+", 579
     test "1_ 2+",1
-    test "1_\\_",1
+    ; test "1_\\_",1
     test "1 2+",3
     test "1_ 2+",1
     test "1_~",0

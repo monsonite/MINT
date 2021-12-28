@@ -17,7 +17,7 @@ CALL initialize
 ld HL,testGetCharImpl                       ; change getchar implmentation to use tbuf
 LD (GETCVEC),HL
 
-testInput {"0\\Z1."}
+testInput {"\\D."}
 JP interpret
 
 testGetCharImpl:

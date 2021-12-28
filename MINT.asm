@@ -153,8 +153,38 @@ waitchar4:
         LD (vTIBPtr),BC
         LD BC,TIB               ; Instructions stored on heap at address HERE
         DEC BC
-                                ; Drop into the NEXT and dispatch routines
+        JP NEXT
 
+; ********************************************************************************
+;
+; Dispatch Routine.
+;
+; Get the next character and form a 1 byte jump address
+;
+; This target jump address is loaded into HL, and using JP (HL) to quickly 
+; jump to the selected function.
+;
+; Individual handler routines will deal with each category:
+;
+; 1. Detect characters A-Z and jump to the User Command handler routine
+;
+; 2. Detect characters a-z and jump to the variable handler routine
+;
+; 3. All other characters are punctuation and cause a jump to the associated
+; primitive code.
+;
+; Instruction Pointer IP BC is incremented
+;
+; *********************************************************************************
+
+NEXT:                               ; 9 
+        INC BC                      ; 6t    Increment the IP
+        LD A, (BC)                  ; 7t    Get the next character and dispatch
+        LD L,A                      ; 4t    Index into table
+        LD H,msb(opcodes)           ; 7t    Start address of jump table         
+        LD L,(HL)                   ; 7t    get low jump address
+        LD H,msb(page4)             ; 7t    Load H with the 1st page address
+        JP (HL)                     ; 4t    Jump to routine
 
 ; ARRAY compilation routine
 compNEXT:                       ; 20
@@ -169,21 +199,20 @@ compNEXT:                       ; 20
         INC HL
 compNext1:
         LD (vHeapPtr),HL    ; save heap ptr
-        JP NEXT
+        JR NEXT
 
-rpush:                              ; 11
-        DEC IX                  
-        LD (IX+0),H
-        DEC IX
-        LD (IX+0),L
-        RET
+getRef:                         ;= 8
+        INC BC
+        LD A,(BC)
+        CALL getGroup
+        JP fetch1
 
-rpop:                               ; 11
-        LD L,(IX+0)         
-        INC IX              
-        LD H,(IX+0)
-        INC IX                  
-        RET
+enter:                          ; 9
+        LD HL,BC
+        CALL rpush              ; save Instruction Pointer
+        POP BC
+        DEC BC
+        JP  (IY)                ; Execute code from User def
 
 ; Print an 8-bit HEX number  - shortened KB 25/11/21
 ; A: Number to print
@@ -202,13 +231,6 @@ conv:
 		ADC	A,0x40
 		DAA
 		JP putchar
-
-ENTER:                          ; 9
-        LD HL,BC
-        CALL rpush              ; save Instruction Pointer
-        POP BC
-        DEC BC
-        JP  (IY)                ; Execute code from User def
 
 printhex:                       ;= 11  
                                 ; Display HL as a 16-bit number in hex.
@@ -467,7 +489,7 @@ altCodes:
         DB     lsb(comment_)    ;    \  comment text, skips reading until end of line
         DB     lsb(aNop_)       ;    ]
         DB     lsb(charCode_)   ;    ^
-        DB     lsb(sign_)       ;    _)  ( n -- b ) returns true if -ve 
+        DB     lsb(aNop_)       ;    _ 
         DB     lsb(aNop_)       ;    `            
         DB     lsb(sysVar_)     ;    a  ; start of data stack variable
         DB     lsb(sysVar_)     ;    b  ; base16 variable
@@ -1167,15 +1189,15 @@ rot_:                               ; a b c -- b c a
         PUSH HL                     ; b c a                         
         JP (IY)
 
-sign_:
-        POP HL
-        BIT 7,H
-        LD HL,0
-        JR Z, sign2
-        INC HL
-sign2:
-        PUSH HL
-        JP (IY)
+; sign_:
+;         POP HL
+;         BIT 7,H
+;         LD HL,0
+;         JR Z, sign2
+;         INC HL
+; sign2:
+;         PUSH HL
+        ; JP (IY)
 
 break_:
         POP HL
@@ -1235,43 +1257,6 @@ editDef3:
         SBC HL,DE
         LD (vTIBPtr),HL
         JP (IY)
-
-                            ;= 54
-; editDef:                    ; lookup up def based on number
-;         POP DE
-;         LD A,E
-;         ADD A,"A"
-;         EX AF,AF'
-;         LD HL,(vDEFS)
-;         ADD HL,DE
-;         ADD HL,DE
-;         LD E,(HL)
-;         INC HL
-;         LD D,(HL)
-;         EX DE,HL
-;         LD A,(HL)
-;         CP ";"
-;         LD DE,TIB
-;         JR Z,editDef3
-;         LD A,":"
-;         CALL writeChar
-;         EX AF,AF'
-;         CALL writeChar
-;         JR editDef2
-; editDef1:
-;         INC HL
-; editDef2:        
-;         LD A,(HL)
-;         CALL writeChar
-;         CP ";"
-;         JR NZ,editDef1
-; editDef3:        
-;         LD HL,TIB
-;         EX DE,HL
-;         OR A
-;         SBC HL,DE
-;         LD (vTIBPtr),HL
-;         JP (IY)
 
 printStk:                   ;= 40
         call ENTER
@@ -1410,11 +1395,6 @@ nesting4:
         DEC E
         RET 
         
-getRef:                         ;= 8
-        INC BC
-        LD A,(BC)
-        CALL getGroup
-        JP fetch1
 
 crlf:                               ; 18
         LD A, '\r'
@@ -1432,34 +1412,16 @@ writeChar:
 writeChar1:
         JP putchar
 
-; ********************************************************************************
-;
-; Dispatch Routine.
-;
-; Get the next character and form a 1 byte jump address
-;
-; This target jump address is loaded into HL, and using JP (HL) to quickly 
-; jump to the selected function.
-;
-; Individual handler routines will deal with each category:
-;
-; 1. Detect characters A-Z and jump to the User Command handler routine
-;
-; 2. Detect characters a-z and jump to the variable handler routine
-;
-; 3. All other characters are punctuation and cause a jump to the associated
-; primitive code.
-;
-; Instruction Pointer IP BC is incremented
-;
-; *********************************************************************************
+rpush:                              ; 11
+        DEC IX                  
+        LD (IX+0),H
+        DEC IX
+        LD (IX+0),L
+        RET
 
-NEXT:                               ; 9 
-        INC BC                      ; 6t    Increment the IP
-        LD A, (BC)                  ; 7t    Get the next character and dispatch
-        LD L,A                      ; 4t    Index into table
-        LD H,msb(opcodes)           ; 7t    Start address of jump table         
-        LD L,(HL)                   ; 7t    get low jump address
-        LD H,msb(page4)             ; 7t    Load H with the 1st page address
-        JP (HL)                     ; 4t    Jump to routine
-
+rpop:                               ; 11
+        LD L,(IX+0)         
+        INC IX              
+        LD H,(IX+0)
+        INC IX                  
+        RET

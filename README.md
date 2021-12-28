@@ -170,7 +170,6 @@ Mint is a bytecode interpreter - this means that all of its instructions are 1 b
 | /      | 16-bit by 8-bit division DIV              | a b -- c |
 | \_     | 16-bit negation (2's complement) NEG      | a -- b   |
 | \*     | 8-bit by 8-bit integer multiplication MUL | a b -- c |
-| \\\_   | sign of number                            | n -- b   |
 | \>     | 16-bit comparison GT                      | a b -- c |
 | +      | 16-bit integer addition ADD               | a b -- c |
 | <      | 16-bit comparison LT                      | a b -- c |
