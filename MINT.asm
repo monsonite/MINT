@@ -10,10 +10,6 @@
 ;
 ; *****************************************************************************
 
-        ;ROMSTART    EQU $0
-        ;RAMSTART    EQU $800
-        ;EXTENDED    EQU 0
-        ;ROMSIZE     EQU $800
         DSIZE       EQU $80
         RSIZE       EQU $80
         TIBSIZE     EQU $100
@@ -691,6 +687,7 @@ shl_:
 		
 shr_:    
         POP HL                  ; Get the top member of the stack
+shr1:
         SRL H
         RR L
         PUSH HL
@@ -1035,12 +1032,7 @@ depth_:
         LD HL,DSTACK
         OR A
         SBC HL,DE
-        JR C,depth2
-        SRL H
-        RR L
-depth2:
-        PUSH HL
-        JP (IY)
+        JP shr1
 
 emit_:
         POP HL
