@@ -35,7 +35,7 @@ mint:
         CALL initialize
         call ENTER
         .cstr "`MINT V1.0`\\N"
-        JP interpret
+        JR interpret
 
 ; ***********************************************************************
 ; Initial values for user mintVars		
@@ -68,7 +68,7 @@ init1:
         DJNZ init1
         RET
 
-macro:                          ; 25
+macro:                          ;=25
         LD (vTIBPtr),BC
         LD HL,ctrlCodes
         ADD A,L
@@ -187,7 +187,7 @@ NEXT:                               ; 9
         JP (HL)                     ; 4t    Jump to routine
 
 ; ARRAY compilation routine
-compNEXT:                       ; 20
+compNEXT:                       ;=20
         POP DE          ; DE = return address
         LD HL,(vHeapPtr)    ; load heap ptr
         LD (HL),E       ; store lsb
@@ -605,7 +605,8 @@ dot_:
         POP HL
         CALL printdec
 dot2:
-        CALL space
+        LD A,' '           
+        CALL writeChar1
         JP (IY)
 
 drop_:                      ; Discard the top member of the stack
@@ -618,7 +619,14 @@ dup_:
         PUSH    HL
         JP (IY)
 etx_:
-        JP etx
+etx:
+        LD HL,-DSTACK
+        ADD HL,SP
+        JR NC,etx1
+        LD SP,DSTACK
+etx1:
+        JP interpret
+
         
 exit_:
         INC BC
@@ -719,9 +727,9 @@ lt_:    POP      HL
         POP      DE
 cmp_:   AND      A              ; reset the carry flag
         SBC      HL,DE          ; only equality sets HL=0 here
-		JR       Z, less        ; equality returns 0  KB 25/11/21
+		JR       Z,less         ; equality returns 0  KB 25/11/21
         LD       HL, 0
-        JP       M, less
+        JP       M,less
 equal:  INC      L              ; HL = 1    
 less:     
         PUSH     HL
@@ -738,10 +746,13 @@ var_:
         PUSH HL
         JP (IY)
         
-div_:       JR div
-mul_:   JR mul      
+div_:   
+        JR div
+mul_:   
+        JP mul      
 
-again_:     JP again
+again_:     
+        JP again
 str_:                       
 str:                                ;= 15
         INC BC
@@ -752,7 +763,7 @@ nextchar:
         CP "`"              ; ` is the string terminator
         JR Z,str2
         CALL putchar
-        JR   nextchar
+        JR nextchar
 
 str2:  
         DEC BC
@@ -770,7 +781,17 @@ alt:                                ;= 11
         LD L,A
         LD L,(HL)                   ; 7t    get low jump address
         LD H, msb(page6)            ; Load H with the 5th page address
-        JP  (HL)                    ; 4t    Jump to routine
+        JP (HL)                    ; 4t    Jump to routine
+
+; define a word array
+arrDef:                     ;= 18
+        LD A,FALSE
+arrDef1:      
+        LD IY,compNEXT
+        LD (vByteMode),A
+        LD HL,(vHeapPtr)    ; HL = heap ptr
+        CALL rpush          ; save start of array \[  \]
+        JP NEXT         ; hardwired to NEXT
 
 ; end a word array
 arrEnd:                     ;= 27
@@ -791,33 +812,6 @@ arrEnd2:
         JP (IY)         ; hardwired to NEXT
 
 ; ********************************************************************
-; 16-bit multiply  
-mul:    ; 19
-        POP  DE             ; get first value
-        POP  HL
-        PUSH BC             ; Preserve the IP
-        LD B,H              ; BC = 2nd value
-        LD C,L
-        
-        LD HL,0
-        LD A,16
-Mul_Loop_1:
-        ADD HL,HL
-        RL E
-        RL D
-        JR NC,$+6
-        ADD HL,BC
-        JR NC,$+3
-        INC DE
-        DEC A
-        JR NZ,Mul_Loop_1
-		
-		POP BC				; Restore the IP
-		PUSH HL             ; Put the product on the stack - stack bug fixed 2/12/21
-		
-		JP (IY)
-
-; ********************************************************************
 ; 16-bit division subroutine.
 ;
 ; BC: divisor, DE: dividend, HL: remainder
@@ -830,7 +824,7 @@ Mul_Loop_1:
 ; 35 bytes (reduced from 48)
 		
 
-div:    ; 24
+div:                        ;=24
         POP  DE             ; get first value
         POP  HL             ; get 2nd value
         PUSH BC             ; Preserve the IP
@@ -866,7 +860,40 @@ div_end:
         PUSH DE             ; Push Result
         PUSH HL             ; Push remainder             
 
-        JP       (IY)
+        JP (IY)
+
+; **************************************************************************             
+; def is used to create a colon definition
+; When a colon is detected, the next character (usually uppercase alpha)
+; is looked up in the vector table to get its associated code field address
+; This CFA is updated to point to the character after uppercase alpha
+; The remainder of the characters are then skipped until after a semicolon  
+; is found.
+; ***************************************************************************
+                            ;= 31
+def:                        ; Create a colon definition
+        INC BC
+        LD  A,(BC)          ; Get the next character
+        INC BC
+        CALL getGroup
+        LD DE,(vHeapPtr)    ; start of defintion
+        LD (HL),E           ; Save low byte of address in CFA
+        INC HL              
+        LD (HL),D           ; Save high byte of address in CFA+1
+def1:                   ; Skip to end of definition   
+        LD A,(BC)           ; Get the next character
+        INC BC              ; Point to next character
+        LD (DE),A
+        INC DE
+        CP ";"                  ; Is it a semicolon 
+        JR Z, def2           ; end the definition
+        JR  def1            ; get the next element
+
+def2:    
+        DEC BC
+def3:
+        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
+        JP (IY)       
         
 ; *************************************
 ; Loop Handling Code
@@ -932,54 +959,6 @@ again3:
         ADD IX,DE
         JP (IY)
 
-
-; ********************************************************************************
-; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
-; Read the first character. 
-;			
-; Number characters ($30 to $39) are converted to digits by subtracting $30
-; and then added into the L register. (HL forms a 16-bit accumulator)
-; Fetch the next character, if it is a number, multiply contents of HL by 10
-; and then add in the next digit. Repeat this until a non-number character is 
-; detected. Add in the final digit so that HL contains the converted number.
-; Push HL onto the stack and proceed to the dispatch routine.
-; ********************************************************************************
-         
-number:                         ;= 23
-		LD HL,$0000				; 10t Clear HL to accept the number
-		LD A,(BC)				; 7t  Get the character which is a numeral
-        
-number1:                        ; corrected KB 24/11/21
-
-        SUB $30                 ; 7t    Form decimal digit
-        ADD A,L                 ; 4t    Add into bottom of HL
-        LD  L,A                 ; 4t
-        LD A,00                 ; 4t    Clear A
-        ADC	A,H	                ; Add with carry H-reg
-	    LD	H,A	                ; Put result in H-reg
-      
-        INC BC                  ; 6t    Increment IP
-        LD A, (BC)              ; 7t    and get the next character
-        CP $30                  ; 7t    Less than $30
-        JR C, endnum            ; 7/12t Not a number / end of number
-        CP $3A                  ; 7t    Greater or equal to $3A
-        JR NC, endnum           ; 7/12t Not a number / end of number
-       
-times10:                        ; Multiply digit(s) in HL by 10
-        ADD HL,HL               ; 11t    2X
-        LD  E,L                 ;  4t    LD DE,HL
-        LD  D,H                 ;  4t
-        ADD HL,HL               ; 11t    4X
-        ADD HL,HL               ; 11t    8X
-        ADD HL,DE               ; 11t    2X  + 8X  = 10X
-                                ; 52t cycles
-
-        JR  number1
-                
-endnum:
-        DEC BC
-        PUSH HL                 ; 11t   Put the number on the stack
-        JP (IY)                 ; and process the next character
 
 printdec:
 
@@ -1073,7 +1052,7 @@ ifte_:
         POP DE
         LD A,E
         OR D
-        JP NZ,ifte1
+        JR NZ,ifte1
         INC DE
         PUSH DE                     ; push TRUE on stack for else clause
         JP begin1                   ; skip to closing ) works with \) too 
@@ -1189,16 +1168,6 @@ rot_:                               ; a b c -- b c a
         PUSH HL                     ; b c a                         
         JP (IY)
 
-; sign_:
-;         POP HL
-;         BIT 7,H
-;         LD HL,0
-;         JR Z, sign2
-;         INC HL
-; sign2:
-;         PUSH HL
-        ; JP (IY)
-
 break_:
         POP HL
         LD A,L                      ; zero?
@@ -1266,70 +1235,6 @@ printStk:                   ;= 40
 ;*******************************************************************
 ; Page 5 primitive routines continued
 ;*******************************************************************
-etx:
-        LD HL,-DSTACK
-        ADD HL,SP
-        JP NC,etx1
-        LD SP,DSTACK
-etx1:
-        JP interpret
-
-; define a word array
-arrDef:                     ;= 18
-        LD A,FALSE
-arrDef1:      
-        LD IY,compNEXT
-        LD (vByteMode),A
-        LD HL,(vHeapPtr)    ; HL = heap ptr
-        CALL rpush          ; save start of array \[  \]
-        JP NEXT         ; hardwired to NEXT
-
-getGroup:                       ;= 11
-        SUB "A"  
-        LD (vEdited),A      
-        JR getGroup2
-getGroup1:
-        SUB "A"  
-getGroup2:
-        ADD A,A
-        LD E,A
-        LD D,0
-        LD HL,(vDEFS)
-        ADD HL,DE
-        RET
-
-; **************************************************************************             
-; def is used to create a colon definition
-; When a colon is detected, the next character (usually uppercase alpha)
-; is looked up in the vector table to get its associated code field address
-; This CFA is updated to point to the character after uppercase alpha
-; The remainder of the characters are then skipped until after a semicolon  
-; is found.
-; ***************************************************************************
-                            ;= 31
-def:                        ; Create a colon definition
-        INC BC
-        LD  A,(BC)          ; Get the next character
-        INC BC
-        CALL getGroup
-        LD DE,(vHeapPtr)    ; start of defintion
-        LD (HL),E           ; Save low byte of address in CFA
-        INC HL              
-        LD (HL),D           ; Save high byte of address in CFA+1
-def1:                   ; Skip to end of definition   
-        LD A,(BC)           ; Get the next character
-        INC BC              ; Point to next character
-        LD (DE),A
-        INC DE
-        CP ";"                  ; Is it a semicolon 
-        JP z, def2           ; end the definition
-        JR  def1            ; get the next element
-
-def2:    
-        DEC BC
-def3:
-        LD (vHeapPtr),DE        ; bump heap ptr to after definiton
-        JP (IY)       
 
 hex:                            ;= 26
 	    LD HL,0		    		; 10t Clear HL to accept the number
@@ -1351,6 +1256,80 @@ hex2:
         ADD A,L                 ; 4t    Add into bottom of HL
         LD  L,A                 ; 4t
         JR  hex1
+
+; ********************************************************************
+; 16-bit multiply  
+mul:                        ;=19
+        POP  DE             ; get first value
+        POP  HL
+        PUSH BC             ; Preserve the IP
+        LD B,H              ; BC = 2nd value
+        LD C,L
+        
+        LD HL,0
+        LD A,16
+Mul_Loop_1:
+        ADD HL,HL
+        RL E
+        RL D
+        JR NC,$+6
+        ADD HL,BC
+        JR NC,$+3
+        INC DE
+        DEC A
+        JR NZ,Mul_Loop_1
+		
+		POP BC				; Restore the IP
+		PUSH HL             ; Put the product on the stack - stack bug fixed 2/12/21
+		JP (IY)
+
+; ********************************************************************************
+; Number Handling Routine - converts numeric ascii string to a 16-bit number in HL
+; Read the first character. 
+;			
+; Number characters ($30 to $39) are converted to digits by subtracting $30
+; and then added into the L register. (HL forms a 16-bit accumulator)
+; Fetch the next character, if it is a number, multiply contents of HL by 10
+; and then add in the next digit. Repeat this until a non-number character is 
+; detected. Add in the final digit so that HL contains the converted number.
+; Push HL onto the stack and proceed to the dispatch routine.
+; ********************************************************************************
+         
+number:                         ;= 23
+		LD HL,$0000				; 10t Clear HL to accept the number
+		LD A,(BC)				; 7t  Get the character which is a numeral
+        
+number1:                        ; corrected KB 24/11/21
+
+        SUB $30                 ; 7t    Form decimal digit
+        ADD A,L                 ; 4t    Add into bottom of HL
+        LD  L,A                 ; 4t
+        LD A,00                 ; 4t    Clear A
+        ADC	A,H	                ; Add with carry H-reg
+	    LD	H,A	                ; Put result in H-reg
+      
+        INC BC                  ; 6t    Increment IP
+        LD A, (BC)              ; 7t    and get the next character
+        CP $30                  ; 7t    Less than $30
+        JR C, endnum            ; 7/12t Not a number / end of number
+        CP $3A                  ; 7t    Greater or equal to $3A
+        JR NC, endnum           ; 7/12t Not a number / end of number
+       
+times10:                        ; Multiply digit(s) in HL by 10
+        ADD HL,HL               ; 11t    2X
+        LD  E,L                 ;  4t    LD DE,HL
+        LD  D,H                 ;  4t
+        ADD HL,HL               ; 11t    4X
+        ADD HL,HL               ; 11t    8X
+        ADD HL,DE               ; 11t    2X  + 8X  = 10X
+                                ; 52t cycles
+
+        JR  number1
+                
+endnum:
+        DEC BC
+        PUSH HL                 ; 11t   Put the number on the stack
+        JP (IY)                 ; and process the next character
 
 ; **************************************************************************             
 ; calculate nesting value
@@ -1395,15 +1374,10 @@ nesting4:
         DEC E
         RET 
         
-
-crlf:                               ; 18
+crlf:                               ;=18
         LD A, '\r'
         CALL putchar
         LD A, '\n'           
-        JR writeChar1
-
-space:       
-        LD A,' '           
         JR writeChar1
 
 writeChar:
@@ -1412,16 +1386,30 @@ writeChar:
 writeChar1:
         JP putchar
 
-rpush:                              ; 11
+rpush:                              ;=11
         DEC IX                  
         LD (IX+0),H
         DEC IX
         LD (IX+0),L
         RET
 
-rpop:                               ; 11
+rpop:                               ;=11
         LD L,(IX+0)         
         INC IX              
         LD H,(IX+0)
         INC IX                  
+        RET
+
+getGroup:                           ;= 11
+        SUB "A"  
+        LD (vEdited),A      
+        JR getGroup2
+getGroup1:
+        SUB "A"  
+getGroup2:
+        ADD A,A
+        LD E,A
+        LD D,0
+        LD HL,(vDEFS)
+        ADD HL,DE
         RET
